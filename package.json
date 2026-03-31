@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:init": "npx tsx prisma/initDb.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

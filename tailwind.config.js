@@ -15,6 +15,7 @@ module.exports = {
         // Colores principales 
         brand: {
           primary: '#2563EB', // Azul Institucional
+          secondary: '#7C3AED', // Violeta 
           bg: '#F8FAFC',      // Gris perla claro 
           text: '#334155',    // Gris pizarra oscuro
         },

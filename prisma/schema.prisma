@@ -1,9 +1,149 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+
+// 1. SEGURIDAD Y CATÁLOGOS BASE
+// ============================================================================
+
+model Rol {
+  id       Int       @id @default(autoincrement())
+  nombre   String    @unique 
+  usuarios Usuario[]
+}
+
+model Usuario {
+  id            String   @id @default(uuid())
+  nombre        String
+  email         String   @unique
+  password_hash String
+  rol_id        Int
+  rol           Rol      @relation(fields: [rol_id], references: [id])
+  creado_en     DateTime @default(now())
+
+  muestrasRegistradas  MuestraFarmaceutica[]
+  historialesCambiados HistorialTrazabilidad[]
+  descartesAutorizados ReporteDescarte[]       @relation("AutorizadoPor")
+  descartesEjecutados  ReporteDescarte[]       @relation("EjecutadoPor")
+}
+
+model Piso {
+  id          Int         @id @default(autoincrement())
+  nombre      String      @unique 
+  direcciones Direccion[]
+}
+
+model Direccion {
+  id      Int    @id @default(autoincrement())
+  nombre  String 
+  piso_id Int
+
+  piso    Piso   @relation(fields: [piso_id], references: [id])
+  areas   Area[]
+}
+
+model Area {
+  id           Int                   @id @default(autoincrement())
+  nombre       String                
+  direccion_id Int
+
+  direccion    Direccion             @relation(fields: [direccion_id], references: [id])
+  muestras     MuestraFarmaceutica[]
+}
+
+model EstadoMuestra {
+  id                    Int                     @id @default(autoincrement())
+  nombre                String                  @unique 
+
+  muestras              MuestraFarmaceutica[]
+  historialesAnteriores HistorialTrazabilidad[] @relation("EstadoAnterior")
+  historialesNuevos     HistorialTrazabilidad[] @relation("EstadoNuevo")
+}
+
+
+// 2. MÓDULO DE INVENTARIO Y TRAZABILIDAD (Especialidades Farmacéuticas)
+// ============================================================================
+
+model MuestraFarmaceutica {
+  id                  String   @id @default(uuid())
+  codigo_interno      String   @unique
+  lote                String
+  registro_sanitario  String
+  principio_activo    String
+  
+  // Datos para la Economía Circular y Asistente de Segregación
+  tipo_empaque        String   
+  riesgo_bioseguridad String 
+
+  // Control de Mermas
+  cantidad            Int
+  unidad_medida       String   
+  proposito_analisis  String   @db.Text 
+
+  // Tiempos Críticos (Resolución N° 072)
+  fecha_ingreso       DateTime @default(now())
+  fecha_caducidad     DateTime @db.Date
+  fecha_fin_retencion DateTime @db.Date 
+  
+  // Llaves foráneas
+  estado_id           Int
+  estado              EstadoMuestra @relation(fields: [estado_id], references: [id])
+  
+  area_id             Int
+  area                Area          @relation(fields: [area_id], references: [id])
+  
+  registrado_por      String
+  usuarioRegistrador  Usuario       @relation(fields: [registrado_por], references: [id])
+
+  creado_en           DateTime @default(now())
+  actualizado_en      DateTime @updatedAt
+
+  // Relaciones
+  historiales         HistorialTrazabilidad[]
+  reporte_descarte    ReporteDescarte?
+}
+
+
+// 3. MÓDULO DE AUDITORÍA Y LOGÍSTICA INVERSA
+// ============================================================================
+
+model HistorialTrazabilidad {
+  id                 String   @id @default(uuid())
+  
+  muestra_id         String
+  muestra            MuestraFarmaceutica @relation(fields: [muestra_id], references: [id])
+
+  estado_anterior_id Int
+  estado_anterior    EstadoMuestra       @relation("EstadoAnterior", fields: [estado_anterior_id], references: [id])
+
+  estado_nuevo_id    Int
+  estado_nuevo       EstadoMuestra       @relation("EstadoNuevo", fields: [estado_nuevo_id], references: [id])
+
+  cambiado_por       String?  
+  usuario            Usuario?            @relation(fields: [cambiado_por], references: [id])
+
+  fecha_cambio       DateTime @default(now())
+  motivo             String   @db.Text
+}
+
+model ReporteDescarte {
+  id                 String   @id @default(uuid())
+  
+  muestra_id         String   @unique 
+  muestra            MuestraFarmaceutica @relation(fields: [muestra_id], references: [id])
+
+  autorizado_por     String
+  autorizador        Usuario  @relation("AutorizadoPor", fields: [autorizado_por], references: [id])
+
+  ejecutado_por      String
+  ejecutor           Usuario  @relation("EjecutadoPor", fields: [ejecutado_por], references: [id])
+
+  fecha_descarte     DateTime @default(now())
+  metodo_disposicion String   // Ej: Incineración controlada, Neutralización
+  observaciones      String   @db.Text
 }
