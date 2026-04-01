@@ -39,7 +39,7 @@ export default function LoginPage() {
         setLoading(false);
       } else if (res?.ok) {
         toast.update(toastId, { render: "¡Acceso autorizado!", type: "success", isLoading: false, autoClose: 2000 });
-        router.push("/dashboard");
+        router.push("/home");
       }
     } catch (err) {
       toast.update(toastId, { render: "Error de conexión con el servidor.", type: "error", isLoading: false, autoClose: 3000 });
@@ -50,7 +50,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-brand-bg font-sans text-brand-text">
       
-      {/* HEADER INSTITUCIONAL ESTILO iOS */}
+      {/* HEADER INSTITUCIONAL */}
       <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-lg shadow-sm border-b border-slate-200 px-4 sm:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           
@@ -61,7 +61,7 @@ export default function LoginPage() {
                 src="/Logo.png" 
                 alt="Logo INHRR" 
                 fill 
-                sizes="(max-width: 640px) 56px, 64px" // <-- Solución a la advertencia
+                sizes="(max-width: 640px) 56px, 64px" 
                 className="object-contain"
                 priority
               />

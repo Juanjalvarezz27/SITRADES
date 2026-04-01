@@ -2,38 +2,64 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 export async function seedUsuarios(prisma: PrismaClient) {
-  console.log(' Poblando tabla de Usuarios (Administrador inicial)...');
+  console.log('Poblando tabla de Usuarios (Un usuario por rol)...');
   
-  const rolAdmin = await prisma.rol.findUnique({
-    where: { nombre: 'Administrador' }
-  });
+  // 1. Traemos todos los roles de la base de datos
+  const roles = await prisma.rol.findMany();
+  
+  const rolAdmin = roles.find(r => r.nombre === 'Administrador');
+  const rolAnalista = roles.find(r => r.nombre === 'Analista de Laboratorio');
+  const rolSeguridad = roles.find(r => r.nombre === 'Seguridad Industrial');
 
-  if (!rolAdmin) {
-    throw new Error('No se encontró el rol "Administrador". Asegúrate de correr seedRoles primero.');
+  if (!rolAdmin || !rolAnalista || !rolSeguridad) {
+    throw new Error('Faltan roles en la base de datos. Asegúrate de correr seedRoles primero.');
   }
 
-  // 1. Generamos la sal y encriptamos la contraseña real
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash('1234', salt);
-
-  const adminData = {
-    nombre: 'Juan Sarmiento', 
-    email: 'admin@sitrades.inhrr.gob.ve',
-    password_hash: hashedPassword, 
-    rol_id: rolAdmin.id
-  };
-
-  await prisma.usuario.upsert({
-    where: { email: adminData.email },
-    // Si ya existe, le actualizamos el password al nuevo encriptado
-    update: { password_hash: adminData.password_hash }, 
-    create: {
-      nombre: adminData.nombre,
-      email: adminData.email,
-      password_hash: adminData.password_hash,
-      rol_id: adminData.rol_id
+  // 2. Definimos nuestra plantilla de usuarios de prueba
+  const usuariosMock = [
+    {
+      nombre: 'Juan Álvarez', 
+      email: 'admin@sitrades.inhrr.gob.ve',
+      password_plano: 'Admin123*',
+      rol_id: rolAdmin.id
+    },
+    {
+      nombre: 'Dra. Ana López',
+      email: 'analista@sitrades.inhrr.gob.ve',
+      password_plano: 'Analista123*',
+      rol_id: rolAnalista.id
+    },
+    {
+      nombre: 'Ing. Carlos Méndez',
+      email: 'seguridad@sitrades.inhrr.gob.ve',
+      password_plano: 'Seguridad123*',
+      rol_id: rolSeguridad.id
     }
-  });
+  ];
 
-  console.log('Usuario Administrador creado con éxito.');
+  // 3. Insertamos cada usuario encriptando su respectiva contraseña
+  for (const userData of usuariosMock) {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(userData.password_plano, salt);
+
+    await prisma.usuario.upsert({
+      where: { email: userData.email },
+      update: { 
+        // Si ya existe, le actualizamos la clave y el rol por si hubo cambios
+        password_hash: hashedPassword,
+        rol_id: userData.rol_id,
+        nombre: userData.nombre
+      }, 
+      create: {
+        nombre: userData.nombre,
+        email: userData.email,
+        password_hash: hashedPassword,
+        rol_id: userData.rol_id
+      }
+    });
+    
+    console.log(`Usuario creado: ${userData.nombre} | Rol ID: ${userData.rol_id}`);
+  }
+
+  console.log('Todos los usuarios de prueba sembrados con éxito.');
 }
