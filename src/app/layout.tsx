@@ -1,25 +1,24 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; 
 import "./globals.css";
 
-// Configuración de la fuente para textos y datos
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Configuración de la fuente para Títulos y Encabezados
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Metadatos oficiales del sistema
 export const metadata: Metadata = {
   title: "SITRADES | INHRR",
-  description: "Sistema de Trazabilidad y Gestión de Desechos en el Control de Muestras del Instituto Nacional de Higiene Rafael Rangel.",
+  description: "Sistema de Trazabilidad y Gestión de Desechos en el Control de Muestras.",
 };
 
 export default function RootLayout({
@@ -28,11 +27,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="es"
-      className={`${inter.variable} ${montserrat.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="es" className={`${inter.variable} ${montserrat.variable} h-full antialiased`}>
+      <body className="font-sans bg-[#F2F2F7] text-[#1C1C1E] min-h-full flex flex-col">
+
+        <main className="flex-1 flex flex-col h-full">
+          {children}
+        </main>
+        
+        {/* Contenedor global de notificaciones */}
+        <ToastContainer 
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={true}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          toastClassName="rounded-2xl shadow-lg border border-slate-100 font-sans text-sm"
+        />
+      </body>
     </html>
   );
 }

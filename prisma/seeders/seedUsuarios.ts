@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 export async function seedUsuarios(prisma: PrismaClient) {
   console.log(' Poblando tabla de Usuarios (Administrador inicial)...');
   
-  // 1. Buscamos el ID del rol Administrador
   const rolAdmin = await prisma.rol.findUnique({
     where: { nombre: 'Administrador' }
   });
@@ -12,18 +12,21 @@ export async function seedUsuarios(prisma: PrismaClient) {
     throw new Error('No se encontró el rol "Administrador". Asegúrate de correr seedRoles primero.');
   }
 
-  // 2. Creamos al usuario maestro (Tú) [cite: 9]
+  // 1. Generamos la sal y encriptamos la contraseña real
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash('1234', salt);
+
   const adminData = {
     nombre: 'Juan Sarmiento', 
     email: 'admin@sitrades.inhrr.gob.ve',
-    password_hash: '1234', 
+    password_hash: hashedPassword, 
     rol_id: rolAdmin.id
   };
 
-  // 3. Upsert para evitar duplicados si corres el comando varias veces
   await prisma.usuario.upsert({
     where: { email: adminData.email },
-    update: {}, // No actualizamos nada si ya existe
+    // Si ya existe, le actualizamos el password al nuevo encriptado
+    update: { password_hash: adminData.password_hash }, 
     create: {
       nombre: adminData.nombre,
       email: adminData.email,
