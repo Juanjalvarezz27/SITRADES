@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 // 1. SEGURIDAD Y CATÁLOGOS BASE
 // ============================================================================
 
@@ -22,10 +21,17 @@ model Usuario {
   nombre        String
   email         String   @unique
   password_hash String
+  
+  // Relación con el Rol en el sistema
   rol_id        Int
   rol           Rol      @relation(fields: [rol_id], references: [id])
+  
+  area_id       Int
+  area          Area     @relation(fields: [area_id], references: [id])
+
   creado_en     DateTime @default(now())
 
+  // Relaciones inversas (Registros hechos por este usuario)
   muestrasRegistradas  MuestraFarmaceutica[]
   historialesCambiados HistorialTrazabilidad[]
   descartesAutorizados ReporteDescarte[]       @relation("AutorizadoPor")
@@ -53,6 +59,8 @@ model Area {
   direccion_id Int
 
   direccion    Direccion             @relation(fields: [direccion_id], references: [id])
+  
+  usuarios     Usuario[]
   muestras     MuestraFarmaceutica[]
 }
 
