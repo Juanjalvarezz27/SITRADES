@@ -19,20 +19,20 @@ export async function seedUsuarios(prisma: PrismaClient) {
   const usuariosMock = [
     {
       nombre: 'Juan Álvarez', 
-      email: 'admin@sitrades.inhrr.gob.ve',
-      password_plano: 'Admin123*',
+      email: 'admin@admin',
+      password_plano: '1234',
       rol_id: rolAdmin.id
     },
     {
       nombre: 'Dra. Ana López',
-      email: 'analista@sitrades.inhrr.gob.ve',
-      password_plano: 'Analista123*',
+      email: 'analista@analista',
+      password_plano: '1234',
       rol_id: rolAnalista.id
     },
     {
       nombre: 'Ing. Carlos Méndez',
-      email: 'seguridad@sitrades.inhrr.gob.ve',
-      password_plano: 'Seguridad123*',
+      email: 'seguridad@seguridad',
+      password_plano: '1234',
       rol_id: rolSeguridad.id
     }
   ];

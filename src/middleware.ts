@@ -5,7 +5,7 @@ import { getToken } from "next-auth/jwt";
 // 1. Diccionario de Permisos
 const routePermissions: Record<string, string[]> = {
   "/home": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
-  "/home/admin": ["Administrador"],
+  "/home/personal": ["Administrador"],
   "/home/alertas": ["Administrador", "Seguridad Industrial"],
   "/home/muestras": ["Administrador", "Analista de Laboratorio"],
 };

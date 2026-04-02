@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react"; 
@@ -14,7 +14,10 @@ import {
   Menu, 
   X, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  ChevronDown,
+  UserPlus,
+  UsersRound
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -38,10 +41,23 @@ const MENU_ITEMS = [
     rolesPermitidos: ["Administrador", "Seguridad Industrial"],
   },
   {
-    path: "/home/admin",
-    name: "Gestión de Usuarios",
+    path: "/home/personal",
+    name: "Gestión de Personal",
     icon: Users,
     rolesPermitidos: ["Administrador"],
+    subItems: [
+      {
+        path: "/home/personal",
+        name: "Directorio",
+        icon: UsersRound,
+        exact: true,
+      },
+      {
+        path: "/home/personal/nuevo",
+        name: "Registrar Personal",
+        icon: UserPlus,
+      }
+    ]
   },
 ];
 
@@ -49,6 +65,21 @@ export default function Sidebar({ userRol }: { userRol: string }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    MENU_ITEMS.forEach(item => {
+      if (item.subItems && pathname.startsWith(item.path)) {
+        setOpenMenus(prev => ({ ...prev, [item.name]: true }));
+      }
+    });
+  }, [pathname]);
+
+  const toggleSubMenu = (menuName: string) => {
+    if (isCollapsed) setIsCollapsed(false);
+    setOpenMenus(prev => ({ ...prev, [menuName]: !prev[menuName] }));
+  };
 
   const menuFiltrado = MENU_ITEMS.filter((item) =>
     item.rolesPermitidos.includes(userRol)
@@ -59,7 +90,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
       {/* HEADER MÓVIL */}
       <div className="md:hidden w-full flex items-center justify-between bg-white border-b border-slate-100 p-4 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
-          {/* Logo con toque degradado de fondo */}
           <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 p-2 rounded-xl text-brand-primary">
             <ShieldAlert size={20} />
           </div>
@@ -101,11 +131,9 @@ export default function Sidebar({ userRol }: { userRol: string }) {
             </div>
           </div>
 
-          {/* Botón Cerrar (Móvil) */}
           <button 
             onClick={() => setIsMobileOpen(false)} 
             className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
-            aria-label="Cerrar menú"
           >
             <X size={22} />
           </button>
@@ -118,37 +146,88 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           </p>
           
           {menuFiltrado.map((item) => {
-            const isActive = item.exact 
-              ? pathname === item.path 
-              : pathname.startsWith(item.path);
+            const isMenuOpen = openMenus[item.name];
+            const isActive = item.subItems 
+              ? pathname.startsWith(item.path)
+              : item.exact ? pathname === item.path : pathname.startsWith(item.path);
+            
             const Icon = item.icon;
 
             return (
-              <Link
-                key={item.path}
-                href={item.path}
-                onClick={() => setIsMobileOpen(false)}
-                title={isCollapsed ? item.name : ""}
-                className={`flex items-center gap-3 px-3.5 py-3.5 rounded-2xl text-[14px] font-semibold transition-all group relative ${
-                  isActive
-                    // AQUÍ ESTÁ EL DEGRADADO DE AZUL A VIOLETA
-                    ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
-                    // AQUÍ ESTÁ EL HOVER VIOLETA (brand-secondary)
-                    : "text-slate-500 hover:bg-brand-secondary/5 hover:text-brand-secondary"
-                } ${isCollapsed ? "justify-center" : "justify-start"}`}
-              >
-                <Icon size={20} className={`shrink-0 ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-secondary transition-colors"}`} />
-                <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
-                  {item.name}
-                </span>
-              </Link>
+              <div key={item.name} className="flex flex-col gap-1">
+                {/* LÓGICA DE BOTÓN CON DEGRADADO PERMANENTE AL ESTAR ACTIVO */}
+                {item.subItems ? (
+                  <button
+                    onClick={() => toggleSubMenu(item.name)}
+                    className={`flex items-center justify-between px-3.5 py-3.5 rounded-2xl text-[14px] font-semibold transition-all group relative w-full ${
+                      isActive
+                        ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
+                        : "text-slate-500 hover:bg-brand-secondary/5 hover:text-brand-secondary"
+                    } ${isCollapsed ? "justify-center" : "justify-start"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon size={20} className={`shrink-0 ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-secondary transition-colors"}`} />
+                      <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
+                        {item.name}
+                      </span>
+                    </div>
+                    {/* Flecha indicadora blanca si está activo */}
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-white/80" : "text-slate-400"}`} />
+                  </button>
+                ) : (
+                  <Link
+                    href={item.path}
+                    onClick={() => setIsMobileOpen(false)}
+                    title={isCollapsed ? item.name : ""}
+                    className={`flex items-center gap-3 px-3.5 py-3.5 rounded-2xl text-[14px] font-semibold transition-all group relative ${
+                      isActive
+                        ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
+                        : "text-slate-500 hover:bg-brand-secondary/5 hover:text-brand-secondary"
+                    } ${isCollapsed ? "justify-center" : "justify-start"}`}
+                  >
+                    <Icon size={20} className={`shrink-0 ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-secondary transition-colors"}`} />
+                    <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
+                      {item.name}
+                    </span>
+                  </Link>
+                )}
+
+                {/* Sub-rutas */}
+                {item.subItems && (
+                  <div 
+                    className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col gap-1 ${
+                      isMenuOpen && !isCollapsed ? "max-h-[200px] opacity-100 mt-1" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    {item.subItems.map((subItem) => {
+                      const isSubActive = subItem.exact ? pathname === subItem.path : pathname.startsWith(subItem.path);
+                      const SubIcon = subItem.icon;
+                      
+                      return (
+                        <Link
+                          key={subItem.path}
+                          href={subItem.path}
+                          onClick={() => setIsMobileOpen(false)}
+                          className={`flex items-center gap-3 ml-4 pl-4 py-2.5 border-l-2 text-[13px] font-medium transition-all ${
+                            isSubActive
+                              ? "border-brand-primary text-brand-primary bg-brand-primary/5 rounded-r-xl"
+                              : "border-slate-100 text-slate-500 hover:border-brand-secondary/50 hover:text-brand-secondary hover:bg-slate-50 rounded-r-xl"
+                          }`}
+                        >
+                          <SubIcon size={16} />
+                          {subItem.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
 
         {/* Controles Inferiores */}
         <div className="p-4 border-t border-slate-50 flex flex-col gap-3 bg-white">
-          
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:flex items-center justify-center p-2 text-slate-400 hover:text-brand-secondary hover:bg-brand-secondary/5 rounded-xl transition-all"
