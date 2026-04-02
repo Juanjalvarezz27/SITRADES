@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function GET(request: Request) {
   try {
@@ -56,5 +57,47 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Error en la API de usuarios:", error);
     return NextResponse.json({ error: "Error interno al obtener los usuarios" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { nombre, email, password, rol_id, area_id } = body;
+
+    // 1. Validación básica
+    if (!nombre || !email || !password || !rol_id || !area_id) {
+      return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+    }
+
+    // 2. Verificar que el correo no exista ya
+    const usuarioExistente = await prisma.usuario.findUnique({
+      where: { email }
+    });
+
+    if (usuarioExistente) {
+      return NextResponse.json({ error: "Este correo electrónico ya está registrado" }, { status: 400 });
+    }
+
+    // 3. Encriptar la contraseña
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    // 4. Crear el usuario en la Base de Datos
+    const nuevoUsuario = await prisma.usuario.create({
+      data: {
+        nombre,
+        email,
+        password_hash,
+        rol_id: parseInt(rol_id),
+        area_id: parseInt(area_id),
+      }
+    });
+
+    return NextResponse.json(nuevoUsuario, { status: 201 });
+
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
+    return NextResponse.json({ error: "Ocurrió un error interno al registrar el usuario" }, { status: 500 });
   }
 }
