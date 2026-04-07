@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image"; //  Importamos Image de Next.js
 import { ArrowLeft, Save, User, Mail, Lock, Loader2, ShieldCheck, MapPin, Building2, Layers, ChevronDown, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify"; 
 
@@ -160,11 +161,27 @@ export default function NuevoPersonalPage() {
         Volver al Directorio
       </Link>
 
-      <div className="mb-8">
-        <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight">Registrar Nuevo Personal</h1>
-        <p className="text-slate-500 text-[14px] font-medium mt-1">
-          Completa los datos para dar acceso a un nuevo miembro del equipo.
-        </p>
+      {/*  CABECERA CON IMAGEN DE LA BATA */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
+        <div>
+          <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight">Registrar Nuevo Personal</h1>
+          <p className="text-slate-500 text-[14px] font-medium mt-1">
+            Completa los datos para dar acceso a un nuevo miembro del equipo.
+          </p>
+        </div>
+        
+        {/* Contenedor de la imagen (oculto en móviles muy pequeños para no estorbar) */}
+        <div className="hidden sm:block shrink-0 relative w-20 h-20 md:w-24 md:h-24">
+          {/* Resplandor decorativo de fondo */}
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/20 to-brand-secondary/20 rounded-full blur-xl"></div>
+          <Image 
+            src="/Bata.png" 
+            alt="Ilustración Bata de Laboratorio" 
+            fill
+            className="object-contain drop-shadow-md relative z-10 hover:scale-105 transition-transform duration-300"
+            priority 
+          />
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white border border-slate-100 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden">
@@ -198,7 +215,6 @@ export default function NuevoPersonalPage() {
                 <label className="text-[13px] font-bold text-slate-600">Contraseña de Acceso</label>
                 <div className="relative">
                   <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  {/* Cambiamos el tipo dinámicamente y agregamos pr-12 para que el texto no pise el ícono */}
                   <input 
                     required 
                     type={showPassword ? "text" : "password"} 

@@ -3,19 +3,29 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { UserPlus, ShieldAlert, TestTube, ShieldCheck, Loader2, Mail, CalendarDays, MapPin } from "lucide-react";
+import { toast } from "react-toastify"; //  Importamos toast
 import { UsuarioAPI } from "@/types";
 import Buscador from "../../components/personal/Buscador";
+import GestionarUsuarioModal from "../../components/personal/GestionarUsuarioModal";
+//  Importamos el modal de confirmación
+import ConfirmarEliminacionModal from "../../components/personal/ConfirmarEliminacionModal";
 
 export default function DirectorioPersonalPage() {
   const [usuarios, setUsuarios] = useState<UsuarioAPI[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Estados de filtrado
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [pisoFilter, setPisoFilter] = useState("");
   const [direccionFilter, setDireccionFilter] = useState("");
   const [areaFilter, setAreaFilter] = useState("");
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UsuarioAPI | null>(null);
+
+  //  Estados para el Modal de Eliminación
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsuarios = useCallback(async () => {
     setLoading(true);
@@ -38,7 +48,6 @@ export default function DirectorioPersonalPage() {
     }
   }, [searchTerm, roleFilter, pisoFilter, direccionFilter, areaFilter]);
 
-  // Se ejecuta automáticamente cada vez que un filtro cambia
   useEffect(() => {
     fetchUsuarios();
   }, [fetchUsuarios]);
@@ -52,9 +61,51 @@ export default function DirectorioPersonalPage() {
     }
   };
 
-  return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+  const handleOpenModal = (user: UsuarioAPI) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  //  Funciones para manejar la eliminación
+  const handleDeleteClick = () => {
+    setIsModalOpen(false); // Cierra el modal de opciones
+    setIsDeleteModalOpen(true); // Abre el modal de confirmación roja
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedUser) return;
+    
+    setIsDeleting(true);
+    const toastId = toast.loading("Eliminando usuario...");
+
+    try {
+      const res = await fetch(`/api/usuarios/${selectedUser.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Error al eliminar el usuario");
+      }
+
+      toast.update(toastId, { render: "¡Usuario eliminado con éxito!", type: "success", isLoading: false, autoClose: 3000 });
       
+      // Cerramos modal y recargamos la lista silenciosamente
+      setIsDeleteModalOpen(false);
+      fetchUsuarios();
+
+    } catch (err: any) {
+      toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+      
+      {/* ... (CABECERA Y BUSCADOR SE MANTIENEN IGUAL) ... */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-6 sm:mb-8">
         <div>
           <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight">Directorio de Personal</h1>
@@ -70,8 +121,6 @@ export default function DirectorioPersonalPage() {
       </div>
 
       <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-6 flex flex-col gap-4 sticky top-20 z-10">
-        
-        {/* Componente Buscador Modificado */}
         <Buscador 
           onSearch={setSearchTerm} 
           onRoleChange={setRoleFilter}
@@ -79,7 +128,6 @@ export default function DirectorioPersonalPage() {
           onDireccionChange={setDireccionFilter}
           onAreaChange={setAreaFilter}
         />
-
         <div className="text-[13px] font-semibold text-slate-500 w-full text-right px-2 border-t border-slate-100 pt-3">
           Total: <span className="text-brand-secondary font-bold">{loading ? "..." : usuarios.length}</span> resultados
         </div>
@@ -157,7 +205,10 @@ export default function DirectorioPersonalPage() {
                   </div>
 
                   <div className="mt-auto">
-                    <button className="w-full py-2.5 bg-brand-secondary/5 hover:bg-brand-secondary/10 text-brand-secondary font-bold rounded-xl text-[13px] transition-colors">
+                    <button 
+                      onClick={() => handleOpenModal(user)}
+                      className="w-full py-2.5 bg-brand-secondary/5 hover:bg-brand-secondary/10 text-brand-secondary font-bold rounded-xl text-[13px] transition-colors"
+                    >
                       Gestionar Perfil
                     </button>
                   </div>
@@ -167,6 +218,24 @@ export default function DirectorioPersonalPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Opciones Principales */}
+      <GestionarUsuarioModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        usuario={selectedUser} 
+        onDeleteClick={handleDeleteClick} 
+      />
+
+      {/* Modal de Confirmación Rojos */}
+      <ConfirmarEliminacionModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        nombreUsuario={selectedUser?.nombre || ""}
+        isLoading={isDeleting}
+      />
+
     </div>
   );
 }
