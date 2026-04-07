@@ -48,6 +48,27 @@ export interface DireccionAPI {
   };
 }
 
+export interface AreaAPI {
+  id: number;
+  nombre: string;
+  direccion_id: number;
+  direccion?: {
+    id: number;
+    nombre: string;
+    piso?: {
+      id: number;
+      nombre: string;
+    }
+  };
+  usuarios?: {
+    id: string;
+    nombre: string;
+  }[];
+  _count?: {
+    usuarios: number;
+  };
+}
+
 export interface UsuarioAPI {
   id: string;
   nombre: string;
