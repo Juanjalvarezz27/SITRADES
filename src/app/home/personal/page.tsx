@@ -2,28 +2,30 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { UserPlus, ShieldAlert, TestTube, ShieldCheck, Loader2, Mail, CalendarDays, MapPin } from "lucide-react";
-import { toast } from "react-toastify"; //  Importamos toast
+import { UserPlus, Loader2 } from "lucide-react";
+import { toast } from "react-toastify"; 
 import { UsuarioAPI } from "@/types";
 import Buscador from "../../components/personal/Buscador";
+import UsuarioCard from "../../components/personal/UsuarioCard";
 import GestionarUsuarioModal from "../../components/personal/GestionarUsuarioModal";
-//  Importamos el modal de confirmación
 import ConfirmarEliminacionModal from "../../components/personal/ConfirmarEliminacionModal";
+import EditarUsuarioModal from "../../components/personal/EditarUsuarioModal";
 
 export default function DirectorioPersonalPage() {
   const [usuarios, setUsuarios] = useState<UsuarioAPI[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [pisoFilter, setPisoFilter] = useState("");
   const [direccionFilter, setDireccionFilter] = useState("");
   const [areaFilter, setAreaFilter] = useState("");
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Modales y Selección
   const [selectedUser, setSelectedUser] = useState<UsuarioAPI | null>(null);
-
-  //  Estados para el Modal de Eliminación
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -39,10 +41,12 @@ export default function DirectorioPersonalPage() {
 
       const res = await fetch(`/api/usuarios?${params.toString()}`);
       if (!res.ok) throw new Error("Error al cargar los usuarios");
+      
       const data = await res.json();
       setUsuarios(data);
     } catch (error) {
       console.error(error);
+      toast.error("Error al cargar la lista de usuarios.");
     } finally {
       setLoading(false);
     }
@@ -52,26 +56,23 @@ export default function DirectorioPersonalPage() {
     fetchUsuarios();
   }, [fetchUsuarios]);
 
-  const getRoleInfo = (rolNombre: string) => {
-    switch (rolNombre) {
-      case "Administrador": return { color: "bg-blue-100 text-blue-700 border-blue-200", icon: <ShieldAlert size={14} className="shrink-0" /> };
-      case "Analista de Laboratorio": return { color: "bg-brand-secondary/10 text-brand-secondary border-brand-secondary/20", icon: <TestTube size={14} className="shrink-0" /> };
-      case "Seguridad Industrial": return { color: "bg-orange-100 text-orange-700 border-orange-200", icon: <ShieldCheck size={14} className="shrink-0" /> };
-      default: return { color: "bg-slate-100 text-slate-700 border-slate-200", icon: null };
-    }
-  };
-
+  // Handlers para abrir modales
   const handleOpenModal = (user: UsuarioAPI) => {
     setSelectedUser(user);
     setIsModalOpen(true);
   };
 
-  //  Funciones para manejar la eliminación
-  const handleDeleteClick = () => {
-    setIsModalOpen(false); // Cierra el modal de opciones
-    setIsDeleteModalOpen(true); // Abre el modal de confirmación roja
+  const handleEditClick = () => {
+    setIsModalOpen(false); 
+    setIsEditModalOpen(true);
   };
 
+  const handleDeleteClick = () => {
+    setIsModalOpen(false);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Acción Final de Eliminar
   const confirmDelete = async () => {
     if (!selectedUser) return;
     
@@ -90,8 +91,6 @@ export default function DirectorioPersonalPage() {
       }
 
       toast.update(toastId, { render: "¡Usuario eliminado con éxito!", type: "success", isLoading: false, autoClose: 3000 });
-      
-      // Cerramos modal y recargamos la lista silenciosamente
       setIsDeleteModalOpen(false);
       fetchUsuarios();
 
@@ -105,7 +104,7 @@ export default function DirectorioPersonalPage() {
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       
-      {/* ... (CABECERA Y BUSCADOR SE MANTIENEN IGUAL) ... */}
+      {/* Cabecera */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-6 sm:mb-8">
         <div>
           <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight">Directorio de Personal</h1>
@@ -120,6 +119,7 @@ export default function DirectorioPersonalPage() {
         </Link>
       </div>
 
+      {/* Barra de Filtros */}
       <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-6 flex flex-col gap-4 sticky top-20 z-10">
         <Buscador 
           onSearch={setSearchTerm} 
@@ -133,6 +133,7 @@ export default function DirectorioPersonalPage() {
         </div>
       </div>
 
+      {/* Cuadrícula de Usuarios */}
       <div className="w-full relative min-h-[400px]">
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3 bg-brand-bg/50 backdrop-blur-sm rounded-3xl z-20">
@@ -149,85 +150,36 @@ export default function DirectorioPersonalPage() {
 
         {!loading && usuarios.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {usuarios.map((user) => {
-              const role = getRoleInfo(user.rol.nombre);
-              
-              return (
-                <div key={user.id} className="bg-white border border-slate-100 rounded-3xl p-6 shadow-[0_2px_12px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(124,58,237,0.08)] hover:border-brand-secondary/30 transition-all duration-300 flex flex-col h-full group">
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/20 flex items-center justify-center text-brand-primary font-black text-[18px] shrink-0 shadow-inner border border-white">
-                      {user.nombre.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[17px] font-black text-slate-800 leading-tight truncate group-hover:text-brand-secondary transition-colors" title={user.nombre}>
-                        {user.nombre}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3.5 bg-slate-50/50 p-4 rounded-2xl border border-slate-50 flex-1 mb-6 group-hover:bg-brand-secondary/[0.02] transition-colors">
-                    <div>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${role.color}`}>
-                        {role.icon}
-                        <span className="ml-1.5">{user.rol.nombre}</span>
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2.5 text-slate-600 mt-1">
-                      <Mail size={15} className="text-slate-400 shrink-0 group-hover:text-brand-secondary/50 transition-colors" />
-                      <p className="text-[13px] font-semibold text-slate-700 truncate" title={user.email}>
-                        {user.email}
-                      </p>
-                    </div>
-
-                    <div className="flex items-start gap-2.5 text-slate-600">
-                      <MapPin size={15} className="text-slate-400 shrink-0 mt-0.5 group-hover:text-brand-secondary/50 transition-colors" />
-                      <div className="flex flex-col min-w-0">
-                        <p className="text-[13px] font-semibold text-slate-700">
-                          {user.area?.nombre || "Sin área asignada"}
-                        </p>
-                        {user.area?.direccion && (
-                          <p className="text-[11px] font-medium text-slate-500">
-                            {user.area.direccion.nombre} • {user.area.direccion.piso.nombre}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2.5 text-slate-500">
-                      <CalendarDays size={15} className="text-slate-400 shrink-0 group-hover:text-brand-secondary/50 transition-colors" />
-                      <p className="text-[13px] font-medium">
-                        <span className="font-bold text-slate-600">
-                          {new Intl.DateTimeFormat('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(user.creado_en))}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-auto">
-                    <button 
-                      onClick={() => handleOpenModal(user)}
-                      className="w-full py-2.5 bg-brand-secondary/5 hover:bg-brand-secondary/10 text-brand-secondary font-bold rounded-xl text-[13px] transition-colors"
-                    >
-                      Gestionar Perfil
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {usuarios.map((user) => (
+              <UsuarioCard 
+                key={user.id} 
+                user={user} 
+                onManageClick={handleOpenModal} 
+              />
+            ))}
           </div>
         )}
       </div>
 
-      {/* Modal de Opciones Principales */}
+      {/* Modales */}
       <GestionarUsuarioModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         usuario={selectedUser} 
         onDeleteClick={handleDeleteClick} 
+        onEditClick={handleEditClick}
       />
 
-      {/* Modal de Confirmación Rojos */}
+      <EditarUsuarioModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        usuario={selectedUser}
+        onUserUpdated={() => {
+          setIsEditModalOpen(false);
+          fetchUsuarios(); 
+        }}
+      />
+
       <ConfirmarEliminacionModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -235,7 +187,6 @@ export default function DirectorioPersonalPage() {
         nombreUsuario={selectedUser?.nombre || ""}
         isLoading={isDeleting}
       />
-
     </div>
   );
 }

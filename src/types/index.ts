@@ -3,18 +3,26 @@ export interface Rol {
   nombre: string;
 }
 
-export interface Piso {
+export interface AreaData {
+  id: number;
   nombre: string;
 }
 
-export interface Direccion {
+export interface DireccionData {
+  id: number;
   nombre: string;
-  piso: Piso;
+  areas: AreaData[];
 }
 
-export interface Area {
+export interface PisoData {
+  id: number;
   nombre: string;
-  direccion: Direccion;
+  direcciones: DireccionData[];
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
 }
 
 export interface UsuarioAPI {
@@ -22,7 +30,19 @@ export interface UsuarioAPI {
   nombre: string;
   email: string;
   rol_id: number;
-  creado_en: string; 
-  rol: Rol;          
-  area: Area; 
+  rol: Rol;
+  area_id?: number;
+  area?: {
+    id: number;
+    nombre: string;
+    direccion?: {
+      id: number;
+      nombre: string;
+      piso?: {
+        id: number;
+        nombre: string;
+      }
+    }
+  };
+  creado_en: string;
 }

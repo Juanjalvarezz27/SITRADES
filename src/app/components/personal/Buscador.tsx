@@ -23,7 +23,7 @@ const ROLES = [
   { value: "Seguridad Industrial", label: "Seguridad Industrial" },
 ];
 
-// 🔥 SUB-COMPONENTE: Select Personalizado Reutilizable
+// Select Personalizado Reutilizable
 function CustomSelect({ 
   options, value, onChange, placeholder, icon: Icon, disabled = false 
 }: { 
