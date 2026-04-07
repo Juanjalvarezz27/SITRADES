@@ -11,7 +11,7 @@ export interface AreaData {
 export interface DireccionData {
   id: number;
   nombre: string;
-  areas: AreaData[];
+  areas?: AreaData[];
 }
 
 export interface PisoData {
@@ -23,6 +23,15 @@ export interface PisoData {
 export interface SelectOption {
   value: string;
   label: string;
+}
+
+export interface PisoAPI {
+  id: number;
+  nombre: string;
+  direcciones?: DireccionData[];
+  _count?: {
+    direcciones: number;
+  };
 }
 
 export interface UsuarioAPI {
