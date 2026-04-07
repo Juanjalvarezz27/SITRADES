@@ -34,6 +34,20 @@ export interface PisoAPI {
   };
 }
 
+export interface DireccionAPI {
+  id: number;
+  nombre: string;
+  piso_id: number;
+  piso?: {
+    id: number;
+    nombre: string;
+  };
+  areas?: AreaData[];
+  _count?: {
+    areas: number;
+  };
+}
+
 export interface UsuarioAPI {
   id: string;
   nombre: string;
