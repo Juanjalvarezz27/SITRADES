@@ -17,7 +17,11 @@ import {
   ChevronRight,
   ChevronDown,
   UserPlus,
-  UsersRound
+  UsersRound,
+  // Importamos los nuevos iconos para infraestructura
+  Building2,
+  MapPin,
+  Layers
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -56,6 +60,29 @@ const MENU_ITEMS = [
         path: "/home/personal/nuevo",
         name: "Registrar Personal",
         icon: UserPlus,
+      }
+    ]
+  },
+  {
+    path: "/home/infraestructura",
+    name: "Infraestructura",
+    icon: Building2,
+    rolesPermitidos: ["Administrador"],
+    subItems: [
+      {
+        path: "/home/infraestructura/pisos",
+        name: "Gestión de Pisos",
+        icon: Layers,
+      },
+      {
+        path: "/home/infraestructura/direcciones",
+        name: "Direcciones",
+        icon: Building2,
+      },
+      {
+        path: "/home/infraestructura/areas",
+        name: "Áreas de Trabajo",
+        icon: MapPin,
       }
     ]
   },
@@ -155,7 +182,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
             return (
               <div key={item.name} className="flex flex-col gap-1">
-                {/* LÓGICA DE BOTÓN CON DEGRADADO PERMANENTE AL ESTAR ACTIVO */}
                 {item.subItems ? (
                   <button
                     onClick={() => toggleSubMenu(item.name)}
@@ -171,7 +197,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                         {item.name}
                       </span>
                     </div>
-                    {/* Flecha indicadora blanca si está activo */}
                     <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-white/80" : "text-slate-400"}`} />
                   </button>
                 ) : (
@@ -192,7 +217,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                   </Link>
                 )}
 
-                {/* Sub-rutas */}
                 {item.subItems && (
                   <div 
                     className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col gap-1 ${

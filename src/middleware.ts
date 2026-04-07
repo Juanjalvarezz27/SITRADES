@@ -4,10 +4,11 @@ import { getToken } from "next-auth/jwt";
 
 // 1. Diccionario de Permisos
 const routePermissions: Record<string, string[]> = {
-  "/home": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
+  "/home/infraestructura": ["Administrador"], 
   "/home/personal": ["Administrador"],
   "/home/alertas": ["Administrador", "Seguridad Industrial"],
   "/home/muestras": ["Administrador", "Analista de Laboratorio"],
+  "/home": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
 };
 
 // 2. Rutas públicas
@@ -37,7 +38,7 @@ export async function middleware(request: NextRequest) {
   let hasAccess = false;
   let routeRequiresProtection = false;
 
-  // Ordenamos las rutas de la más larga a la más corta para evitar colisiones (ej: /home/admin vs /home)
+  // Ordenamos las rutas de la más larga a la más corta para evitar colisiones (ej: /home/personal vs /home)
   const sortedRoutes = Object.entries(routePermissions).sort(
     ([routeA], [routeB]) => routeB.length - routeA.length
   );
