@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Filter, ChevronDown, Check, Building2, MapPin, Layers } from "lucide-react";
+import { Search, Filter, ChevronDown, Check, Building2, MapPin, Layers, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 // Interfaces para tipar la respuesta de la API de ubicaciones
@@ -23,7 +23,12 @@ const ROLES = [
   { value: "Seguridad Industrial", label: "Seguridad Industrial" },
 ];
 
-// Select Personalizado Reutilizable
+// Función auxiliar para limpiar acentos
+const quitarAcentos = (str: string) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
+// --- Select Personalizado Reutilizable (UI Corregida) ---
 function CustomSelect({ 
   options, value, onChange, placeholder, icon: Icon, disabled = false 
 }: { 
@@ -46,32 +51,38 @@ function CustomSelect({
     <div className={`relative w-full ${disabled ? 'opacity-50 pointer-events-none' : ''}`} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between pl-10 pr-4 py-3 bg-white border rounded-2xl text-[13px] font-semibold transition-all shadow-sm focus:outline-none ${
-          isOpen ? "border-brand-secondary ring-4 ring-brand-secondary/10 text-brand-secondary" : value ? "border-brand-primary/30 text-slate-800" : "border-slate-200 text-slate-600 hover:border-brand-secondary/50"
+        className={`w-full flex items-center justify-between pl-11 pr-4 py-3 bg-white border rounded-2xl text-[14px] transition-all shadow-sm focus:outline-none ${
+          isOpen 
+          ? "border-brand-secondary ring-4 ring-brand-secondary/10 text-brand-secondary" 
+          : value 
+            ? "border-brand-secondary/30 bg-brand-secondary/5 text-brand-secondary font-bold" 
+            : "border-slate-200 text-slate-600 font-medium hover:border-brand-secondary/50"
         }`}
       >
-        <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-          <Icon size={16} className={isOpen || value ? "text-brand-secondary" : "text-slate-400"} />
+        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+          <Icon size={18} className={isOpen || value ? "text-brand-secondary" : "text-slate-400"} />
         </div>
         <span className="truncate pr-2">{selectedLabel}</span>
-        <ChevronDown size={16} className={`shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-brand-secondary" : "text-slate-400"}`} />
+        <ChevronDown size={18} className={`shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-brand-secondary" : "text-slate-400"}`} />
       </button>
 
+      {/* Menú Desplegable Corregido (Evita el desbordamiento horizontal) */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full min-w-[200px] bg-white border border-slate-100 rounded-2xl shadow-[0_10px_40px_rgb(0,0,0,0.08)] py-2 z-50 animate-in fade-in zoom-in-95 duration-200 max-h-60 overflow-y-auto">
-          <ul className="flex flex-col gap-1 px-1">
+        <div className="absolute top-full left-0 mt-2 w-full min-w-full sm:w-max max-w-[90vw] sm:max-w-[350px] bg-white border border-slate-100 rounded-2xl shadow-xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-200 max-h-60 overflow-y-auto overflow-x-hidden">
+          <ul className="flex flex-col gap-1 px-1.5">
             {options.map((opt) => {
               const isSelected = value === opt.value;
               return (
                 <li key={opt.value}>
                   <button
                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium transition-colors text-left ${
-                      isSelected ? "bg-brand-secondary/10 text-brand-secondary" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    className={`w-full flex items-start justify-between px-3 py-2.5 rounded-xl text-[13px] sm:text-[14px] transition-colors text-left ${
+                      isSelected ? "bg-brand-secondary/10 text-brand-secondary font-bold" : "text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900"
                     }`}
                   >
-                    <span className="truncate pr-2" title={opt.label}>{opt.label}</span>
-                    {isSelected && <Check size={14} strokeWidth={3} className="shrink-0" />}
+                    {/* El texto ahora puede bajar de línea sin romper la caja */}
+                    <span className="flex-1 whitespace-normal break-words leading-snug pr-3">{opt.label}</span>
+                    {isSelected && <Check size={16} strokeWidth={3} className="shrink-0 mt-0.5" />}
                   </button>
                 </li>
               );
@@ -83,6 +94,7 @@ function CustomSelect({
   );
 }
 
+// --- Componente Principal Buscador ---
 export default function Buscador({ onSearch, onRoleChange, onPisoChange, onDireccionChange, onAreaChange }: BuscadorProps) {
   const [term, setTerm] = useState("");
   const [ubicaciones, setUbicaciones] = useState<PisoData[]>([]);
@@ -98,8 +110,12 @@ export default function Buscador({ onSearch, onRoleChange, onPisoChange, onDirec
     fetch("/api/ubicaciones").then(res => res.json()).then(data => setUbicaciones(data));
   }, []);
 
+  // Debounce del buscador (Emite el texto limpio sin acentos)
   useEffect(() => {
-    const delay = setTimeout(() => onSearch(term), 300);
+    const delay = setTimeout(() => {
+      // Pasamos el texto limpio de acentos al padre para el filtrado
+      onSearch(quitarAcentos(term));
+    }, 300);
     return () => clearTimeout(delay);
   }, [term, onSearch]);
 
@@ -129,17 +145,29 @@ export default function Buscador({ onSearch, onRoleChange, onPisoChange, onDirec
   const opcionesAreas = [{ value: "", label: "Todas las Áreas" }, ...(direccionSeleccionada?.areas.map(a => ({ value: a.id.toString(), label: a.nombre })) || [])];
 
   return (
-    <div className="flex flex-col gap-3 w-full flex-1">
+    <div className="flex flex-col gap-4 w-full flex-1">
       {/* Fila 1: Buscador de texto ocupando todo el ancho */}
       <div className="relative w-full">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+          <Search size={18} className="text-slate-400" />
+        </div>
         <input
           type="text"
           value={term}
           onChange={(e) => setTerm(e.target.value)}
           placeholder="Buscar por nombre o correo electrónico..."
-          className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all placeholder:text-slate-400 shadow-sm"
+          className="w-full pl-11 pr-12 py-3 bg-white border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all placeholder:text-slate-400 shadow-sm text-slate-700"
         />
+        {/* Botón de "X" limpio y sin borde de hover */}
+        {term && (
+          <button
+            onClick={() => setTerm("")}
+            className="absolute inset-y-0 right-4 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors bg-transparent outline-none"
+            title="Limpiar búsqueda"
+          >
+            <X size={18} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
 
       {/* Fila 2: Grid de 4 Filtros Avanzados */}

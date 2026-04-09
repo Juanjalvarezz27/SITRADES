@@ -11,8 +11,15 @@ import GestionarUsuarioModal from "../../components/personal/GestionarUsuarioMod
 import ConfirmarEliminacionModal from "../../components/personal/ConfirmarEliminacionModal";
 import EditarUsuarioModal from "../../components/personal/EditarUsuarioModal";
 
+// Función auxiliar para limpiar acentos
+const quitarAcentos = (str: string) => {
+  if (!str) return "";
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
 export default function DirectorioPersonalPage() {
-  const [usuarios, setUsuarios] = useState<UsuarioAPI[]>([]);
+  const [todosLosUsuarios, setTodosLosUsuarios] = useState<UsuarioAPI[]>([]);
+  const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioAPI[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Filtros
@@ -32,31 +39,47 @@ export default function DirectorioPersonalPage() {
   const fetchUsuarios = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append("q", searchTerm);
-      if (roleFilter) params.append("rol", roleFilter);
-      if (pisoFilter) params.append("piso", pisoFilter);
-      if (direccionFilter) params.append("direccion", direccionFilter);
-      if (areaFilter) params.append("area", areaFilter);
-
-      const res = await fetch(`/api/usuarios?${params.toString()}`);
+      const res = await fetch(`/api/usuarios`);
       if (!res.ok) throw new Error("Error al cargar los usuarios");
       
       const data = await res.json();
-      setUsuarios(data);
+      setTodosLosUsuarios(data);
+      setUsuariosFiltrados(data);
     } catch (error) {
       console.error(error);
       toast.error("Error al cargar la lista de usuarios.");
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, roleFilter, pisoFilter, direccionFilter, areaFilter]);
+  }, []);
 
   useEffect(() => {
     fetchUsuarios();
   }, [fetchUsuarios]);
 
-  // Handlers para abrir modales
+  //  EFECTO DE FILTRADO CORREGIDO PARA TYPESCRIPT
+  useEffect(() => {
+    const filtrados = todosLosUsuarios.filter((user) => {
+      // 1. Filtro de Texto
+      const nombreLimpio = quitarAcentos(user.nombre);
+      const correoLimpio = quitarAcentos(user.email);
+      const matchBusqueda = nombreLimpio.includes(searchTerm) || correoLimpio.includes(searchTerm);
+
+      // 2. Filtro de Rol (Convertimos el Enum de Prisma a String para poder compararlo)
+      const matchRol = roleFilter === "" || String(user.rol) === roleFilter;
+
+      // 3. Filtros Jerárquicos (Usamos la propiedad .id del objeto relacional anidado)
+      const matchArea = areaFilter === "" || user.area?.id?.toString() === areaFilter;
+      const matchDireccion = direccionFilter === "" || user.area?.direccion?.id?.toString() === direccionFilter;
+      const matchPiso = pisoFilter === "" || user.area?.direccion?.piso?.id?.toString() === pisoFilter;
+
+      return matchBusqueda && matchRol && matchArea && matchDireccion && matchPiso;
+    });
+
+    setUsuariosFiltrados(filtrados);
+  }, [searchTerm, roleFilter, pisoFilter, direccionFilter, areaFilter, todosLosUsuarios]);
+
+  // Handlers para modales
   const handleOpenModal = (user: UsuarioAPI) => {
     setSelectedUser(user);
     setIsModalOpen(true);
@@ -72,7 +95,6 @@ export default function DirectorioPersonalPage() {
     setIsDeleteModalOpen(true);
   };
 
-  // Acción Final de Eliminar
   const confirmDelete = async () => {
     if (!selectedUser) return;
     
@@ -129,28 +151,26 @@ export default function DirectorioPersonalPage() {
           onAreaChange={setAreaFilter}
         />
         <div className="text-[13px] font-semibold text-slate-500 w-full text-right px-2 border-t border-slate-100 pt-3">
-          Total: <span className="text-brand-secondary font-bold">{loading ? "..." : usuarios.length}</span> resultados
+          Total: <span className="text-brand-secondary font-bold">{loading ? "..." : usuariosFiltrados.length}</span> resultados
         </div>
       </div>
 
       {/* Cuadrícula de Usuarios */}
       <div className="w-full relative min-h-[400px]">
-        {loading && (
+        {loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3 bg-brand-bg/50 backdrop-blur-sm rounded-3xl z-20">
             <Loader2 className="animate-spin text-brand-secondary" size={36} />
-            <span className="text-[15px] font-semibold text-brand-secondary">Aplicando filtros...</span>
+            <span className="text-[15px] font-semibold text-brand-secondary">Cargando personal...</span>
           </div>
-        )}
-
-        {!loading && usuarios.length === 0 && (
-          <div className="py-24 text-center text-slate-500 text-[15px] px-6 bg-white border border-slate-100 rounded-3xl shadow-sm">
-            No se encontraron perfiles coincidentes con los filtros aplicados.
+        ) : usuariosFiltrados.length === 0 ? (
+          <div className="py-24 text-center text-slate-500 text-[15px] px-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col items-center justify-center">
+            <UserPlus size={48} className="text-slate-300 mb-4 opacity-50" />
+            <p className="font-bold text-slate-700 text-lg">No se encontraron perfiles</p>
+            <p className="text-slate-500 mt-1">No hay coincidencias con los filtros aplicados.</p>
           </div>
-        )}
-
-        {!loading && usuarios.length > 0 && (
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {usuarios.map((user) => (
+            {usuariosFiltrados.map((user) => (
               <UsuarioCard 
                 key={user.id} 
                 user={user} 

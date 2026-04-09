@@ -11,8 +11,13 @@ import { DireccionAPI, AreaData } from "@/types";
 
 import DireccionModal from "../../../components/infraestructura/DireccionModal";
 import ConfirmarEliminacionModal from "../../../components/personal/ConfirmarEliminacionModal";
+import SearchBar from "../../../components/ui/SearchBar";
+import FilterSelect from "../../../components/ui/FilterSelect";
 
-// --- SUB-COMPONENTE 1: TARJETA DE DIRECCIÓN ---
+const quitarAcentos = (str: string) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
 function DireccionCard({ 
   direccion, 
   onEdit, 
@@ -35,10 +40,15 @@ function DireccionCard({
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-primary/10 to-brand-secondary/20 flex items-center justify-center text-brand-primary shadow-inner border border-white shrink-0">
             <Building2 size={20} />
           </div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-500 rounded-lg text-[11px] font-bold tracking-wide uppercase">
+          {/* Etiqueta de Piso convertida en botón navegable */}
+          <button 
+            onClick={() => router.push("/home/infraestructura/pisos")}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-500 hover:text-brand-primary hover:bg-brand-primary/5 hover:border-brand-primary/30 rounded-lg text-[11px] font-bold tracking-wide uppercase transition-all"
+            title="Ir a Gestión de Pisos"
+          >
             <Layers size={13} className="text-brand-secondary" />
             {direccion.piso?.nombre || "Sin Piso"}
-          </span>
+          </button>
         </div>
 
         <div className="flex gap-1 shrink-0">
@@ -75,7 +85,6 @@ function DireccionCard({
           <div className="overflow-hidden">
             <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4 flex flex-col gap-3">
               {direccion.areas?.map((area: AreaData) => (
-                /* Cambiamos el <div> a <button> y añadimos la navegación y efectos hover */
                 <button 
                   key={area.id} 
                   onClick={() => router.push("/home/infraestructura/areas")}
@@ -110,6 +119,11 @@ function PisoSeccion({
   onDelete: (d: DireccionAPI) => void; 
 }) {
   const [isExpanded, setIsExpanded] = useState(isDefaultExpanded);
+
+  // Si cambia el prop por el filtro, lo expandimos
+  useEffect(() => {
+    setIsExpanded(isDefaultExpanded);
+  }, [isDefaultExpanded]);
 
   return (
     <div className="bg-white/60 border border-slate-200/60 rounded-[2rem] md:rounded-[2.5rem] p-5 sm:p-7 shadow-sm hover:shadow-md transition-all duration-300">
@@ -184,6 +198,10 @@ export default function GestionDireccionesPage() {
   const [direcciones, setDirecciones] = useState<DireccionAPI[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Estados para Búsqueda y Filtros
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroPiso, setFiltroPiso] = useState("TODOS");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [direccionToEdit, setDireccionToEdit] = useState<DireccionAPI | null>(null);
 
@@ -227,7 +245,18 @@ export default function GestionDireccionesPage() {
     }
   };
 
-  const direccionesPorPiso = direcciones.reduce((acc, direccion) => {
+  // --- LÓGICA DE FILTRADO ---
+  const opcionesPisos = Array.from(new Map(direcciones.filter(d => d.piso).map(d => [d.piso?.id, d.piso])).values())
+    .map(p => ({ value: p?.id.toString() || "", label: p?.nombre || "" }));
+
+const direccionesFiltradas = direcciones.filter(dir => {
+    const matchBusqueda = quitarAcentos(dir.nombre).includes(quitarAcentos(busqueda));
+    const matchPiso = filtroPiso === "TODOS" || dir.piso_id?.toString() === filtroPiso;
+    
+    return matchBusqueda && matchPiso;
+  });
+
+  const direccionesPorPiso = direccionesFiltradas.reduce((acc, direccion) => {
     const pisoNombre = direccion.piso?.nombre || "Sin Piso Asignado";
     if (!acc[pisoNombre]) {
       acc[pisoNombre] = [];
@@ -241,7 +270,7 @@ export default function GestionDireccionesPage() {
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-8">
         <div>
           <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight flex items-center gap-3">
             <div className="p-2.5 bg-brand-primary/10 text-brand-primary rounded-xl">
@@ -263,6 +292,26 @@ export default function GestionDireccionesPage() {
         </button>
       </div>
 
+      {/* Barra de Búsqueda y Filtros */}
+      {!loading && direcciones.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 p-3 bg-slate-50/50 rounded-[1.5rem] border border-slate-100">
+          <SearchBar 
+            value={busqueda} 
+            onChange={setBusqueda} 
+            placeholder="Buscar dirección por nombre..." 
+          />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <FilterSelect 
+              value={filtroPiso} 
+              onChange={setFiltroPiso} 
+              options={opcionesPisos} 
+              defaultLabel="Todos los Pisos" 
+              icon={Layers}
+            />
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
           <Loader2 className="animate-spin text-brand-secondary" size={36} />
@@ -273,6 +322,12 @@ export default function GestionDireccionesPage() {
           <Building2 size={48} className="mx-auto text-slate-200 mb-4" />
           <p className="font-semibold text-slate-700">No hay direcciones registradas</p>
         </div>
+      ) : direccionesFiltradas.length === 0 ? (
+        <div className="py-20 text-center text-slate-500 px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm">
+          <Building2 size={48} className="mx-auto text-slate-300 mb-4 opacity-50" />
+          <p className="font-bold text-slate-700 text-lg">No se encontraron resultados</p>
+          <p className="text-[14px] mt-1">Intenta ajustando el filtro o la búsqueda.</p>
+        </div>
       ) : (
         <div className="space-y-6">
           {/* SECCIONES DESPLEGABLES POR PISO */}
@@ -281,7 +336,7 @@ export default function GestionDireccionesPage() {
               key={pisoNombre}
               pisoNombre={pisoNombre}
               direcciones={direccionesPorPiso[pisoNombre]}
-              isDefaultExpanded={false}
+              isDefaultExpanded={busqueda !== "" || filtroPiso !== "TODOS"} // Se abre solo si el usuario está buscando algo
               onEdit={(d) => { setDireccionToEdit(d); setIsModalOpen(true); }}
               onDelete={(d) => { setDireccionToDelete(d); setIsDeleteModalOpen(true); }}
             />

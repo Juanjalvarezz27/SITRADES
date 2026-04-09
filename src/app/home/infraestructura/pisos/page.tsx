@@ -11,8 +11,13 @@ import { PisoAPI, DireccionData } from "@/types";
 
 import PisoModal from "../../../components/infraestructura/PisoModal";
 import ConfirmarEliminacionModal from "../../../components/personal/ConfirmarEliminacionModal";
+import SearchBar from "../../../components/ui/SearchBar";
 
-// --- SUB-COMPONENTE: Tarjeta de Piso con Acordeón tipo Árbol Interactivo ---
+// Función auxiliar para ignorar acentos y mayúsculas en las búsquedas
+const quitarAcentos = (str: string) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
 function PisoCard({ 
   piso, 
   onEdit, 
@@ -93,7 +98,6 @@ function PisoCard({
                 <div className="mt-3 ml-[15px] pl-5 border-l-2 border-slate-200 flex flex-col gap-3">
                   {dir.areas?.length ? (
                     dir.areas.map(area => (
-                      /* Área convertida en Botón Navegable */
                       <button 
                         key={area.id}
                         onClick={() => router.push("/home/infraestructura/areas")}
@@ -126,6 +130,9 @@ function PisoCard({
 export default function GestionPisosPage() {
   const [pisos, setPisos] = useState<PisoAPI[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Estado para la Búsqueda
+  const [busqueda, setBusqueda] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pisoToEdit, setPisoToEdit] = useState<PisoAPI | null>(null);
@@ -170,6 +177,11 @@ export default function GestionPisosPage() {
     }
   };
 
+  // Lógica de Filtrado
+const pisosFiltrados = pisos.filter(piso => 
+    quitarAcentos(piso.nombre).includes(quitarAcentos(busqueda))
+  );
+
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       
@@ -195,6 +207,17 @@ export default function GestionPisosPage() {
         </button>
       </div>
 
+      {/* Barra de Búsqueda */}
+      {!loading && pisos.length > 0 && (
+        <div className="mb-8 p-3 bg-slate-50/50 rounded-[1.5rem] border border-slate-100 max-w-md">
+          <SearchBar 
+            value={busqueda} 
+            onChange={setBusqueda} 
+            placeholder="Buscar piso por nombre..." 
+          />
+        </div>
+      )}
+
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
           <Loader2 className="animate-spin text-brand-secondary" size={36} />
@@ -205,9 +228,16 @@ export default function GestionPisosPage() {
           <Layers size={48} className="mx-auto text-slate-200 mb-4" />
           <p className="font-semibold text-slate-700">No hay pisos registrados</p>
         </div>
+      ) : pisosFiltrados.length === 0 ? (
+        <div className="py-20 text-center text-slate-500 px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm">
+          <Layers size={48} className="mx-auto text-slate-300 mb-4 opacity-50" />
+          <p className="font-bold text-slate-700 text-lg">No se encontraron resultados</p>
+          <p className="text-[14px] mt-1">Intenta ajustando la búsqueda.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
-          {pisos.map((piso) => (
+          {/* Renderizamos la lista filtrada */}
+          {pisosFiltrados.map((piso) => (
             <PisoCard 
               key={piso.id} 
               piso={piso} 
