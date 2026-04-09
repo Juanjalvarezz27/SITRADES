@@ -255,7 +255,7 @@ export default function GestionAreasPage() {
               key={dir}
               direccionNombre={dir}
               areas={areasPorDireccion[dir]}
-              isDefaultExpanded={index === 0}
+              isDefaultExpanded={false}
               onEdit={(a) => { setAreaToEdit(a); setIsModalOpen(true); }}
               onDelete={(a) => { setAreaToDelete(a); setIsDeleteModalOpen(true); }}
             />
