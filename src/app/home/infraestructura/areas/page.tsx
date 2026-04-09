@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { 
   MapPin, Plus, Edit2, Trash2, Loader2, 
   Building2, Layers, Users, ChevronDown, User 
@@ -22,6 +23,8 @@ function AreaCard({
   onDelete: (a: AreaAPI) => void; 
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const router = useRouter(); 
+
   const tieneUsuarios = area.usuarios && area.usuarios.length > 0;
 
   return (
@@ -32,17 +35,22 @@ function AreaCard({
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-primary/10 to-brand-secondary/20 flex items-center justify-center text-brand-primary shadow-inner border border-white shrink-0">
             <MapPin size={20} />
           </div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-500 rounded-lg text-[11px] font-bold tracking-wide uppercase">
+          {/* Etiqueta de Piso convertida en botón navegable */}
+          <button 
+            onClick={() => router.push("/home/infraestructura/pisos")}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-500 hover:text-brand-primary hover:bg-brand-primary/5 hover:border-brand-primary/30 rounded-lg text-[11px] font-bold tracking-wide uppercase transition-all"
+            title="Ir a Gestión de Pisos"
+          >
             <Layers size={13} className="text-brand-secondary" />
             {area.direccion?.piso?.nombre || "Sin Piso"}
-          </span>
+          </button>
         </div>
 
         <div className="flex gap-1 shrink-0">
-          <button onClick={() => onEdit(area)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all">
+          <button onClick={() => onEdit(area)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all" title="Editar Área">
             <Edit2 size={16} />
           </button>
-          <button onClick={() => onDelete(area)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+          <button onClick={() => onDelete(area)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Eliminar Área">
             <Trash2 size={16} />
           </button>
         </div>
@@ -75,12 +83,18 @@ function AreaCard({
           <div className="overflow-hidden">
             <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4 flex flex-col gap-2.5">
               {area.usuarios?.map((usuario) => (
-                <div key={usuario.id} className="flex items-center gap-3 text-[13px] font-semibold text-slate-700 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                  <div className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
+                /* Elemento de Usuario convertido en botón navegable */
+                <button 
+                  key={usuario.id} 
+                  onClick={() => router.push("/home/personal")}
+                  className="w-full flex items-center gap-3 text-[13px] font-semibold text-slate-700 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-brand-primary/40 hover:shadow-md hover:text-brand-primary transition-all text-left group/user"
+                  title="Ver detalles del personal"
+                >
+                  <div className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0 group-hover/user:scale-110 transition-transform">
                     <User size={12} strokeWidth={3} />
                   </div>
                   <span className="leading-snug flex-1 truncate" title={usuario.nombre}>{usuario.nombre}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -250,7 +264,7 @@ export default function GestionAreasPage() {
         <div className="py-20 text-center text-slate-500 px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm"><MapPin size={48} className="mx-auto text-slate-200 mb-4" /><p className="font-semibold text-slate-700">No hay áreas registradas</p></div>
       ) : (
         <div className="space-y-6">
-          {direccionesOrdenadas.map((dir, index) => (
+          {direccionesOrdenadas.map((dir) => (
             <DireccionSeccion
               key={dir}
               direccionNombre={dir}

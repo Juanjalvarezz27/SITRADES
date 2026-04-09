@@ -3,16 +3,13 @@ import prisma from "@/lib/prisma";
 
 export async function PUT(request: Request, context: any) {
   try {
-    // Mantenemos la compatibilidad asíncrona para Next.js 15
     const params = await context.params;
     const id = parseInt(params?.id);
-    
-    if (isNaN(id)) {
-      return NextResponse.json({ error: "ID de piso inválido" }, { status: 400 });
-    }
+    if (isNaN(id)) return NextResponse.json({ error: "ID de piso inválido" }, { status: 400 });
 
     const body = await request.json();
-    const { nombre } = body;
+    // Recibimos las direcciones actuales y los IDs de las que el usuario decidió borrar en el modal
+    const { nombre, direcciones = [], direccionesEliminadas = [] } = body;
 
     if (!nombre || nombre.trim() === "") {
       return NextResponse.json({ error: "El nombre del piso es obligatorio" }, { status: 400 });
@@ -20,27 +17,51 @@ export async function PUT(request: Request, context: any) {
 
     const nombreLimpio = nombre.trim();
 
-    // Validar que el nuevo nombre no esté siendo usado por OTRO piso diferente
     const pisoExistente = await prisma.piso.findFirst({
-      where: {
-        nombre: nombreLimpio,
-        NOT: { id: id }
+      where: { nombre: nombreLimpio, NOT: { id } }
+    });
+
+    if (pisoExistente) return NextResponse.json({ error: "Ya existe otro piso usando este nombre" }, { status: 400 });
+
+    // TRANSACCIÓN DE PRISMA: Ejecutamos todo de forma segura
+    await prisma.$transaction(async (tx) => {
+      // 1. Actualizamos el nombre del piso
+      await tx.piso.update({ where: { id }, data: { nombre: nombreLimpio } });
+
+      // 2. Verificamos y eliminamos las direcciones que el usuario quitó
+      if (direccionesEliminadas.length > 0) {
+        // Bloqueo de seguridad: No borrar direcciones que tengan áreas
+        for (const dirId of direccionesEliminadas) {
+          const check = await tx.direccion.findUnique({ where: { id: dirId }, include: { _count: { select: { areas: true } } } });
+          if (check && check._count.areas > 0) {
+            throw new Error(`La dirección "${check.nombre}" no se puede eliminar desde aquí porque contiene áreas asignadas.`);
+          }
+          await tx.direccion.delete({ where: { id: dirId } });
+        }
+      }
+
+      // 3. Creamos las nuevas o actualizamos las existentes
+      for (const dir of direcciones) {
+        if (!dir.nombre || dir.nombre.trim() === "") continue;
+        
+        if (dir.id) {
+          // Si trae ID, es una existente que tal vez cambió de nombre
+          await tx.direccion.update({ where: { id: dir.id }, data: { nombre: dir.nombre.trim() } });
+        } else {
+          // Si no trae ID, es una nueva que el usuario acaba de agregar al modal
+          await tx.direccion.create({ data: { nombre: dir.nombre.trim(), piso_id: id } });
+        }
       }
     });
 
-    if (pisoExistente) {
-      return NextResponse.json({ error: "Ya existe otro piso usando este nombre" }, { status: 400 });
-    }
+    return NextResponse.json({ success: true }, { status: 200 });
 
-    const pisoActualizado = await prisma.piso.update({
-      where: { id },
-      data: { nombre: nombreLimpio }
-    });
-
-    return NextResponse.json(pisoActualizado, { status: 200 });
-
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al actualizar piso:", error);
+    // Si el error es el que lanzamos nosotros arriba (sobre las áreas), lo mostramos al usuario
+    if (error.message && error.message.includes("no se puede eliminar")) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     return NextResponse.json({ error: "Error al actualizar la información del piso" }, { status: 500 });
   }
 }

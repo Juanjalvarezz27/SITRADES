@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation"; 
 import { 
   Layers, Plus, Edit2, Trash2, Loader2, 
   Building2, MapPin, ChevronDown 
@@ -11,6 +12,7 @@ import { PisoAPI, DireccionData } from "@/types";
 import PisoModal from "../../../components/infraestructura/PisoModal";
 import ConfirmarEliminacionModal from "../../../components/personal/ConfirmarEliminacionModal";
 
+// --- SUB-COMPONENTE: Tarjeta de Piso con Acordeón tipo Árbol Interactivo ---
 function PisoCard({ 
   piso, 
   onEdit, 
@@ -21,6 +23,8 @@ function PisoCard({
   onDelete: (p: PisoAPI) => void; 
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const router = useRouter(); 
+
   const tieneDirecciones = piso.direcciones && piso.direcciones.length > 0;
 
   return (
@@ -29,7 +33,6 @@ function PisoCard({
       {/* Cabecera de la Tarjeta */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          {/* Se cambió el ID por el ícono estático de Layers */}
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-primary/10 to-brand-secondary/20 flex items-center justify-center text-brand-primary shadow-inner border border-white shrink-0">
             <Layers size={24} />
           </div>
@@ -44,10 +47,10 @@ function PisoCard({
         </div>
 
         <div className="flex gap-1 shrink-0">
-          <button onClick={() => onEdit(piso)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all">
+          <button onClick={() => onEdit(piso)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all" title="Editar Piso">
             <Edit2 size={16} />
           </button>
-          <button onClick={() => onDelete(piso)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+          <button onClick={() => onDelete(piso)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Eliminar Piso">
             <Trash2 size={16} />
           </button>
         </div>
@@ -67,31 +70,40 @@ function PisoCard({
         <ChevronDown size={18} className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
       </button>
 
-      {/* Contenido Desplegable (Acordeón tipo Árbol) */}
+      {/* Contenido Desplegable (Acordeón tipo Árbol Interactivo) */}
       <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100 mt-4" : "grid-rows-[0fr] opacity-0"}`}>
         <div className="overflow-hidden">
           <div className="space-y-4 pt-2">
             {piso.direcciones?.map((dir: DireccionData) => (
               <div key={dir.id} className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4">
                 
-                {/* Título de la Dirección */}
-                <div className="flex items-start gap-3 text-slate-800 font-bold text-[14px] leading-snug">
-                  <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 shrink-0 mt-0.5">
-                    <Building2 size={16} className="text-brand-secondary" />
+                {/* Título de la Dirección convertido en Botón Navegable */}
+                <button 
+                  onClick={() => router.push("/home/infraestructura/direcciones")}
+                  className="w-full flex items-start gap-3 text-slate-800 font-bold text-[14px] leading-snug hover:text-brand-primary transition-colors text-left group/dir"
+                  title="Gestionar Direcciones"
+                >
+                  <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 shrink-0 mt-0.5 group-hover/dir:bg-brand-primary/10 transition-colors">
+                    <Building2 size={16} className="text-brand-secondary group-hover/dir:text-brand-primary transition-colors" />
                   </div>
                   <span className="mt-1 flex-1">{dir.nombre}</span>
-                </div>
+                </button>
                 
                 {/* Árbol de Áreas (Jerarquía visual) */}
                 <div className="mt-3 ml-[15px] pl-5 border-l-2 border-slate-200 flex flex-col gap-3">
                   {dir.areas?.length ? (
                     dir.areas.map(area => (
-                      <div key={area.id} className="flex items-start gap-2.5 text-[13px] font-semibold text-slate-600 relative">
-                        {/* Línea conectora horizontal */}
+                      /* Área convertida en Botón Navegable */
+                      <button 
+                        key={area.id}
+                        onClick={() => router.push("/home/infraestructura/areas")}
+                        className="w-full flex items-start gap-2.5 text-[13px] font-semibold text-slate-600 relative hover:text-brand-primary transition-colors text-left"
+                        title="Gestionar Áreas"
+                      >
                         <div className="absolute -left-5 top-[9px] w-4 border-t-2 border-slate-200"></div>
-                        <MapPin size={14} className="text-brand-primary shrink-0 mt-[2px] bg-slate-50" />
+                        <MapPin size={14} className="text-brand-primary shrink-0 mt-[2px] bg-slate-50 rounded-full" />
                         <span className="leading-snug flex-1">{area.nombre}</span>
-                      </div>
+                      </button>
                     ))
                   ) : (
                     <div className="flex items-center text-[12px] font-medium text-slate-400 italic relative">
@@ -110,6 +122,7 @@ function PisoCard({
   );
 }
 
+// --- COMPONENTE PRINCIPAL ---
 export default function GestionPisosPage() {
   const [pisos, setPisos] = useState<PisoAPI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,7 +182,7 @@ export default function GestionPisosPage() {
             Gestión de Pisos
           </h1>
           <p className="text-slate-500 text-[13px] sm:text-[14px] font-medium mt-2">
-            Administra los niveles de la infraestructura y despliega para ver su estructura interna.
+            Administra los niveles de la infraestructura. Haz clic en las direcciones o áreas para gestionarlas.
           </p>
         </div>
         

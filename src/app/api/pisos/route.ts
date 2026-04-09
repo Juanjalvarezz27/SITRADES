@@ -27,19 +27,18 @@ export async function GET() {
   }
 }
 
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { nombre } = body;
+    const { nombre, direcciones = [] } = body;
 
-    // 1. Validación básica
     if (!nombre || nombre.trim() === "") {
       return NextResponse.json({ error: "El nombre del piso es obligatorio" }, { status: 400 });
     }
 
     const nombreLimpio = nombre.trim();
 
-    // 2. Evitar duplicados exactos
     const pisoExistente = await prisma.piso.findUnique({
       where: { nombre: nombreLimpio }
     });
@@ -48,9 +47,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ya existe un piso con este nombre" }, { status: 400 });
     }
 
-    // 3. Crear en base de datos
+    // Limpiamos las direcciones vacías que el usuario pudo dejar en el formulario
+    const direccionesValidas = direcciones
+      .filter((d: any) => d.nombre && d.nombre.trim() !== "")
+      .map((d: any) => ({ nombre: d.nombre.trim() }));
+
+    // Prisma permite crear el padre (Piso) y sus hijos (Direcciones) en 1 sola consulta
     const nuevoPiso = await prisma.piso.create({
-      data: { nombre: nombreLimpio }
+      data: { 
+        nombre: nombreLimpio,
+        direcciones: {
+          create: direccionesValidas
+        }
+      }
     });
 
     return NextResponse.json(nuevoPiso, { status: 201 });
