@@ -37,6 +37,10 @@ export default function RegistroMuestraPage() {
   const [areasOpciones, setAreasOpciones] = useState<{value: string, label: string}[]>([]);
   const [loadingAreas, setLoadingAreas] = useState(true);
 
+  const currentYear = new Date().getFullYear();
+  const MIN_DATE = `${currentYear - 15}-01-01`; 
+  const MAX_DATE = `${currentYear + 15}-12-31`; 
+
   const [formData, setFormData] = useState({
     codigo_interno: "",
     lote: "",
@@ -49,7 +53,7 @@ export default function RegistroMuestraPage() {
     proposito_analisis: "",
     fecha_caducidad: "",
     area_id: "",
-    ubicacion_detalle: "", //  Nuevo campo en el estado
+    ubicacion_detalle: "",
   });
 
   useEffect(() => {
@@ -82,7 +86,33 @@ export default function RegistroMuestraPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.area_id) return toast.warning("Debe seleccionar un área de almacenamiento.");
+
+    // 1. Validación manual de campos vacíos (ya que desactivamos el HTML5 nativo)
+    if (
+      !formData.codigo_interno || !formData.lote || !formData.registro_sanitario || 
+      !formData.principio_activo || !formData.cantidad || !formData.proposito_analisis
+    ) {
+      return toast.warning("Por favor, completa todos los campos obligatorios (*).");
+    }
+
+    if (!formData.area_id) {
+      return toast.warning("Debe seleccionar un Área de Almacenamiento.");
+    }
+
+    if (!formData.fecha_caducidad) {
+      return toast.warning("La Fecha de Caducidad es obligatoria.");
+    }
+
+    // 2. Validación de Fecha con los límites (Ahora sí saltará el Toast)
+    const yearIngresado = new Date(formData.fecha_caducidad).getFullYear();
+    
+    if (yearIngresado > currentYear + 15) {
+      return toast.warning(`Fecha irreal: La caducidad no puede superar el año ${currentYear + 15}. Revisa si hay un error de tipeo.`);
+    }
+    
+    if (yearIngresado < currentYear - 15) {
+      return toast.warning(`Fecha muy antigua: La caducidad no puede ser menor al año ${currentYear - 15}.`);
+    }
 
     setIsSubmitting(true);
     const toastId = toast.loading("Registrando muestra y generando cadena de custodia...");
@@ -121,7 +151,8 @@ export default function RegistroMuestraPage() {
         <p className="text-slate-500 text-[14px] font-medium">Ingresa los datos del producto para iniciar su cadena de custodia.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Agregamos noValidate aquí para matar los tooltips del navegador */}
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           <div className="bg-white border border-slate-100 rounded-[2rem] p-6 sm:p-8 shadow-sm">
@@ -194,7 +225,17 @@ export default function RegistroMuestraPage() {
             <div className="space-y-5">
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Fecha de Caducidad Impresa <span className="text-red-500">*</span></label>
-                <input required type="date" name="fecha_caducidad" value={formData.fecha_caducidad} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all text-slate-700" />
+                {/* Dejamos min y max porque algunos celulares lo usan para bloquear días en el calendario visual */}
+                <input 
+                  required 
+                  type="date" 
+                  name="fecha_caducidad" 
+                  value={formData.fecha_caducidad} 
+                  onChange={handleChange} 
+                  min={MIN_DATE}
+                  max={MAX_DATE}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all text-slate-700" 
+                />
               </div>
               <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
                 <label className="block text-[13px] font-bold text-blue-800 mb-1.5">Fecha Fin de Retención Legal (Automático)</label>
@@ -224,7 +265,6 @@ export default function RegistroMuestraPage() {
                 )}
               </div>
               
-              {/*  NUEVO CAMPO: Detalle de Ubicación */}
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Detalle de Ubicación (Opcional)</label>
                 <input 
