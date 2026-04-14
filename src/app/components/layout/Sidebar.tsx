@@ -114,17 +114,20 @@ export default function Sidebar({ userRol }: { userRol: string }) {
   // Estado para controlar el modal de cierre de sesión
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
+  // 🔥 Efecto actualizado: Solo mantiene abierto el menú de la ruta actual
   useEffect(() => {
-    MENU_ITEMS.forEach(item => {
-      if (item.subItems && pathname.startsWith(item.path)) {
-        setOpenMenus(prev => ({ ...prev, [item.name]: true }));
-      }
-    });
+    const activeMenu = MENU_ITEMS.find(item => item.subItems && pathname.startsWith(item.path));
+    if (activeMenu) {
+      setOpenMenus({ [activeMenu.name]: true });
+    } else {
+      setOpenMenus({});
+    }
   }, [pathname]);
 
+  // 🔥 Comportamiento de Acordeón: Cierra el resto al abrir uno nuevo
   const toggleSubMenu = (menuName: string) => {
     if (isCollapsed) setIsCollapsed(false);
-    setOpenMenus(prev => ({ ...prev, [menuName]: !prev[menuName] }));
+    setOpenMenus(prev => (prev[menuName] ? {} : { [menuName]: true }));
   };
 
   const menuFiltrado = MENU_ITEMS.filter((item) =>
@@ -206,19 +209,19 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                     onClick={() => toggleSubMenu(item.name)}
                     className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-[14px] font-semibold transition-all group relative w-full ${
                       isActive
-                        ? "text-brand-secondary"
+                        ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
                         : isMenuOpen 
                           ? "text-slate-800"
                           : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                     } ${isCollapsed ? "justify-center" : "justify-start"}`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon size={20} className={`shrink-0 transition-colors ${isActive ? "text-brand-secondary" : "text-slate-400 group-hover:text-slate-600"}`} />
+                      <Icon size={20} className={`shrink-0 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"}`} />
                       <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
                         {item.name}
                       </span>
                     </div>
-                    <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-brand-secondary" : "text-slate-400"}`} />
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-white" : "text-slate-400"}`} />
                   </button>
                 ) : (
                   <Link
