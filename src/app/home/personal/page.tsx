@@ -131,7 +131,7 @@ export default function DirectorioPersonalPage() {
         <div>
           <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight">Directorio de Personal</h1>
           <p className="text-slate-500 text-[13px] sm:text-[14px] font-medium mt-1">
-            Visualiza y gestiona los accesos de los usuarios en un diseño bento moderno.
+            Visualiza y gestiona los accesos de los usuarios.
           </p>
         </div>
         

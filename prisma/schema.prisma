@@ -84,26 +84,24 @@ model MuestraFarmaceutica {
   registro_sanitario  String
   principio_activo    String
   
-  // Datos para la Economía Circular y Asistente de Segregación
   tipo_empaque        String   
   riesgo_bioseguridad String 
 
-  // Control de Mermas
   cantidad            Int
   unidad_medida       String   
   proposito_analisis  String   @db.Text 
 
-  // Tiempos Críticos (Resolución N° 072)
   fecha_ingreso       DateTime @default(now())
   fecha_caducidad     DateTime @db.Date
   fecha_fin_retencion DateTime @db.Date 
   
-  // Llaves foráneas
   estado_id           Int
   estado              EstadoMuestra @relation(fields: [estado_id], references: [id])
   
   area_id             Int
   area                Area          @relation(fields: [area_id], references: [id])
+
+  ubicacion_detalle   String?       @db.Text
   
   registrado_por      String
   usuarioRegistrador  Usuario       @relation(fields: [registrado_por], references: [id])
@@ -111,7 +109,6 @@ model MuestraFarmaceutica {
   creado_en           DateTime @default(now())
   actualizado_en      DateTime @updatedAt
 
-  // Relaciones
   historiales         HistorialTrazabilidad[]
   reporte_descarte    ReporteDescarte?
 }

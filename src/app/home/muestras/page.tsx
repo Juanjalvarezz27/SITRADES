@@ -1,3 +1,277 @@
-export default function MuestrasTest() {
-  return <h1 className="p-10 text-2xl font-bold text-blue-600">🧪 Zona de Muestras (Analista/Admin)</h1>;
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { 
+  PackagePlus, Loader2, Package, Calendar, MapPin, 
+  ShieldAlert, Eye, FlaskConical 
+} from "lucide-react";
+import { toast } from "react-toastify";
+import SearchBar from "../../components/ui/SearchBar";
+import FilterSelect from "../../components/ui/FilterSelect";
+import TrazabilidadModal from "../../components/muestras/TrazabilidadModal";
+
+const quitarAcentos = (str: string) => {
+  if (!str) return "";
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
+const formatearFecha = (fecha: string) => {
+  if (!fecha) return "N/A";
+  return new Date(fecha).toLocaleDateString("es-VE", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+};
+
+function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }) {
+  const hoy = new Date();
+  const fechaCaducidad = new Date(muestra.fecha_caducidad);
+  const fechaRetencion = new Date(muestra.fecha_fin_retencion);
+
+  let estadoLegal = { texto: "Vigente", color: "bg-emerald-50 text-emerald-600 border-emerald-200" };
+  
+  if (hoy >= fechaRetencion) {
+    estadoLegal = { texto: "Retención Cumplida - Descartar", color: "bg-red-50 text-red-600 border-red-200" };
+  } else if (hoy >= fechaCaducidad) {
+    estadoLegal = { texto: "Vencida (En Custodia)", color: "bg-amber-50 text-amber-600 border-amber-200" };
+  }
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full group">
+      
+      <div className="flex items-start justify-between gap-4 mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary/10 to-brand-secondary/20 flex items-center justify-center text-brand-primary shrink-0 shadow-inner">
+            <FlaskConical size={24} />
+          </div>
+          <div>
+            <span className={`inline-flex px-2.5 py-1 border rounded-lg text-[10px] font-bold uppercase tracking-wider mb-1 ${estadoLegal.color}`}>
+              {estadoLegal.texto}
+            </span>
+            <h3 className="text-[16px] font-black text-slate-800 leading-tight group-hover:text-brand-primary transition-colors line-clamp-2" title={muestra.principio_activo}>
+              {muestra.principio_activo}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-3 mb-6">
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <span className="block text-slate-400 font-medium text-[11px] uppercase mb-1">Código</span>
+            <span className="font-bold text-slate-700 text-[13px] truncate block">{muestra.codigo_interno}</span>
+          </div>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <span className="block text-slate-400 font-medium text-[11px] uppercase mb-1">Lote</span>
+            <span className="font-bold text-slate-700 text-[13px] truncate block">{muestra.lote}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Calendar size={14} className="text-amber-500" />
+              <span className="text-slate-400 font-medium text-[11px] uppercase">Vence</span>
+            </div>
+            <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_caducidad)}</span>
+          </div>
+
+          <div className={`p-3 rounded-xl border ${hoy >= fechaRetencion ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
+            <div className="flex items-center gap-1.5 mb-1">
+              <ShieldAlert size={14} className={hoy >= fechaRetencion ? "text-red-500" : "text-blue-500"} />
+              <span className={`font-medium text-[11px] uppercase ${hoy >= fechaRetencion ? 'text-red-400' : 'text-blue-400'}`}>Retención</span>
+            </div>
+            <span className={`font-bold text-[13px] block ${hoy >= fechaRetencion ? 'text-red-700' : 'text-blue-700'}`}>{formatearFecha(muestra.fecha_fin_retencion)}</span>
+          </div>
+        </div>
+
+        {/*  Fila de Ubicación con la nota */}
+        <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <MapPin size={18} className="text-brand-secondary shrink-0 mt-0.5" />
+          <div className="leading-snug text-[13px] text-slate-600">
+            <strong className="text-slate-800 block mb-0.5">{muestra.area?.nombre || "Sin área"}</strong>
+            {muestra.area?.direccion?.nombre} ({muestra.area?.direccion?.piso?.nombre})
+            {muestra.ubicacion_detalle && (
+              <span className="block mt-1.5 text-[11px] text-slate-500 font-medium bg-slate-200/50 p-1.5 rounded-lg">
+                📍 {muestra.ubicacion_detalle}
+              </span>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      <div className="mt-auto flex gap-2">
+        <button 
+          onClick={onClick}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white font-bold text-[13px] rounded-xl transition-all border border-brand-primary/20 hover:border-brand-primary shadow-sm"
+        >
+          <Eye size={16} /> Ver Trazabilidad
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function InventarioMuestrasPage() {
+  const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
+  const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroPiso, setFiltroPiso] = useState("TODOS");
+  const [filtroDireccion, setFiltroDireccion] = useState("TODOS");
+  const [filtroEstadoLegal, setFiltroEstadoLegal] = useState("TODOS");
+
+  const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchMuestras = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/muestras");
+      if (!res.ok) throw new Error("Error al cargar inventario");
+      const data = await res.json();
+      setMuestrasOriginales(data);
+      setMuestrasFiltradas(data);
+    } catch (error) {
+      toast.error("No se pudo cargar el inventario de muestras.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMuestras();
+  }, [fetchMuestras]);
+
+  useEffect(() => {
+    setFiltroDireccion("TODOS");
+  }, [filtroPiso]);
+
+  useEffect(() => {
+    const hoy = new Date();
+    
+    const filtrados = muestrasOriginales.filter((muestra) => {
+      const busquedaLimpia = quitarAcentos(busqueda);
+      const matchBusqueda = 
+        quitarAcentos(muestra.codigo_interno).includes(busquedaLimpia) ||
+        quitarAcentos(muestra.lote).includes(busquedaLimpia) ||
+        quitarAcentos(muestra.principio_activo).includes(busquedaLimpia);
+
+      const matchPiso = filtroPiso === "TODOS" || muestra.area?.direccion?.piso_id?.toString() === filtroPiso;
+      const matchDireccion = filtroDireccion === "TODOS" || muestra.area?.direccion_id?.toString() === filtroDireccion;
+
+      let matchEstadoLegal = true;
+      if (filtroEstadoLegal !== "TODOS") {
+        const fechaCad = new Date(muestra.fecha_caducidad);
+        const fechaRet = new Date(muestra.fecha_fin_retencion);
+        if (filtroEstadoLegal === "VIGENTE") matchEstadoLegal = hoy < fechaCad;
+        if (filtroEstadoLegal === "VENCIDA_CUSTODIA") matchEstadoLegal = hoy >= fechaCad && hoy < fechaRet;
+        if (filtroEstadoLegal === "DESCARTABLE") matchEstadoLegal = hoy >= fechaRet;
+      }
+
+      return matchBusqueda && matchPiso && matchDireccion && matchEstadoLegal;
+    });
+
+    setMuestrasFiltradas(filtrados);
+  }, [busqueda, filtroPiso, filtroDireccion, filtroEstadoLegal, muestrasOriginales]);
+
+  const opcionesPisos = Array.from(new Map(muestrasOriginales.filter(m => m.area?.direccion?.piso).map(m => [m.area.direccion.piso.id, m.area.direccion.piso])).values())
+    .map((p: any) => ({ value: p.id.toString(), label: p.nombre }));
+
+  const opcionesDirecciones = Array.from(new Map(muestrasOriginales
+    .filter(m => filtroPiso === "TODOS" || m.area?.direccion?.piso_id?.toString() === filtroPiso)
+    .filter(m => m.area?.direccion)
+    .map(m => [m.area.direccion.id, m.area.direccion])).values())
+    .map((d: any) => ({ value: d.id.toString(), label: d.nombre }));
+
+  const OPCIONES_ESTADO_LEGAL = [
+    { value: "VIGENTE", label: "Vigentes (Útiles)" },
+    { value: "VENCIDA_CUSTODIA", label: "Vencidas (En Custodia)" },
+    { value: "DESCARTABLE", label: "Retención Cumplida (Para Descarte)" },
+  ];
+
+  const handleOpenModal = (muestra: any) => {
+    setMuestraSeleccionada(muestra);
+    setIsModalOpen(true);
+  };
+
+  return (
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+      
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-8">
+        <div>
+          <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight flex items-center gap-3">
+            <div className="p-2.5 bg-brand-primary/10 text-brand-primary rounded-xl">
+              <Package size={24} />
+            </div>
+            Inventario de Muestras
+          </h1>
+          <p className="text-slate-500 text-[13px] sm:text-[14px] font-medium mt-2">
+            Control de trazabilidad, custodia legal y gestión de vida útil de las especialidades farmacéuticas.
+          </p>
+        </div>
+        
+        <Link 
+          href="/home/muestras/nuevo"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 active:scale-95 text-white px-6 py-3 rounded-2xl font-bold text-[14px] transition-all shadow-md shadow-brand-secondary/25 shrink-0"
+        >
+          <PackagePlus size={18} strokeWidth={3} />
+          Registrar Entrada
+        </Link>
+      </div>
+
+      <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 flex flex-col gap-4 sticky top-20 z-10">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1">
+            <SearchBar 
+              value={busqueda} 
+              onChange={setBusqueda} 
+              placeholder="Buscar por código, lote o principio activo..." 
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <FilterSelect options={OPCIONES_ESTADO_LEGAL} value={filtroEstadoLegal} onChange={setFiltroEstadoLegal} defaultLabel="Todos los Estados" icon={ShieldAlert} />
+            <FilterSelect options={opcionesPisos} value={filtroPiso} onChange={setFiltroPiso} defaultLabel="Todos los Pisos" />
+            <FilterSelect options={opcionesDirecciones} value={filtroDireccion} onChange={setFiltroDireccion} defaultLabel="Todas las Direcciones" disabled={filtroPiso === "TODOS" && opcionesDirecciones.length === 0} />
+          </div>
+        </div>
+        <div className="text-[13px] font-semibold text-slate-500 w-full text-right px-2 border-t border-slate-100 pt-3">
+          Mostrando <span className="text-brand-secondary font-bold">{loading ? "..." : muestrasFiltradas.length}</span> registros físicos
+        </div>
+      </div>
+
+      <div className="w-full relative min-h-[400px]">
+        {loading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3 bg-slate-50/50 backdrop-blur-sm rounded-3xl z-20">
+            <Loader2 className="animate-spin text-brand-secondary" size={36} />
+            <span className="text-[15px] font-semibold text-brand-secondary">Cargando trazabilidad...</span>
+          </div>
+        ) : muestrasFiltradas.length === 0 ? (
+          <div className="py-24 text-center text-slate-500 text-[15px] px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center">
+            <Package size={48} className="text-slate-300 mb-4 opacity-50" />
+            <p className="font-bold text-slate-700 text-lg">Inventario vacío</p>
+            <p className="text-slate-500 mt-1">No hay muestras registradas que coincidan con los filtros.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+            {muestrasFiltradas.map((muestra) => (
+              <MuestraCard 
+                key={muestra.id} 
+                muestra={muestra} 
+                onClick={() => handleOpenModal(muestra)} 
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <TrazabilidadModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        muestra={muestraSeleccionada}
+      />
+
+    </div>
+  );
 }

@@ -18,10 +18,12 @@ import {
   ChevronDown,
   UserPlus,
   UsersRound,
-  // Importamos los nuevos iconos para infraestructura
   Building2,
   MapPin,
-  Layers
+  Layers,
+  Package,
+  PackagePlus,
+  BookOpen
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -34,9 +36,22 @@ const MENU_ITEMS = [
   },
   {
     path: "/home/muestras",
-    name: "Registro de Muestras",
+    name: "Gestión de Muestras",
     icon: TestTube,
     rolesPermitidos: ["Administrador", "Analista de Laboratorio"],
+    subItems: [
+      {
+        path: "/home/muestras",
+        name: "Inventario Activo",
+        icon: Package,
+        exact: true,
+      },
+      {
+        path: "/home/muestras/nuevo",
+        name: "Registrar Entrada",
+        icon: PackagePlus,
+      }
+    ]
   },
   {
     path: "/home/alertas",
@@ -167,7 +182,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         </div>
 
         {/* Navegación */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
           <p className={`px-2 text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-4 transition-all duration-300 ${isCollapsed ? "text-center opacity-0" : "opacity-100"}`}>
             {isCollapsed ? "..." : "Menú Principal"}
           </p>
@@ -182,41 +197,47 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
             return (
               <div key={item.name} className="flex flex-col gap-1">
+                {/* 1. RENDERIZADO PARA BOTONES CON SUB-MENÚ */}
                 {item.subItems ? (
                   <button
                     onClick={() => toggleSubMenu(item.name)}
-                    className={`flex items-center justify-between px-3.5 py-3.5 rounded-2xl text-[14px] font-semibold transition-all group relative w-full ${
+                    className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-[14px] font-semibold transition-all group relative w-full ${
                       isActive
-                        ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
-                        : "text-slate-500 hover:bg-brand-secondary/5 hover:text-brand-secondary"
+                        ? "text-brand-secondary" // Sin fondo, solo color de texto si un hijo está activo
+                        : isMenuOpen 
+                          ? "text-slate-800" // Texto oscuro si está abierto pero inactivo
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                     } ${isCollapsed ? "justify-center" : "justify-start"}`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon size={20} className={`shrink-0 ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-secondary transition-colors"}`} />
+                      <Icon size={20} className={`shrink-0 transition-colors ${isActive ? "text-brand-secondary" : "text-slate-400 group-hover:text-slate-600"}`} />
                       <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
                         {item.name}
                       </span>
                     </div>
-                    <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-white/80" : "text-slate-400"}`} />
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-brand-secondary" : "text-slate-400"}`} />
                   </button>
                 ) : (
+                  
+                  /* 2. RENDERIZADO PARA ENLACES DIRECTOS (SIN SUB-MENÚ) */
                   <Link
                     href={item.path}
                     onClick={() => setIsMobileOpen(false)}
                     title={isCollapsed ? item.name : ""}
-                    className={`flex items-center gap-3 px-3.5 py-3.5 rounded-2xl text-[14px] font-semibold transition-all group relative ${
+                    className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl text-[14px] font-semibold transition-all group relative ${
                       isActive
                         ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
-                        : "text-slate-500 hover:bg-brand-secondary/5 hover:text-brand-secondary"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                     } ${isCollapsed ? "justify-center" : "justify-start"}`}
                   >
-                    <Icon size={20} className={`shrink-0 ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-secondary transition-colors"}`} />
+                    <Icon size={20} className={`shrink-0 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"}`} />
                     <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
                       {item.name}
                     </span>
                   </Link>
                 )}
 
+                {/* 3. RENDERIZADO DE LOS SUB-ÍTEMS */}
                 {item.subItems && (
                   <div 
                     className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col gap-1 ${
@@ -235,7 +256,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                           className={`flex items-center gap-3 ml-4 pl-4 py-2.5 border-l-2 text-[13px] font-medium transition-all ${
                             isSubActive
                               ? "border-brand-primary text-brand-primary bg-brand-primary/5 rounded-r-xl"
-                              : "border-slate-100 text-slate-500 hover:border-brand-secondary/50 hover:text-brand-secondary hover:bg-slate-50 rounded-r-xl"
+                              : "border-slate-100 text-slate-500 hover:border-slate-300 hover:text-slate-700"
                           }`}
                         >
                           <SubIcon size={16} />
@@ -250,22 +271,36 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           })}
         </nav>
 
-        {/* Controles Inferiores */}
-        <div className="p-4 border-t border-slate-50 flex flex-col gap-3 bg-white">
+        {/* Controles Inferiores (Más compactos) */}
+        <div className="p-4 border-t border-slate-50 flex flex-col gap-2.5 bg-white">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden md:flex items-center justify-center p-2 text-slate-400 hover:text-brand-secondary hover:bg-brand-secondary/5 rounded-xl transition-all"
+            className="hidden md:flex items-center justify-center p-2 mb-1 text-slate-400 hover:text-brand-secondary hover:bg-brand-secondary/5 rounded-xl transition-all"
             title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
           >
             {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
 
+          {/* Botón de Manual de Usuario */}
+          <Link
+            href="/manual" 
+            target="_blank"
+            title={isCollapsed ? "Manual de Usuario" : ""}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-brand-primary font-semibold text-[13px] rounded-xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
+          >
+            <BookOpen size={18} className="shrink-0 transition-transform group-hover:scale-110" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
+              Manual de Usuario
+            </span>
+          </Link>
+
+          {/* Botón de Cerrar Sesión */}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             title={isCollapsed ? "Cerrar Sesión" : ""}
-            className={`w-full flex items-center gap-3 px-3.5 py-3.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-700 font-bold rounded-2xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-700 font-semibold text-[13px] rounded-xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
           >
-            <LogOut size={20} className="shrink-0 transition-transform group-hover:-translate-x-1" />
+            <LogOut size={18} className="shrink-0 transition-transform group-hover:-translate-x-1" />
             <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
               Cerrar Sesión
             </span>
