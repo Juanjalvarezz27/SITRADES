@@ -26,6 +26,8 @@ import {
   BookOpen
 } from "lucide-react";
 
+import ConfirmModal from "../ui/ConfirmModal"; 
+
 const MENU_ITEMS = [
   {
     path: "/home",
@@ -107,8 +109,10 @@ export default function Sidebar({ userRol }: { userRol: string }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  
+  // Estado para controlar el modal de cierre de sesión
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   useEffect(() => {
     MENU_ITEMS.forEach(item => {
@@ -197,15 +201,14 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
             return (
               <div key={item.name} className="flex flex-col gap-1">
-                {/* 1. RENDERIZADO PARA BOTONES CON SUB-MENÚ */}
                 {item.subItems ? (
                   <button
                     onClick={() => toggleSubMenu(item.name)}
                     className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-[14px] font-semibold transition-all group relative w-full ${
                       isActive
-                        ? "text-brand-secondary" // Sin fondo, solo color de texto si un hijo está activo
+                        ? "text-brand-secondary"
                         : isMenuOpen 
-                          ? "text-slate-800" // Texto oscuro si está abierto pero inactivo
+                          ? "text-slate-800"
                           : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                     } ${isCollapsed ? "justify-center" : "justify-start"}`}
                   >
@@ -218,8 +221,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                     <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-brand-secondary" : "text-slate-400"}`} />
                   </button>
                 ) : (
-                  
-                  /* 2. RENDERIZADO PARA ENLACES DIRECTOS (SIN SUB-MENÚ) */
                   <Link
                     href={item.path}
                     onClick={() => setIsMobileOpen(false)}
@@ -237,7 +238,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                   </Link>
                 )}
 
-                {/* 3. RENDERIZADO DE LOS SUB-ÍTEMS */}
                 {item.subItems && (
                   <div 
                     className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col gap-1 ${
@@ -271,7 +271,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           })}
         </nav>
 
-        {/* Controles Inferiores (Más compactos) */}
+        {/* Controles Inferiores */}
         <div className="p-4 border-t border-slate-50 flex flex-col gap-2.5 bg-white">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -281,7 +281,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
             {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
 
-          {/* Botón de Manual de Usuario */}
           <Link
             href="/manual" 
             target="_blank"
@@ -294,9 +293,9 @@ export default function Sidebar({ userRol }: { userRol: string }) {
             </span>
           </Link>
 
-          {/* Botón de Cerrar Sesión */}
+          {/* Botón de Cerrar Sesión modificado para abrir el modal */}
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => setIsLogoutModalOpen(true)}
             title={isCollapsed ? "Cerrar Sesión" : ""}
             className={`w-full flex items-center gap-3 px-3 py-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-700 font-semibold text-[13px] rounded-xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
           >
@@ -306,8 +305,19 @@ export default function Sidebar({ userRol }: { userRol: string }) {
             </span>
           </button>
         </div>
-
       </aside>
+
+      {/* Renderizamos el Modal al final */}
+      <ConfirmModal 
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => signOut({ callbackUrl: "/" })}
+        title="¿Cerrar Sesión?"
+        message="Estás a punto de salir del sistema SITRADES. Tendrás que ingresar tus credenciales nuevamente para acceder."
+        confirmText="Sí, cerrar sesión"
+        cancelText="Cancelar"
+        isDanger={true}
+      />
     </>
   );
 }
