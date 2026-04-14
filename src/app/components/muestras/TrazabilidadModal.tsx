@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { 
   X, Loader2, Activity, User, Calendar, FileText, 
-  ShieldAlert, Trash2, ArrowRight, MapPin, Package, Clock, Info, ChevronDown
+  ShieldAlert, ArrowRight, MapPin, Package, Clock, Info, ChevronDown
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -76,7 +76,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
               Código: <span className="text-brand-primary">{muestra.codigo_interno}</span> • Lote: <span className="text-brand-primary">{muestra.lote}</span>
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
             <X size={24} />
           </button>
         </div>
@@ -129,7 +129,6 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                         {muestra.area?.direccion?.nombre} • {muestra.area?.direccion?.piso?.nombre}
                       </span>
                     </p>
-                    {/*  Aquí se muestra la nota si existe */}
                     {muestra.ubicacion_detalle && (
                       <p className="mt-2 text-[12px] text-slate-500 bg-white p-2 rounded-xl border border-slate-100 shadow-sm inline-block">
                         <strong className="text-brand-secondary">Nota:</strong> {muestra.ubicacion_detalle}
@@ -276,25 +275,9 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
           </div>
           
           <div className="flex gap-3 w-full sm:w-auto">
-            <button onClick={onClose} className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-bold text-[14px] bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors text-center">
+            <button onClick={onClose} className="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold text-[14px] bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 transition-colors text-center">
               Cerrar Expediente
             </button>
-            
-            {esDescartable ? (
-              <button 
-                onClick={() => {
-                  onClose();
-                  toast.info("Iniciando Módulo de Logística Inversa...");
-                }}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-[14px] transition-colors shadow-lg shadow-red-500/20 animate-in pulse"
-              >
-                <Trash2 size={18} /> Iniciar Descarte
-              </button>
-            ) : (
-              <button disabled className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-200 text-slate-400 rounded-xl font-bold text-[14px] cursor-not-allowed" title="Aún no cumple el año legal de retención">
-                <ShieldAlert size={18} /> Retención Activa
-              </button>
-            )}
           </div>
         </div>
 
