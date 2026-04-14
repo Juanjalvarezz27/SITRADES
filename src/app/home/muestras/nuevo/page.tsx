@@ -245,9 +245,23 @@ export default function RegistroMuestraPage() {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
-          <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 active:scale-95 disabled:opacity-70 disabled:active:scale-100 text-white px-8 py-3.5 rounded-2xl font-bold text-[15px] transition-all shadow-lg shadow-brand-secondary/30">
-            {isSubmitting ? <><Loader2 size={20} className="animate-spin" /> Registrando en Sistema...</> : <><Save size={20} /> Guardar y Generar Trazabilidad</>}
+        <div className="flex justify-center pt-4">
+          <button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 active:scale-95 disabled:opacity-70 disabled:active:scale-100 text-white px-4 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-[15px] sm:text-[18px] transition-all shadow-lg shadow-brand-secondary/30 leading-tight"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 size={22} className="animate-spin shrink-0" /> 
+                <span>Registrando en Sistema...</span>
+              </>
+            ) : (
+              <>
+                <Save size={22} className="shrink-0" /> 
+                <span>Guardar y Generar Trazabilidad</span>
+              </>
+            )}
           </button>
         </div>
       </form>
