@@ -11,6 +11,9 @@ import SearchBar from "../../components/ui/SearchBar";
 import FilterSelect from "../../components/ui/FilterSelect";
 import TrazabilidadModal from "../../components/muestras/TrazabilidadModal";
 
+//  Importamos la nueva Paginación
+import Pagination from "../../components/ui/Pagination";
+
 const quitarAcentos = (str: string) => {
   if (!str) return "";
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -21,6 +24,7 @@ const formatearFecha = (fecha: string) => {
   return new Date(fecha).toLocaleDateString("es-VE", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 };
 
+// --- MuestraCard SE MANTIENE EXACTAMENTE IGUAL ---
 function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }) {
   const hoy = new Date();
   const fechaCaducidad = new Date(muestra.fecha_caducidad);
@@ -36,7 +40,6 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
 
   return (
     <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full group">
-      
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary/10 to-brand-secondary/20 flex items-center justify-center text-brand-primary shrink-0 shadow-inner">
@@ -54,7 +57,6 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
       </div>
 
       <div className="flex-1 space-y-3 mb-6">
-        
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
             <span className="block text-slate-400 font-medium text-[11px] uppercase mb-1">Código</span>
@@ -74,7 +76,6 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
             </div>
             <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_caducidad)}</span>
           </div>
-
           <div className={`p-3 rounded-xl border ${hoy >= fechaRetencion ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
             <div className="flex items-center gap-1.5 mb-1">
               <ShieldAlert size={14} className={hoy >= fechaRetencion ? "text-red-500" : "text-blue-500"} />
@@ -84,7 +85,6 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
           </div>
         </div>
 
-        {/*  Fila de Ubicación con la nota */}
         <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
           <MapPin size={18} className="text-brand-secondary shrink-0 mt-0.5" />
           <div className="leading-snug text-[13px] text-slate-600">
@@ -97,7 +97,6 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
             )}
           </div>
         </div>
-
       </div>
 
       <div className="mt-auto flex gap-2">
@@ -112,16 +111,23 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
   );
 }
 
+// --- COMPONENTE PRINCIPAL ---
 export default function InventarioMuestrasPage() {
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Filtros
   const [busqueda, setBusqueda] = useState("");
   const [filtroPiso, setFiltroPiso] = useState("TODOS");
   const [filtroDireccion, setFiltroDireccion] = useState("TODOS");
   const [filtroEstadoLegal, setFiltroEstadoLegal] = useState("TODOS");
 
+  //  Estados para la Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
+
+  // Modal
   const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -148,6 +154,7 @@ export default function InventarioMuestrasPage() {
     setFiltroDireccion("TODOS");
   }, [filtroPiso]);
 
+  // Lógica de Filtrado
   useEffect(() => {
     const hoy = new Date();
     
@@ -174,7 +181,16 @@ export default function InventarioMuestrasPage() {
     });
 
     setMuestrasFiltradas(filtrados);
+    
+    //  Cada vez que buscamos algo nuevo, devolvemos al usuario a la página 1
+    setCurrentPage(1); 
   }, [busqueda, filtroPiso, filtroDireccion, filtroEstadoLegal, muestrasOriginales]);
+
+  //  Cálculos de Paginación
+  const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const muestrasPaginadas = muestrasFiltradas.slice(indexOfFirstItem, indexOfLastItem);
 
   const opcionesPisos = Array.from(new Map(muestrasOriginales.filter(m => m.area?.direccion?.piso).map(m => [m.area.direccion.piso.id, m.area.direccion.piso])).values())
     .map((p: any) => ({ value: p.id.toString(), label: p.nombre }));
@@ -254,15 +270,28 @@ export default function InventarioMuestrasPage() {
             <p className="text-slate-500 mt-1">No hay muestras registradas que coincidan con los filtros.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
-            {muestrasFiltradas.map((muestra) => (
-              <MuestraCard 
-                key={muestra.id} 
-                muestra={muestra} 
-                onClick={() => handleOpenModal(muestra)} 
-              />
-            ))}
-          </div>
+          <>
+            {/*  Renderizamos solo la rebanada (slice) actual, no las 1000 de golpe */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+              {muestrasPaginadas.map((muestra) => (
+                <MuestraCard 
+                  key={muestra.id} 
+                  muestra={muestra} 
+                  onClick={() => handleOpenModal(muestra)} 
+                />
+              ))}
+            </div>
+
+            {/*  Renderizamos el componente Paginación abajo */}
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Sube la pantalla al cambiar de página
+              }} 
+            />
+          </>
         )}
       </div>
 

@@ -14,6 +14,9 @@ import ConfirmarEliminacionModal from "../../../components/personal/ConfirmarEli
 import SearchBar from "../../../components/ui/SearchBar";
 import FilterSelect from "../../../components/ui/FilterSelect";
 
+// Importamos nuestro componente de paginación reutilizable
+import Pagination from "../../../components/ui/Pagination";
+
 // Función auxiliar para ignorar acentos y mayúsculas en las búsquedas
 const quitarAcentos = (str: string) => {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -89,7 +92,6 @@ function AreaCard({
           <div className="overflow-hidden">
             <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4 flex flex-col gap-2.5">
               {area.usuarios?.map((usuario) => (
-                /* Elemento de Usuario convertido en botón navegable */
                 <button 
                   key={usuario.id} 
                   onClick={() => router.push("/home/personal")}
@@ -110,7 +112,6 @@ function AreaCard({
   );
 }
 
-// --- SUB-COMPONENTE 2: SECCIÓN DESPLEGABLE HÍBRIDA (PC HORIZONTAL / MÓVIL VERTICAL) ---
 function DireccionSeccion({ 
   direccionNombre, 
   areas, 
@@ -133,7 +134,6 @@ function DireccionSeccion({
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full group outline-none"
       >
-        {/* VISTA ESCRITORIO (md:flex) */}
         <div className="hidden md:flex items-center justify-between gap-4 w-full text-left">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className={`p-2.5 rounded-xl transition-colors shrink-0 ${isExpanded ? "bg-brand-primary/10 text-brand-primary" : "bg-slate-100 text-slate-400 group-hover:bg-brand-primary/5"}`}>
@@ -151,7 +151,6 @@ function DireccionSeccion({
           </div>
         </div>
 
-        {/* VISTA MÓVIL (md:hidden) */}
         <div className="flex md:hidden flex-col gap-4 text-left w-full">
           <div className="flex items-center justify-between w-full">
             <div className={`p-2.5 rounded-xl transition-colors shrink-0 ${isExpanded ? "bg-brand-primary/10 text-brand-primary" : "bg-slate-100 text-slate-400"}`}>
@@ -174,7 +173,6 @@ function DireccionSeccion({
         </div>
       </button>
 
-      {/* Contenedor del Grid de Tarjetas */}
       <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100 mt-6 md:mt-8" : "grid-rows-[0fr] opacity-0"}`}>
         <div className="overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-2">
@@ -189,7 +187,6 @@ function DireccionSeccion({
           </div>
         </div>
       </div>
-
     </div>
   );
 }
@@ -203,6 +200,10 @@ export default function GestionAreasPage() {
   const [busqueda, setBusqueda] = useState("");
   const [filtroPiso, setFiltroPiso] = useState("TODOS");
   const [filtroDireccion, setFiltroDireccion] = useState("TODOS");
+
+  // Estados para la Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [areaToEdit, setAreaToEdit] = useState<AreaAPI | null>(null);
@@ -234,6 +235,11 @@ export default function GestionAreasPage() {
     setFiltroDireccion("TODOS");
   }, [filtroPiso]);
 
+  // Efecto para devolver a la página 1 cuando el usuario busca o filtra algo
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [busqueda, filtroPiso, filtroDireccion]);
+
   const confirmDelete = async () => {
     if (!areaToDelete) return;
     setIsDeleting(true);
@@ -261,7 +267,8 @@ export default function GestionAreasPage() {
     .map(a => [a.direccion?.id, a.direccion])
   ).values()).map(d => ({ value: d?.id.toString() || "", label: d?.nombre || "" }));
 
-const areasFiltradas = areas.filter(area => {
+  // 1. Aplicamos los filtros
+  const areasFiltradas = areas.filter(area => {
     const matchBusqueda = quitarAcentos(area.nombre).includes(quitarAcentos(busqueda));
     const matchPiso = filtroPiso === "TODOS" || area.direccion?.piso?.id.toString() === filtroPiso;
     const matchDireccion = filtroDireccion === "TODOS" || area.direccion_id.toString() === filtroDireccion;
@@ -269,7 +276,14 @@ const areasFiltradas = areas.filter(area => {
     return matchBusqueda && matchPiso && matchDireccion;
   });
 
-  const areasPorDireccion = areasFiltradas.reduce((acc, area) => {
+  // 2. Calculamos la Paginación sobre las áreas filtradas
+  const totalPages = Math.ceil(areasFiltradas.length / ITEMS_PER_PAGE);
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const areasPaginadas = areasFiltradas.slice(indexOfFirstItem, indexOfLastItem);
+
+  // 3. Agrupamos SOLAMENTE las áreas que pertenecen a la página actual
+  const areasPorDireccion = areasPaginadas.reduce((acc, area) => {
     const dir = area.direccion?.nombre || "Sin Dirección";
     if (!acc[dir]) acc[dir] = [];
     acc[dir].push(area);
@@ -333,18 +347,30 @@ const areasFiltradas = areas.filter(area => {
           <p className="text-[14px] mt-1">Intenta ajustando los filtros o la búsqueda.</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {direccionesOrdenadas.map((dir) => (
-            <DireccionSeccion
-              key={dir}
-              direccionNombre={dir}
-              areas={areasPorDireccion[dir]}
-              isDefaultExpanded={busqueda !== "" || filtroPiso !== "TODOS" || filtroDireccion !== "TODOS"} // Se expande automáticamente si hay un filtro activo
-              onEdit={(a) => { setAreaToEdit(a); setIsModalOpen(true); }}
-              onDelete={(a) => { setAreaToDelete(a); setIsDeleteModalOpen(true); }}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-6">
+            {direccionesOrdenadas.map((dir) => (
+              <DireccionSeccion
+                key={dir}
+                direccionNombre={dir}
+                areas={areasPorDireccion[dir]}
+                isDefaultExpanded={busqueda !== "" || filtroPiso !== "TODOS" || filtroDireccion !== "TODOS"}
+                onEdit={(a) => { setAreaToEdit(a); setIsModalOpen(true); }}
+                onDelete={(a) => { setAreaToDelete(a); setIsDeleteModalOpen(true); }}
+              />
+            ))}
+          </div>
+
+          {/* Agregamos el Componente de Paginación debajo de las tarjetas */}
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll hacia arriba al cambiar
+            }} 
+          />
+        </>
       )}
 
       <AreaModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} areaToEdit={areaToEdit} onSaved={fetchAreas} />

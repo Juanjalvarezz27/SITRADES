@@ -11,6 +11,9 @@ import GestionarUsuarioModal from "../../components/personal/GestionarUsuarioMod
 import ConfirmarEliminacionModal from "../../components/personal/ConfirmarEliminacionModal";
 import EditarUsuarioModal from "../../components/personal/EditarUsuarioModal";
 
+// Importamos nuestro componente reutilizable de paginación
+import Pagination from "../../components/ui/Pagination";
+
 // Función auxiliar para limpiar acentos
 const quitarAcentos = (str: string) => {
   if (!str) return "";
@@ -28,6 +31,10 @@ export default function DirectorioPersonalPage() {
   const [pisoFilter, setPisoFilter] = useState("");
   const [direccionFilter, setDireccionFilter] = useState("");
   const [areaFilter, setAreaFilter] = useState("");
+
+  // Estados para la Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10; // Configuramos de 10 en 10 como pediste
 
   // Modales y Selección
   const [selectedUser, setSelectedUser] = useState<UsuarioAPI | null>(null);
@@ -57,7 +64,7 @@ export default function DirectorioPersonalPage() {
     fetchUsuarios();
   }, [fetchUsuarios]);
 
-  //  EFECTO DE FILTRADO CORREGIDO PARA TYPESCRIPT
+  // EFECTO DE FILTRADO CORREGIDO PARA TYPESCRIPT
   useEffect(() => {
     const filtrados = todosLosUsuarios.filter((user) => {
       // 1. Filtro de Texto
@@ -65,10 +72,10 @@ export default function DirectorioPersonalPage() {
       const correoLimpio = quitarAcentos(user.email);
       const matchBusqueda = nombreLimpio.includes(searchTerm) || correoLimpio.includes(searchTerm);
 
-      // 2. Filtro de Rol (Convertimos el Enum de Prisma a String para poder compararlo)
+      // 2. Filtro de Rol
       const matchRol = roleFilter === "" || String(user.rol) === roleFilter;
 
-      // 3. Filtros Jerárquicos (Usamos la propiedad .id del objeto relacional anidado)
+      // 3. Filtros Jerárquicos
       const matchArea = areaFilter === "" || user.area?.id?.toString() === areaFilter;
       const matchDireccion = direccionFilter === "" || user.area?.direccion?.id?.toString() === direccionFilter;
       const matchPiso = pisoFilter === "" || user.area?.direccion?.piso?.id?.toString() === pisoFilter;
@@ -77,7 +84,17 @@ export default function DirectorioPersonalPage() {
     });
 
     setUsuariosFiltrados(filtrados);
+    
+    // Cada vez que se cambia un filtro o se busca a alguien, devolvemos a la página 1
+    setCurrentPage(1);
   }, [searchTerm, roleFilter, pisoFilter, direccionFilter, areaFilter, todosLosUsuarios]);
+
+  // Cálculos de Paginación
+  const totalPages = Math.ceil(usuariosFiltrados.length / ITEMS_PER_PAGE);
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  // Extraemos solo los 10 usuarios de la página actual
+  const usuariosPaginados = usuariosFiltrados.slice(indexOfFirstItem, indexOfLastItem);
 
   // Handlers para modales
   const handleOpenModal = (user: UsuarioAPI) => {
@@ -169,15 +186,28 @@ export default function DirectorioPersonalPage() {
             <p className="text-slate-500 mt-1">No hay coincidencias con los filtros aplicados.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {usuariosFiltrados.map((user) => (
-              <UsuarioCard 
-                key={user.id} 
-                user={user} 
-                onManageClick={handleOpenModal} 
-              />
-            ))}
-          </div>
+          <>
+            {/* Mapeamos sobre usuariosPaginados en lugar de todos los filtrados */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {usuariosPaginados.map((user) => (
+                <UsuarioCard 
+                  key={user.id} 
+                  user={user} 
+                  onManageClick={handleOpenModal} 
+                />
+              ))}
+            </div>
+
+            {/* Componente de Paginación al final de la cuadrícula */}
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll automático hacia arriba
+              }} 
+            />
+          </>
         )}
       </div>
 
