@@ -3,8 +3,7 @@
 import { useRef, useState } from "react";
 import { X, FileSignature, Thermometer, Calendar, User, ShieldCheck, Download, Loader2 } from "lucide-react";
 import DescartePDFTemplate from "./DescartePDFTemplate";
-// @ts-ignore
-import html2pdf from "html2pdf.js";
+import { toast } from "react-toastify";
 
 interface CertificadoDescarteModalProps {
   isOpen: boolean;
@@ -28,38 +27,41 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   const pdfRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  const exportarPDF = () => {
+  // FUNCIÓN PARA EXPORTAR CORREGIDA (Carga dinámica para evitar error de SSR)
+  const exportarPDF = async () => {
     if (!pdfRef.current) return;
     setIsExporting(true);
 
-    const element = pdfRef.current;
-    
-    const opt = {
-      margin: 0,
-      filename: `ACTA_DESCARTE_${muestra.codigo_interno}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
-        scrollY: 0
-      },
-      jsPDF: { 
-        unit: 'mm', 
-        format: 'letter', 
-        orientation: 'portrait' 
-      }
-    } as const;
+    try {
+      // Cargamos la librería dinámicamente solo en el cliente
+      const html2pdf = (await import("html2pdf.js")).default;
+      
+      const element = pdfRef.current;
+      
+      const opt = {
+        margin: 0,
+        filename: `ACTA_DESCARTE_${muestra.codigo_interno}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          letterRendering: true,
+          scrollY: 0
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'letter', 
+          orientation: 'portrait' 
+        }
+      } as const;
 
-    html2pdf()
-      .set(opt)
-      .from(element)
-      .save()
-      .then(() => setIsExporting(false))
-      .catch((err: any) => {
-        setIsExporting(false);
-        console.error("Error al generar PDF:", err);
-      });
+      await html2pdf().set(opt).from(element).save();
+      setIsExporting(false);
+    } catch (err: any) {
+      setIsExporting(false);
+      console.error("Error al generar PDF:", err);
+      toast.error("Error técnico al generar el documento.");
+    }
   };
 
   if (!isOpen || !muestra) return null;
@@ -73,6 +75,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       
+      {/* Fondo oscuro sólido para rendimiento */}
       <div 
         className="absolute inset-0 bg-slate-900/70 transition-opacity"
         onClick={onClose}
@@ -83,12 +86,12 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
         {/* CABECERA */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-violet-50 text-violet-600 rounded-2xl">
+            <div className="p-3 bg-violet-50 text-brand-primary rounded-2xl">
               <FileSignature size={24} />
             </div>
             <div>
               <h2 className="font-title font-black text-xl text-slate-800 leading-tight">Acta de Descarte Legal</h2>
-              <p className="text-slate-500 font-medium text-xs mt-0.5">Certificación de Destrucción y Segregación</p>
+              <p className="text-slate-500 font-medium text-xs mt-0.5">Certificación de Destrucción e Inactivación</p>
             </div>
           </div>
           <button 
@@ -99,7 +102,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
           </button>
         </div>
 
-        {/* CUERPO DEL MODAL (VISTA COMPLETA RECUPERADA) */}
+        {/* CUERPO DEL MODAL (Vista Detallada) */}
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
           
           {/* Sección 1: Identificación */}
@@ -127,8 +130,8 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
               Protocolo Aplicado
             </h3>
             <div className="space-y-4">
-              <div className="bg-white border-2 border-violet-100 p-4 rounded-2xl flex items-start gap-4">
-                <div className="p-2 bg-violet-50 text-violet-600 rounded-xl shrink-0 mt-0.5">
+              <div className="bg-white border-2 border-brand-primary/20 p-4 rounded-2xl flex items-start gap-4">
+                <div className="p-2 bg-brand-primary/10 text-brand-primary rounded-xl shrink-0 mt-0.5">
                   <Thermometer size={18} />
                 </div>
                 <div>
@@ -183,7 +186,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
           <button 
             onClick={exportarPDF}
             disabled={isExporting}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-primary hover:bg-violet-700 text-white font-bold rounded-xl transition-all shadow-md shadow-violet-200 text-[13px] active:scale-95 disabled:opacity-70"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-primary hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-primary/20 text-[13px] active:scale-95 disabled:opacity-70"
           >
             {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
             {isExporting ? "Generando PDF..." : "Descargar Acta PDF"}
@@ -191,13 +194,13 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
           
           <button 
             onClick={onClose}
-            className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600 font-bold rounded-xl transition-all shadow-sm text-[13px] active:scale-95"
+            className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition-all shadow-sm text-[13px] active:scale-95"
           >
             Cerrar Certificado
           </button>
         </div>
 
-        {/* TEMPLATE PARA EL PDF (Invisible pero presente para html2pdf) */}
+        {/* TEMPLATE OCULTO PARA PDF */}
         <DescartePDFTemplate ref={pdfRef} muestra={muestra} />
         
       </div>

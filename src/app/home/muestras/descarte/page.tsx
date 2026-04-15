@@ -6,12 +6,13 @@ import {
   PackageX, 
   Trash2, 
   AlertOctagon, 
-  SearchX
+  SearchX,
+  MapPin
 } from "lucide-react";
 import { toast } from "react-toastify";
 import SearchBar from "../../../components/ui/SearchBar";
 import Pagination from "../../../components/ui/Pagination";
-// IMPORTAMOS EL NUEVO COMPONENTE
+import FilterSelect from "../../../components/ui/FilterSelect";
 import MuestraDescarteCard from "../../../components/muestras/MuestraDescarteCard";
 
 const quitarAcentos = (str: string) => {
@@ -24,9 +25,17 @@ export default function ColaDescartePage() {
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroArea, setFiltroArea] = useState("TODOS");
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
+
+  const opcionesAreas = Array.from(
+    new Set(muestrasOriginales.map((m) => m.area?.nombre))
+  )
+    .filter(Boolean)
+    .sort()
+    .map((nombre) => ({ value: nombre as string, label: nombre as string }));
 
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
@@ -50,59 +59,80 @@ export default function ColaDescartePage() {
   useEffect(() => {
     const filtrados = muestrasOriginales.filter((muestra) => {
       const busquedaLimpia = quitarAcentos(busqueda);
-      return (
+      
+      const cumpleBusqueda = (
         quitarAcentos(muestra.codigo_interno).includes(busquedaLimpia) ||
         quitarAcentos(muestra.lote).includes(busquedaLimpia) ||
         quitarAcentos(muestra.principio_activo).includes(busquedaLimpia)
       );
+
+      const cumpleArea = filtroArea === "TODOS" || muestra.area?.nombre === filtroArea;
+
+      return cumpleBusqueda && cumpleArea;
     });
 
     setMuestrasFiltradas(filtrados);
     setCurrentPage(1); 
-  }, [busqueda, muestrasOriginales]);
+  }, [busqueda, filtroArea, muestrasOriginales]);
 
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
-  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
-  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  const muestrasPaginadas = muestrasFiltradas.slice(indexOfFirstItem, indexOfLastItem);
+  const muestrasPaginadas = muestrasFiltradas.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in duration-500 relative">
       
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-rose-600 text-white rounded-2xl shadow-lg shadow-rose-200">
-              <Trash2 size={28} />
+      {/* HEADER CON CONTADOR RESPONSIVO EQUILIBRADO */}
+      <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 mb-10">
+        <div className="space-y-2 w-full md:w-auto text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-3">
+            <div className="p-2.5 bg-rose-600 text-white rounded-2xl shadow-lg shadow-rose-100">
+              <Trash2 size={24} />
             </div>
-            <h1 className="font-title font-black text-3xl sm:text-4xl text-slate-800 tracking-tighter">
+            <h1 className="font-title font-black text-2xl sm:text-3xl md:text-4xl text-slate-800 tracking-tighter">
               Cola de Descarte
             </h1>
           </div>
-          <p className="text-slate-500 text-sm sm:text-base font-medium max-w-2xl leading-relaxed">
-            Muestras que han cumplido su tiempo de retención legal (Res. 072) y requieren inicio del protocolo de segregación y destrucción.
+          <p className="text-slate-500 text-[13px] sm:text-sm font-medium max-w-xl leading-relaxed mx-auto md:mx-0">
+            Muestras con tiempo de retención legal cumplido (Res. 072) que requieren destrucción.
           </p>
         </div>
         
-        <div className="bg-rose-50/80 px-6 py-4 rounded-[2rem] border border-rose-100 flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Pendientes</p>
-            <p className="text-2xl font-black text-rose-700 leading-none">{muestrasFiltradas.length}</p>
+        {/* Contador: Optimizado para no ser invasivo */}
+        <div className="w-full sm:w-auto md:min-w-[180px] bg-white border border-slate-200 px-6 py-3.5 rounded-[2rem] shadow-sm flex items-center justify-center md:justify-end gap-4 transition-all">
+          <div className="text-center md:text-right">
+            <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-0.5">
+              Pendientes
+            </p>
+            <p className="text-2xl font-black text-rose-700 leading-none">
+              {muestrasFiltradas.length}
+            </p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center text-white shadow-md shadow-rose-200">
-            <AlertOctagon size={20} />
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <AlertOctagon size={18} />
           </div>
         </div>
       </div>
 
-      {/* SEARCHBAR STICKY */}
+      {/* SEARCHBAR & FILTERS STICKY */}
       <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-5 rounded-[2.5rem] shadow-xl shadow-slate-200/20 mb-10 sticky top-24 z-20">
-        <SearchBar 
-          value={busqueda} 
-          onChange={setBusqueda} 
-          placeholder="Buscar muestra a descartar por código, lote o nombre..." 
-        />
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1">
+            <SearchBar 
+              value={busqueda} 
+              onChange={setBusqueda} 
+              placeholder="Buscar muestra a descartar por código, lote o nombre..." 
+            />
+          </div>
+          <div className="w-full lg:w-72">
+            <FilterSelect
+              value={filtroArea}
+              onChange={setFiltroArea}
+              options={opcionesAreas}
+              defaultLabel="Todas las Áreas"
+              icon={MapPin}
+            />
+          </div>
+        </div>
       </div>
 
       {/* GRID DE RESULTADOS */}
@@ -135,7 +165,7 @@ export default function ColaDescartePage() {
               <Pagination 
                 currentPage={currentPage} 
                 totalPages={totalPages} 
-                onPageChange={(page: SetStateAction<number>) => {
+                onPageChange={(page: number) => {
                   setCurrentPage(page);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }} 
