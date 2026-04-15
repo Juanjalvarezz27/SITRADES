@@ -23,7 +23,8 @@ import {
   Layers,
   Package,
   PackagePlus,
-  BookOpen
+  BookOpen,
+  Archive 
 } from "lucide-react";
 
 import ConfirmModal from "../ui/ConfirmModal"; 
@@ -43,15 +44,20 @@ const MENU_ITEMS = [
     rolesPermitidos: ["Administrador", "Analista de Laboratorio"],
     subItems: [
       {
+        path: "/home/muestras/nuevo",
+        name: "Registrar Entrada",
+        icon: PackagePlus,
+      },
+      {
         path: "/home/muestras",
         name: "Inventario Activo",
         icon: Package,
         exact: true,
       },
       {
-        path: "/home/muestras/nuevo",
-        name: "Registrar Entrada",
-        icon: PackagePlus,
+        path: "/home/muestras/inactivo",
+        name: "Inventario Inactivo",
+        icon: Archive,
       }
     ]
   },
@@ -114,7 +120,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
   // Estado para controlar el modal de cierre de sesión
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  // 🔥 Efecto actualizado: Solo mantiene abierto el menú de la ruta actual
+  // Efecto: Solo mantiene abierto el menú de la ruta actual
   useEffect(() => {
     const activeMenu = MENU_ITEMS.find(item => item.subItems && pathname.startsWith(item.path));
     if (activeMenu) {
@@ -124,7 +130,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
     }
   }, [pathname]);
 
-  // 🔥 Comportamiento de Acordeón: Cierra el resto al abrir uno nuevo
+  // Comportamiento de Acordeón: Cierra el resto al abrir uno nuevo
   const toggleSubMenu = (menuName: string) => {
     if (isCollapsed) setIsCollapsed(false);
     setOpenMenus(prev => (prev[menuName] ? {} : { [menuName]: true }));

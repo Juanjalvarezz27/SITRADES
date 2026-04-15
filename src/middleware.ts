@@ -45,9 +45,7 @@ export async function middleware(request: NextRequest) {
 
   const userRole = token.rol as string;
 
-  // =======================================================================
   // D. PROTECCIÓN DE ENDPOINTS (API) -> Retornan JSON (403 Forbidden)
-  // =======================================================================
   if (pathname.startsWith("/api/")) {
     
     // EXCEPCIÓN: Los Analistas necesitan hacer GET a infraestructura para registrar muestras
@@ -73,9 +71,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next(); 
   }
 
-  // =======================================================================
   // E. PROTECCIÓN DE VISTAS (FRONTEND) -> Retornan Redirect
-  // =======================================================================
   let hasAccess = false;
   let routeRequiresProtection = false;
 
