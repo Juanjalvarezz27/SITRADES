@@ -10,8 +10,6 @@ import { toast } from "react-toastify";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterSelect from "../../components/ui/FilterSelect";
 import TrazabilidadModal from "../../components/muestras/TrazabilidadModal";
-
-//  Importamos la nueva Paginación
 import Pagination from "../../components/ui/Pagination";
 
 const quitarAcentos = (str: string) => {
@@ -24,17 +22,15 @@ const formatearFecha = (fecha: string) => {
   return new Date(fecha).toLocaleDateString("es-VE", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 };
 
-// --- MuestraCard SE MANTIENE EXACTAMENTE IGUAL ---
+// --- TARJETA DE MUESTRA (LIMPIA, SOLO VIGENTES Y VENCIDAS) ---
 function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }) {
   const hoy = new Date();
   const fechaCaducidad = new Date(muestra.fecha_caducidad);
-  const fechaRetencion = new Date(muestra.fecha_fin_retencion);
 
+  // Solo hay dos estados posibles en la fase Activa
   let estadoLegal = { texto: "Vigente", color: "bg-emerald-50 text-emerald-600 border-emerald-200" };
   
-  if (hoy >= fechaRetencion) {
-    estadoLegal = { texto: "Retención Cumplida - Descartar", color: "bg-red-50 text-red-600 border-red-200" };
-  } else if (hoy >= fechaCaducidad) {
+  if (hoy >= fechaCaducidad) {
     estadoLegal = { texto: "Vencida (En Custodia)", color: "bg-amber-50 text-amber-600 border-amber-200" };
   }
 
@@ -76,12 +72,12 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
             </div>
             <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_caducidad)}</span>
           </div>
-          <div className={`p-3 rounded-xl border ${hoy >= fechaRetencion ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
+          <div className="p-3 rounded-xl border bg-blue-50 border-blue-100">
             <div className="flex items-center gap-1.5 mb-1">
-              <ShieldAlert size={14} className={hoy >= fechaRetencion ? "text-red-500" : "text-blue-500"} />
-              <span className={`font-medium text-[11px] uppercase ${hoy >= fechaRetencion ? 'text-red-400' : 'text-blue-400'}`}>Retención</span>
+              <ShieldAlert size={14} className="text-blue-500" />
+              <span className="font-medium text-[11px] uppercase text-blue-400">Retención</span>
             </div>
-            <span className={`font-bold text-[13px] block ${hoy >= fechaRetencion ? 'text-red-700' : 'text-blue-700'}`}>{formatearFecha(muestra.fecha_fin_retencion)}</span>
+            <span className="font-bold text-[13px] block text-blue-700">{formatearFecha(muestra.fecha_fin_retencion)}</span>
           </div>
         </div>
 
@@ -123,7 +119,7 @@ export default function InventarioMuestrasPage() {
   const [filtroDireccion, setFiltroDireccion] = useState("TODOS");
   const [filtroEstadoLegal, setFiltroEstadoLegal] = useState("TODOS");
 
-  //  Estados para la Paginación
+  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
@@ -134,7 +130,8 @@ export default function InventarioMuestrasPage() {
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/muestras");
+      // 🔥 Llamamos a la API con la fase 'activa'
+      const res = await fetch("/api/muestras?fase=activa");
       if (!res.ok) throw new Error("Error al cargar inventario");
       const data = await res.json();
       setMuestrasOriginales(data);
@@ -154,7 +151,7 @@ export default function InventarioMuestrasPage() {
     setFiltroDireccion("TODOS");
   }, [filtroPiso]);
 
-  // Lógica de Filtrado
+  // Lógica de Filtrado simplificada
   useEffect(() => {
     const hoy = new Date();
     
@@ -171,22 +168,18 @@ export default function InventarioMuestrasPage() {
       let matchEstadoLegal = true;
       if (filtroEstadoLegal !== "TODOS") {
         const fechaCad = new Date(muestra.fecha_caducidad);
-        const fechaRet = new Date(muestra.fecha_fin_retencion);
         if (filtroEstadoLegal === "VIGENTE") matchEstadoLegal = hoy < fechaCad;
-        if (filtroEstadoLegal === "VENCIDA_CUSTODIA") matchEstadoLegal = hoy >= fechaCad && hoy < fechaRet;
-        if (filtroEstadoLegal === "DESCARTABLE") matchEstadoLegal = hoy >= fechaRet;
+        if (filtroEstadoLegal === "VENCIDA_CUSTODIA") matchEstadoLegal = hoy >= fechaCad;
       }
 
       return matchBusqueda && matchPiso && matchDireccion && matchEstadoLegal;
     });
 
     setMuestrasFiltradas(filtrados);
-    
-    //  Cada vez que buscamos algo nuevo, devolvemos al usuario a la página 1
     setCurrentPage(1); 
   }, [busqueda, filtroPiso, filtroDireccion, filtroEstadoLegal, muestrasOriginales]);
 
-  //  Cálculos de Paginación
+  // Cálculos de Paginación
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
@@ -201,10 +194,10 @@ export default function InventarioMuestrasPage() {
     .map(m => [m.area.direccion.id, m.area.direccion])).values())
     .map((d: any) => ({ value: d.id.toString(), label: d.nombre }));
 
+  //  Filtro limpio sin la opción de descarte
   const OPCIONES_ESTADO_LEGAL = [
     { value: "VIGENTE", label: "Vigentes (Útiles)" },
-    { value: "VENCIDA_CUSTODIA", label: "Vencidas (En Custodia)" },
-    { value: "DESCARTABLE", label: "Retención Cumplida (Para Descarte)" },
+    { value: "VENCIDA_CUSTODIA", label: "Vencidas (En Custodia)" }
   ];
 
   const handleOpenModal = (muestra: any) => {
@@ -221,10 +214,10 @@ export default function InventarioMuestrasPage() {
             <div className="p-2.5 bg-brand-primary/10 text-brand-primary rounded-xl">
               <Package size={24} />
             </div>
-            Inventario de Muestras
+            Inventario de Muestras Activas
           </h1>
           <p className="text-slate-500 text-[13px] sm:text-[14px] font-medium mt-2">
-            Control de trazabilidad, custodia legal y gestión de vida útil de las especialidades farmacéuticas.
+            Control de trazabilidad y gestión de vida útil de las especialidades farmacéuticas en almacenamiento.
           </p>
         </div>
         
@@ -253,7 +246,7 @@ export default function InventarioMuestrasPage() {
           </div>
         </div>
         <div className="text-[13px] font-semibold text-slate-500 w-full text-right px-2 border-t border-slate-100 pt-3">
-          Mostrando <span className="text-brand-secondary font-bold">{loading ? "..." : muestrasFiltradas.length}</span> registros físicos
+          Mostrando <span className="text-brand-secondary font-bold">{loading ? "..." : muestrasFiltradas.length}</span> registros activos
         </div>
       </div>
 
@@ -261,17 +254,16 @@ export default function InventarioMuestrasPage() {
         {loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3 bg-slate-50/50 backdrop-blur-sm rounded-3xl z-20">
             <Loader2 className="animate-spin text-brand-secondary" size={36} />
-            <span className="text-[15px] font-semibold text-brand-secondary">Cargando trazabilidad...</span>
+            <span className="text-[15px] font-semibold text-brand-secondary">Cargando inventario activo...</span>
           </div>
         ) : muestrasFiltradas.length === 0 ? (
           <div className="py-24 text-center text-slate-500 text-[15px] px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center">
             <Package size={48} className="text-slate-300 mb-4 opacity-50" />
             <p className="font-bold text-slate-700 text-lg">Inventario vacío</p>
-            <p className="text-slate-500 mt-1">No hay muestras registradas que coincidan con los filtros.</p>
+            <p className="text-slate-500 mt-1">No hay muestras activas que coincidan con los filtros de búsqueda.</p>
           </div>
         ) : (
           <>
-            {/*  Renderizamos solo la rebanada (slice) actual, no las 1000 de golpe */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
               {muestrasPaginadas.map((muestra) => (
                 <MuestraCard 
@@ -282,13 +274,12 @@ export default function InventarioMuestrasPage() {
               ))}
             </div>
 
-            {/*  Renderizamos el componente Paginación abajo */}
             <Pagination 
               currentPage={currentPage} 
               totalPages={totalPages} 
               onPageChange={(page) => {
                 setCurrentPage(page);
-                window.scrollTo({ top: 0, behavior: 'smooth' }); // Sube la pantalla al cambiar de página
+                window.scrollTo({ top: 0, behavior: 'smooth' }); 
               }} 
             />
           </>
@@ -300,7 +291,6 @@ export default function InventarioMuestrasPage() {
         onClose={() => setIsModalOpen(false)}
         muestra={muestraSeleccionada}
       />
-
     </div>
   );
 }

@@ -6,17 +6,13 @@ import {
   Loader2, 
   PackageX, 
   MapPin, 
-  ShieldAlert, 
   Eye, 
-  FileWarning, 
   Trash2, 
-  User, 
   History, 
   SearchX 
 } from "lucide-react";
 import { toast } from "react-toastify";
 import SearchBar from "../../../components/ui/SearchBar";
-import FilterSelect from "../../../components/ui/FilterSelect";
 import TrazabilidadModal from "../../../components/muestras/TrazabilidadModal";
 import Pagination from "../../../components/ui/Pagination";
 
@@ -35,40 +31,23 @@ const formatearFecha = (fecha: string) => {
   });
 };
 
-// --- TARJETA DEL ARCHIVO CON COLORES INSTITUCIONALES ---
+// --- TARJETA DEL ARCHIVO HISTÓRICO (Solo Destruidas) ---
 function MuestraInactivaCard({ muestra, onClick }: { muestra: any, onClick: () => void }) {
-  const esAnulada = muestra.inhabilitado;
-  
-  const estadoVisual = esAnulada 
-    ? { 
-        texto: "Inhabilitada (Error)", 
-        color: "bg-indigo-50 text-indigo-700 border-indigo-200", 
-        icon: FileWarning,
-        gradient: "from-indigo-100 to-indigo-50 text-indigo-600"
-      }
-    : { 
-        texto: "Destruida (Legal)", 
-        color: "bg-violet-50 text-violet-700 border-violet-200", 
-        icon: Trash2,
-        gradient: "from-violet-100 to-violet-50 text-violet-600"
-      };
-
-  const IconoEstado = estadoVisual.icon;
-
   return (
-    <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 flex flex-col h-full group relative overflow-hidden">
+    <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-violet-500/10 transition-all duration-500 flex flex-col h-full group relative overflow-hidden">
       
-      <div className={`absolute top-0 left-0 w-2 h-full ${esAnulada ? 'bg-indigo-500' : 'bg-violet-500'} opacity-20`} />
+      {/* Indicador de estado lateral */}
+      <div className="absolute top-0 left-0 w-2 h-full bg-violet-500 opacity-20" />
 
       <div className="flex items-start justify-between gap-4 mb-5 relative z-10">
         <div className="flex items-center gap-3">
-          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${estadoVisual.gradient} flex items-center justify-center shrink-0 shadow-inner transition-transform group-hover:scale-110`}>
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-100 to-violet-50 text-violet-600 flex items-center justify-center shrink-0 shadow-inner transition-transform group-hover:scale-110">
             <PackageX size={28} />
           </div>
           <div>
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-wider mb-1.5 ${estadoVisual.color}`}>
-              <IconoEstado size={12} strokeWidth={3} />
-              {estadoVisual.texto}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-wider mb-1.5 bg-violet-50 text-violet-700 border-violet-200">
+              <Trash2 size={12} strokeWidth={3} />
+              Destruida (Legal)
             </span>
             <h3 className="text-[17px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand-primary transition-colors">
               {muestra.principio_activo}
@@ -89,31 +68,20 @@ function MuestraInactivaCard({ muestra, onClick }: { muestra: any, onClick: () =
           </div>
         </div>
 
-        <div className={`p-4 rounded-2xl border transition-all ${esAnulada ? 'bg-indigo-50/30 border-indigo-100' : 'bg-violet-50/30 border-violet-100'}`}>
-          <span className="block text-slate-500 font-black text-[11px] uppercase tracking-wide mb-2">Motivo del Archivo</span>
-          <p className="text-[12px] text-slate-600 font-medium italic leading-relaxed mb-3 line-clamp-3">
-            "{esAnulada ? (muestra.motivo_inhabilitacion || "Registro anulado por error administrativo.") : "Muestra descartada físicamente según Gaceta Oficial."}"
+        {/* MOTIVO DE ARCHIVO FIJO */}
+        <div className="p-4 rounded-2xl border transition-all bg-violet-50/30 border-violet-100">
+          <span className="block text-slate-500 font-black text-[11px] uppercase tracking-wide mb-2">Contexto del Archivo</span>
+          <p className="text-[12px] text-slate-600 font-medium italic leading-relaxed line-clamp-3">
+            "Muestra procesada y descartada físicamente según los lineamientos de bioseguridad. Ver expediente para acta detallada."
           </p>
-          
-          {esAnulada && muestra.usuarioInhabilitador && (
-            <div className="flex items-center gap-2 text-[10px] bg-white/80 p-2.5 rounded-xl border border-slate-100">
-              <div className="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg">
-                <User size={12} strokeWidth={3} />
-              </div>
-              <div className="flex flex-col truncate">
-                <span className="text-slate-400 font-bold uppercase text-[8px]">Responsable</span>
-                <span className="text-slate-700 font-bold truncate">{muestra.usuarioInhabilitador.nombre}</span>
-              </div>
-              <span className="ml-auto font-black text-indigo-600/60 uppercase">{formatearFecha(muestra.fecha_inhabilitacion)}</span>
-            </div>
-          )}
         </div>
 
-        <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 group-hover:bg-indigo-500/[0.03] transition-colors">
+        <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 group-hover:bg-violet-500/[0.03] transition-colors">
           <MapPin size={18} className="text-brand-secondary shrink-0 mt-0.5" />
           <div className="leading-tight text-[13px] text-slate-500">
-            <strong className="text-slate-800 block mb-1 font-bold">Ubicación Final</strong>
+            <strong className="text-slate-800 block mb-1 font-bold">Ubicación de origen</strong>
             <span className="text-[12px] font-medium">{muestra.area?.nombre || "N/A"}</span>
+            <span className="block text-[11px] text-slate-400 mt-0.5">{muestra.area?.direccion?.nombre}</span>
           </div>
         </div>
       </div>
@@ -121,7 +89,7 @@ function MuestraInactivaCard({ muestra, onClick }: { muestra: any, onClick: () =
       <div className="mt-auto relative z-10">
         <button 
           onClick={onClick}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-white hover:bg-brand-primary text-slate-600 hover:text-white font-black text-[13px] rounded-2xl transition-all duration-300 border shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-white hover:bg-slate-900 text-slate-600 hover:text-white font-black text-[13px] rounded-2xl transition-all duration-300 border border-slate-200 hover:border-slate-900 shadow-sm"
         >
           <Eye size={18} /> Ver Expediente Histórico
         </button>
@@ -136,11 +104,10 @@ export default function InventarioInactivoPage() {
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtros
+  // Filtros (Solo texto, ya no hay filtro de tipo)
   const [busqueda, setBusqueda] = useState("");
-  const [filtroTipo, setFiltroTipo] = useState("TODOS"); 
 
-  // Lógica de Paginación (20 por página)
+  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
@@ -151,7 +118,7 @@ export default function InventarioInactivoPage() {
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/muestras?vista=inactiva");
+      const res = await fetch("/api/muestras?fase=inactiva");
       if (!res.ok) throw new Error("Error al cargar");
       const data = await res.json();
       setMuestrasOriginales(data);
@@ -170,32 +137,22 @@ export default function InventarioInactivoPage() {
   useEffect(() => {
     const filtrados = muestrasOriginales.filter((muestra) => {
       const busquedaLimpia = quitarAcentos(busqueda);
-      const matchBusqueda = 
+      return (
         quitarAcentos(muestra.codigo_interno).includes(busquedaLimpia) ||
         quitarAcentos(muestra.lote).includes(busquedaLimpia) ||
-        quitarAcentos(muestra.principio_activo).includes(busquedaLimpia);
-
-      let matchTipo = true;
-      if (filtroTipo === "ANULADAS") matchTipo = muestra.inhabilitado === true;
-      if (filtroTipo === "DESTRUIDAS") matchTipo = muestra.inhabilitado === false;
-
-      return matchBusqueda && matchTipo;
+        quitarAcentos(muestra.principio_activo).includes(busquedaLimpia)
+      );
     });
 
     setMuestrasFiltradas(filtrados);
-    setCurrentPage(1); // Resetear a la primera página al filtrar
-  }, [busqueda, filtroTipo, muestrasOriginales]);
+    setCurrentPage(1); 
+  }, [busqueda, muestrasOriginales]);
 
   // Cálculos de Paginación
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
   const muestrasPaginadas = muestrasFiltradas.slice(indexOfFirstItem, indexOfLastItem);
-
-  const OPCIONES_TIPO = [
-    { value: "ANULADAS", label: "Solo Inhabilitadas" },
-    { value: "DESTRUIDAS", label: "Solo Destruidas" },
-  ];
 
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in duration-500 relative">
@@ -211,7 +168,7 @@ export default function InventarioInactivoPage() {
             </h1>
           </div>
           <p className="text-slate-500 text-sm sm:text-base font-medium max-w-2xl leading-relaxed">
-            Gestión de auditoría para registros inhabilitados y muestras que han completado su proceso de descarte institucional.
+            Gestión de auditoría para muestras que han completado su proceso de descarte institucional.
           </p>
         </div>
         
@@ -232,16 +189,7 @@ export default function InventarioInactivoPage() {
             <SearchBar 
               value={busqueda} 
               onChange={setBusqueda} 
-              placeholder="Filtrar expediente por código, lote o nombre..." 
-            />
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 min-w-[320px]">
-            <FilterSelect 
-              options={OPCIONES_TIPO} 
-              value={filtroTipo} 
-              onChange={setFiltroTipo} 
-              defaultLabel="Tipo de Registro" 
-              icon={ShieldAlert} 
+              placeholder="Filtrar expediente por código, lote o nombre del producto..." 
             />
           </div>
         </div>
@@ -274,7 +222,6 @@ export default function InventarioInactivoPage() {
               ))}
             </div>
 
-            {/* COMPONENTE DE PAGINACIÓN APLICADO */}
             <div className="mt-12">
               <Pagination 
                 currentPage={currentPage} 

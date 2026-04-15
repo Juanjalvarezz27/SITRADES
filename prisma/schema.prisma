@@ -36,7 +36,6 @@ model Usuario {
   historialesCambiados HistorialTrazabilidad[]
   descartesAutorizados ReporteDescarte[]       @relation("AutorizadoPor")
   descartesEjecutados  ReporteDescarte[]       @relation("EjecutadoPor")
-  muestrasInhabilitadas MuestraFarmaceutica[] @relation("InhabilitadoPor")
 }
 
 model Piso {
@@ -106,14 +105,6 @@ model MuestraFarmaceutica {
   
   registrado_por      String
   usuarioRegistrador  Usuario       @relation(fields: [registrado_por], references: [id])
-
-  // BLOQUE DE BORRADO LÓGICO (SOFT DELETE)
-  inhabilitado         Boolean   @default(false)
-  motivo_inhabilitacion String?   @db.Text
-  fecha_inhabilitacion  DateTime? 
-
-  inhabilitado_por      String?
-  usuarioInhabilitador  Usuario?  @relation("InhabilitadoPor", fields: [inhabilitado_por], references: [id])
 
   creado_en           DateTime @default(now())
   actualizado_en      DateTime @updatedAt
