@@ -24,7 +24,8 @@ import {
   Package,
   PackagePlus,
   BookOpen,
-  Archive 
+  Archive,
+  Trash 
 } from "lucide-react";
 
 import ConfirmModal from "../ui/ConfirmModal"; 
@@ -55,8 +56,13 @@ const MENU_ITEMS = [
         exact: true,
       },
       {
+        path: "/home/muestras/descarte",
+        name: "Cola de Descarte",
+        icon: Trash,
+      },
+      {
         path: "/home/muestras/inactivo",
-        name: "Inventario Inactivo",
+        name: "Archivo Histórico",
         icon: Archive,
       }
     ]
@@ -117,10 +123,8 @@ export default function Sidebar({ userRol }: { userRol: string }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   
-  // Estado para controlar el modal de cierre de sesión
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  // Efecto: Solo mantiene abierto el menú de la ruta actual
   useEffect(() => {
     const activeMenu = MENU_ITEMS.find(item => item.subItems && pathname.startsWith(item.path));
     if (activeMenu) {
@@ -130,7 +134,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
     }
   }, [pathname]);
 
-  // Comportamiento de Acordeón: Cierra el resto al abrir uno nuevo
   const toggleSubMenu = (menuName: string) => {
     if (isCollapsed) setIsCollapsed(false);
     setOpenMenus(prev => (prev[menuName] ? {} : { [menuName]: true }));
@@ -142,7 +145,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
   return (
     <>
-      {/* HEADER MÓVIL */}
       <div className="md:hidden w-full flex items-center justify-between bg-white border-b border-slate-100 p-4 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 p-2 rounded-xl text-brand-primary">
@@ -158,7 +160,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         </button>
       </div>
 
-      {/* OVERLAY OSCURO MÓVIL */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity" 
@@ -166,7 +167,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         />
       )}
 
-      {/* SIDEBAR PRINCIPAL */}
       <aside 
         className={`fixed md:sticky top-0 left-0 h-screen bg-white border-r border-slate-100 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-[4px_0_24px_rgb(0,0,0,0.02)]
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
@@ -174,7 +174,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         `}
       >
         
-        {/* Cabecera del Sidebar */}
         <div className="p-5 border-b border-slate-50 flex items-center justify-between relative">
           <div className="flex items-center gap-3 overflow-hidden pr-8">
             <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 p-2.5 rounded-xl text-brand-primary shrink-0">
@@ -194,7 +193,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           </button>
         </div>
 
-        {/* Navegación */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
           <p className={`px-2 text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-4 transition-all duration-300 ${isCollapsed ? "text-center opacity-0" : "opacity-100"}`}>
             {isCollapsed ? "..." : "Menú Principal"}
@@ -280,7 +278,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           })}
         </nav>
 
-        {/* Controles Inferiores */}
         <div className="p-4 border-t border-slate-50 flex flex-col gap-2.5 bg-white">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -302,7 +299,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
             </span>
           </Link>
 
-          {/* Botón de Cerrar Sesión modificado para abrir el modal */}
           <button
             onClick={() => setIsLogoutModalOpen(true)}
             title={isCollapsed ? "Cerrar Sesión" : ""}
@@ -316,7 +312,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         </div>
       </aside>
 
-      {/* Renderizamos el Modal al final */}
       <ConfirmModal 
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}

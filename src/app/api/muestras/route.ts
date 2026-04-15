@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getToken } from "next-auth/jwt";
+export const dynamic = 'force-dynamic';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
     }
 
     // Ejecutamos la consulta limpia
-    const muestras = await prisma.muestraFarmaceutica.findMany({
+const muestras = await prisma.muestraFarmaceutica.findMany({
       where: whereClause,
       include: {
         area: {
@@ -49,6 +50,13 @@ export async function GET(request: Request) {
         estado: true,
         usuarioRegistrador: {
           select: { nombre: true, rol: true }
+        },
+        reporte_descarte: {
+          include: {
+            ejecutor: {
+              select: { nombre: true }
+            }
+          }
         }
       },
       orderBy: { creado_en: "desc" }

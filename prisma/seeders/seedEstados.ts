@@ -3,12 +3,11 @@ import { PrismaClient } from '@prisma/client';
 export async function seedEstados(prisma: PrismaClient) {
   console.log(' Poblando tabla de Estados de Muestra...');
   
-  // El ciclo de vida legal OFICIAL de la contramuestra (Coincide exacto con la API)
   const estados = [
-    { nombre: 'Recibida (Pendiente de Análisis)' }, // 1. Ingreso inicial
-    { nombre: 'Vencida (En Custodia Legal)' },      // 2. Pasó fecha caducidad, inicia retención
-    { nombre: 'Retención Cumplida (Descartable)' }, // 3. Cumplió el año, lista para logística inversa
-    { nombre: 'Descartada' },                       // 4. Fin del ciclo (Incinerada/Neutralizada)
+    { nombre: 'Recibida (Pendiente de Análisis)' }, 
+    { nombre: 'Vencida (En Custodia Legal)' },      
+    { nombre: 'Retención Cumplida (Descartable)' }, 
+    { nombre: 'Destruida / Segregada' }, 
   ];
 
   for (const estado of estados) {
