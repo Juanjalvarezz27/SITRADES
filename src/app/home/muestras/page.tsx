@@ -4,13 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { 
   PackagePlus, Loader2, Package, Calendar, MapPin, 
-  ShieldAlert, Eye, FlaskConical 
+  ShieldAlert, Eye, FlaskConical, Edit3 
 } from "lucide-react";
 import { toast } from "react-toastify";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterSelect from "../../components/ui/FilterSelect";
 import TrazabilidadModal from "../../components/muestras/TrazabilidadModal";
 import Pagination from "../../components/ui/Pagination";
+import EditarMuestraModal from "../../components/muestras/EditarMuestraModal"; 
 
 const quitarAcentos = (str: string) => {
   if (!str) return "";
@@ -22,27 +23,26 @@ const formatearFecha = (fecha: string) => {
   return new Date(fecha).toLocaleDateString("es-VE", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 };
 
-// --- TARJETA DE MUESTRA (LIMPIA, SOLO VIGENTES Y VENCIDAS) ---
-function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }) {
+// --- TARJETA DE MUESTRA ---
+function MuestraCard({ muestra, onClick, onEdit }: { muestra: any, onClick: () => void, onEdit: () => void }) {
   const hoy = new Date();
   const fechaCaducidad = new Date(muestra.fecha_caducidad);
 
-  // Solo hay dos estados posibles en la fase Activa
   let estadoLegal = { texto: "Vigente", color: "bg-emerald-50 text-emerald-600 border-emerald-200" };
-  
   if (hoy >= fechaCaducidad) {
     estadoLegal = { texto: "Vencida (En Custodia)", color: "bg-amber-50 text-amber-600 border-amber-200" };
   }
 
   return (
-    <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full group">
+    <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm hover:shadow-xl hover:shadow-brand-primary/5 transition-all duration-300 flex flex-col h-full group">
+      
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary/10 to-brand-secondary/20 flex items-center justify-center text-brand-primary shrink-0 shadow-inner">
+          <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand-primary group-hover:bg-brand-primary/5 transition-all shrink-0">
             <FlaskConical size={24} />
           </div>
           <div>
-            <span className={`inline-flex px-2.5 py-1 border rounded-lg text-[10px] font-bold uppercase tracking-wider mb-1 ${estadoLegal.color}`}>
+            <span className={`inline-flex px-2.5 py-1 border rounded-lg text-[9px] font-black uppercase tracking-widest mb-1.5 ${estadoLegal.color}`}>
               {estadoLegal.texto}
             </span>
             <h3 className="text-[16px] font-black text-slate-800 leading-tight group-hover:text-brand-primary transition-colors line-clamp-2" title={muestra.principio_activo}>
@@ -55,39 +55,41 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
       <div className="flex-1 space-y-3 mb-6">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span className="block text-slate-400 font-medium text-[11px] uppercase mb-1">Código</span>
-            <span className="font-bold text-slate-700 text-[13px] truncate block">{muestra.codigo_interno}</span>
+            <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Código</span>
+            <span className="font-black text-slate-700 text-[13px] truncate block">{muestra.codigo_interno}</span>
           </div>
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span className="block text-slate-400 font-medium text-[11px] uppercase mb-1">Lote</span>
-            <span className="font-bold text-slate-700 text-[13px] truncate block">{muestra.lote}</span>
+            <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Lote</span>
+            <span className="font-black text-slate-700 text-[13px] truncate block">{muestra.lote}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
             <div className="flex items-center gap-1.5 mb-1">
-              <Calendar size={14} className="text-amber-500" />
-              <span className="text-slate-400 font-medium text-[11px] uppercase">Vence</span>
+              <Calendar size={14} className="text-slate-400" />
+              <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wide">Vence</span>
             </div>
             <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_caducidad)}</span>
           </div>
-          <div className="p-3 rounded-xl border bg-blue-50 border-blue-100">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
             <div className="flex items-center gap-1.5 mb-1">
-              <ShieldAlert size={14} className="text-blue-500" />
-              <span className="font-medium text-[11px] uppercase text-blue-400">Retención</span>
+              <ShieldAlert size={14} className="text-slate-400" />
+              <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wide">Retención</span>
             </div>
-            <span className="font-bold text-[13px] block text-blue-700">{formatearFecha(muestra.fecha_fin_retencion)}</span>
+            <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_fin_retencion)}</span>
           </div>
         </div>
 
         <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <MapPin size={18} className="text-brand-secondary shrink-0 mt-0.5" />
+          <MapPin size={18} className="text-slate-400 shrink-0 mt-0.5" />
           <div className="leading-snug text-[13px] text-slate-600">
-            <strong className="text-slate-800 block mb-0.5">{muestra.area?.nombre || "Sin área"}</strong>
-            {muestra.area?.direccion?.nombre} ({muestra.area?.direccion?.piso?.nombre})
+            <strong className="text-slate-800 block mb-0.5 font-bold">{muestra.area?.nombre || "Sin área asignada"}</strong>
+            <span className="font-medium text-slate-500">
+              {muestra.area?.direccion?.nombre} ({muestra.area?.direccion?.piso?.nombre})
+            </span>
             {muestra.ubicacion_detalle && (
-              <span className="block mt-1.5 text-[11px] text-slate-500 font-medium bg-slate-200/50 p-1.5 rounded-lg">
+              <span className="block mt-2 text-[11px] text-slate-500 font-bold uppercase tracking-wide bg-white border border-slate-200 px-2 py-1 rounded-md">
                 📍 {muestra.ubicacion_detalle}
               </span>
             )}
@@ -95,12 +97,19 @@ function MuestraCard({ muestra, onClick }: { muestra: any, onClick: () => void }
         </div>
       </div>
 
-      <div className="mt-auto flex gap-2">
+      {/* BOTONES 50/50 */}
+      <div className="mt-auto pt-2 grid grid-cols-2 gap-3 border-t border-slate-100">
         <button 
           onClick={onClick}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white font-bold text-[13px] rounded-xl transition-all border border-brand-primary/20 hover:border-brand-primary shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white font-bold text-[13px] rounded-xl transition-all border border-brand-primary/20 hover:border-brand-primary shadow-sm"
         >
-          <Eye size={16} /> Ver Trazabilidad
+          <Eye size={16} /> Trazabilidad
+        </button>
+        <button 
+          onClick={onEdit}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-secondary/10 hover:bg-brand-secondary text-brand-secondary hover:text-white font-bold text-[13px] rounded-xl transition-all border border-brand-secondary/20 hover:border-brand-secondary shadow-sm"
+        >
+          <Edit3 size={16} /> Editar
         </button>
       </div>
     </div>
@@ -113,25 +122,22 @@ export default function InventarioMuestrasPage() {
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtros
   const [busqueda, setBusqueda] = useState("");
   const [filtroPiso, setFiltroPiso] = useState("TODOS");
   const [filtroDireccion, setFiltroDireccion] = useState("TODOS");
   const [filtroEstadoLegal, setFiltroEstadoLegal] = useState("TODOS");
 
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
-  // Modal
   const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
     try {
-      // 🔥 Llamamos a la API con la fase 'activa'
-      const res = await fetch("/api/muestras?fase=activa");
+      const res = await fetch("/api/muestras?fase=activa", { cache: 'no-store' });
       if (!res.ok) throw new Error("Error al cargar inventario");
       const data = await res.json();
       setMuestrasOriginales(data);
@@ -151,7 +157,6 @@ export default function InventarioMuestrasPage() {
     setFiltroDireccion("TODOS");
   }, [filtroPiso]);
 
-  // Lógica de Filtrado simplificada
   useEffect(() => {
     const hoy = new Date();
     
@@ -179,7 +184,6 @@ export default function InventarioMuestrasPage() {
     setCurrentPage(1); 
   }, [busqueda, filtroPiso, filtroDireccion, filtroEstadoLegal, muestrasOriginales]);
 
-  // Cálculos de Paginación
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
@@ -194,7 +198,6 @@ export default function InventarioMuestrasPage() {
     .map(m => [m.area.direccion.id, m.area.direccion])).values())
     .map((d: any) => ({ value: d.id.toString(), label: d.nombre }));
 
-  //  Filtro limpio sin la opción de descarte
   const OPCIONES_ESTADO_LEGAL = [
     { value: "VIGENTE", label: "Vigentes (Útiles)" },
     { value: "VENCIDA_CUSTODIA", label: "Vencidas (En Custodia)" }
@@ -203,6 +206,11 @@ export default function InventarioMuestrasPage() {
   const handleOpenModal = (muestra: any) => {
     setMuestraSeleccionada(muestra);
     setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (muestra: any) => {
+    setMuestraSeleccionada(muestra);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -270,6 +278,7 @@ export default function InventarioMuestrasPage() {
                   key={muestra.id} 
                   muestra={muestra} 
                   onClick={() => handleOpenModal(muestra)} 
+                  onEdit={() => handleOpenEditModal(muestra)}
                 />
               ))}
             </div>
@@ -286,11 +295,8 @@ export default function InventarioMuestrasPage() {
         )}
       </div>
 
-      <TrazabilidadModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        muestra={muestraSeleccionada}
-      />
+      <TrazabilidadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} muestra={muestraSeleccionada} />
+      <EditarMuestraModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} muestra={muestraSeleccionada} onSuccess={fetchMuestras} />
     </div>
   );
 }
