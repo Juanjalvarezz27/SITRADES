@@ -1,41 +1,150 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
   ArrowLeft, Save, Package, ShieldAlert, 
-  CalendarClock, MapPin, Loader2, Info
+  CalendarClock, MapPin, Loader2, Info, ChevronDown, Check, Plus, X
 } from "lucide-react";
 import { toast } from "react-toastify";
-import CustomSelect from "../../../components/ui/FilterSelect"; 
 
-const TIPOS_EMPAQUE = [
-  { value: "Caja de Cartón", label: "Caja de Cartón" },
-  { value: "Frasco de Vidrio", label: "Frasco de Vidrio" },
-  { value: "Blíster Plástico/Aluminio", label: "Blíster Plástico/Aluminio" },
-  { value: "Vial Ampolla", label: "Vial Ampolla" },
-  { value: "Saco/Bolsa Especial", label: "Saco/Bolsa Especial" },
-];
+// --- COMPONENTE SELECT PREMIUM (SIN SCROLL HORIZONTAL) ---
+function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newValue, setNewValue] = useState("");
+  const [loadingNew, setLoadingNew] = useState(false);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setIsAddingNew(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o: any) => o.value === value?.toString());
+
+  const handleAddNew = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!newValue.trim() || !onAddNew) return;
+    setLoadingNew(true);
+    await onAddNew(newValue);
+    setNewValue("");
+    setIsAddingNew(false);
+    setLoadingNew(false);
+  };
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full px-4 py-3 rounded-2xl border ${
+          isOpen 
+            ? 'border-brand-primary ring-4 ring-brand-primary/10 bg-white text-slate-800' 
+            : 'border-slate-200 bg-slate-50 hover:bg-white'
+        } outline-none transition-all text-[14px] font-medium text-left flex justify-between items-center`}
+      >
+        <span className={`truncate pr-4 ${value ? "text-slate-700" : "text-slate-400"}`}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronDown size={16} className={`shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand-primary' : 'text-slate-400'}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-[1.2rem] shadow-xl py-2 max-h-60 overflow-y-auto overflow-x-hidden custom-scrollbar animate-in fade-in zoom-in-95 origin-top">
+          <div
+            onClick={() => { onChange(name, ""); setIsOpen(false); }}
+            className={`mx-2 my-1 px-3 py-2.5 text-[13px] rounded-xl font-medium cursor-pointer transition-colors flex justify-between items-center ${
+              !value ? 'bg-brand-primary/10 text-brand-primary font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+            }`}
+          >
+            {placeholder}
+            {!value && <Check size={16} strokeWidth={3} className="shrink-0" />}
+          </div>
+          
+          {options.map((opt: any) => (
+            <div
+              key={opt.value}
+              onClick={() => { onChange(name, opt.value); setIsOpen(false); }}
+              className={`mx-2 my-1 px-3 py-2.5 text-[13px] rounded-xl font-medium cursor-pointer transition-colors flex justify-between items-center ${
+                value?.toString() === opt.value ? 'bg-brand-primary/10 text-brand-primary font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <span className="truncate pr-2">{opt.label}</span>
+              {value?.toString() === opt.value && <Check size={16} strokeWidth={3} className="shrink-0" />}
+            </div>
+          ))}
+
+          {/* SECCIÓN DE AÑADIR NUEVO CORREGIDA (min-w-0 y shrink-0) */}
+          {onAddNew && (
+            <div className="border-t border-slate-100 mt-2 pt-2 px-2">
+              {!isAddingNew ? (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setIsAddingNew(true); }}
+                  className="w-full text-left px-3 py-2 text-[13px] text-brand-primary font-bold hover:bg-brand-primary/10 rounded-xl flex items-center gap-2 transition-colors"
+                >
+                  <Plus size={14} /> Añadir nuevo registro
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5 w-full">
+                  <input
+                    autoFocus
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="Escriba aquí..."
+                    className="flex-1 min-w-0 text-[13px] border border-slate-200 rounded-lg px-2.5 py-2 outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 bg-slate-50"
+                  />
+                  <button
+                    type="button"
+                    disabled={loadingNew || !newValue.trim()}
+                    onClick={handleAddNew}
+                    className="p-2 bg-brand-primary text-white rounded-lg disabled:opacity-50 hover:bg-brand-primary/90 transition-colors shadow-sm shrink-0"
+                  >
+                    {loadingNew ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setIsAddingNew(false); }}
+                    className="p-2 bg-white border border-slate-200 text-slate-500 rounded-lg hover:bg-slate-50 shrink-0"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- CONSTANTES ---
 const RIESGOS_BIOSEGURIDAD = [
-  { value: "Bajo (No Infeccioso)", label: "Bajo (No Infeccioso)" },
-  { value: "Moderado (Riesgo Químico)", label: "Moderado (Riesgo Químico)" },
-  { value: "Alto (Riesgo Biológico/Infeccioso)", label: "Alto (Riesgo Biológico/Infeccioso)" },
-];
-
-const UNIDADES_MEDIDA = [
-  { value: "Unidades", label: "Unidades (Cajas/Frascos)" },
-  { value: "Mililitros (ml)", label: "Mililitros (ml)" },
-  { value: "Gramos (g)", label: "Gramos (g)" },
-  { value: "Ampollas", label: "Ampollas" },
+  { value: "Riesgo Mínimo", label: "Riesgo Mínimo" },
+  { value: "Riesgo Moderado", label: "Riesgo Moderado" },
+  { value: "Riesgo Alto", label: "Riesgo Alto" }
 ];
 
 export default function RegistroMuestraPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // ESTADOS DINÁMICOS
   const [areasOpciones, setAreasOpciones] = useState<{value: string, label: string}[]>([]);
-  const [loadingAreas, setLoadingAreas] = useState(true);
+  const [unidades, setUnidades] = useState<{value: string, label: string}[]>([]);
+  const [empaques, setEmpaques] = useState<{value: string, label: string}[]>([]);
+  const [loadingInitial, setLoadingInitial] = useState(true);
 
   const currentYear = new Date().getFullYear();
   const MIN_DATE = `${currentYear - 15}-01-01`; 
@@ -46,38 +155,72 @@ export default function RegistroMuestraPage() {
     lote: "",
     registro_sanitario: "",
     principio_activo: "",
-    tipo_empaque: "Caja de Cartón",
-    riesgo_bioseguridad: "Bajo (No Infeccioso)",
+    tipo_empaque_id: "", 
+    unidad_medida_id: "", 
+    riesgo_bioseguridad: "",
     cantidad: "",
-    unidad_medida: "Unidades",
     proposito_analisis: "",
     fecha_caducidad: "",
     area_id: "",
     ubicacion_detalle: "",
   });
 
+  // CARGAR DATOS AL INICIAR
   useEffect(() => {
-    const fetchAreas = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/areas");
-        const data = await res.json();
-        const opciones = data.map((area: any) => ({
-          value: area.id.toString(),
-          label: `${area.nombre} — ${area.direccion?.nombre} (${area.direccion?.piso?.nombre})`
-        }));
-        setAreasOpciones(opciones);
+        const [resAreas, resUnidades, resEmpaques] = await Promise.all([
+          fetch("/api/areas"),
+          fetch("/api/unidades-medida"),
+          fetch("/api/tipos-empaque")
+        ]);
+
+        const dataAreas = await resAreas.json();
+        const dataUnidades = await resUnidades.json();
+        const dataEmpaques = await resEmpaques.json();
+
+        setAreasOpciones(dataAreas.map((a: any) => ({ value: a.id.toString(), label: `${a.nombre} — ${a.direccion?.nombre}` })));
+        setUnidades(dataUnidades.map((u: any) => ({ value: u.id.toString(), label: u.nombre })));
+        setEmpaques(dataEmpaques.map((e: any) => ({ value: e.id.toString(), label: e.nombre })));
       } catch (error) {
-        toast.error("Error al cargar las áreas de almacenamiento");
+        toast.error("Error al cargar los catálogos del sistema");
       } finally {
-        setLoadingAreas(false);
+        setLoadingInitial(false);
       }
     };
-    fetchAreas();
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // FUNCIONES PARA AÑADIR NUEVOS ELEMENTOS
+  const crearUnidadMedida = async (nombre: string) => {
+    try {
+      const res = await fetch("/api/unidades-medida", { method: "POST", body: JSON.stringify({ nombre }) });
+      const nueva = await res.json();
+      const nuevaOpcion = { value: nueva.id.toString(), label: nueva.nombre };
+      setUnidades(prev => [...prev, nuevaOpcion].sort((a,b) => a.label.localeCompare(b.label)));
+      setFormData(prev => ({ ...prev, unidad_medida_id: nueva.id.toString() }));
+      toast.success("Unidad añadida exitosamente");
+    } catch { toast.error("Error al añadir unidad"); }
+  };
+
+  const crearTipoEmpaque = async (nombre: string) => {
+    try {
+      const res = await fetch("/api/tipos-empaque", { method: "POST", body: JSON.stringify({ nombre }) });
+      const nueva = await res.json();
+      const nuevaOpcion = { value: nueva.id.toString(), label: nueva.nombre };
+      setEmpaques(prev => [...prev, nuevaOpcion].sort((a,b) => a.label.localeCompare(b.label)));
+      setFormData(prev => ({ ...prev, tipo_empaque_id: nueva.id.toString() }));
+      toast.success("Empaque añadido exitosamente");
+    } catch { toast.error("Error al añadir empaque"); }
   };
 
   const fechaFinRetencion = formData.fecha_caducidad 
@@ -87,7 +230,6 @@ export default function RegistroMuestraPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Validación manual de campos vacíos (ya que desactivamos el HTML5 nativo)
     if (
       !formData.codigo_interno || !formData.lote || !formData.registro_sanitario || 
       !formData.principio_activo || !formData.cantidad || !formData.proposito_analisis
@@ -95,21 +237,19 @@ export default function RegistroMuestraPage() {
       return toast.warning("Por favor, completa todos los campos obligatorios (*).");
     }
 
-    if (!formData.area_id) {
-      return toast.warning("Debe seleccionar un Área de Almacenamiento.");
+    if (!formData.area_id || !formData.tipo_empaque_id || !formData.unidad_medida_id || !formData.riesgo_bioseguridad) {
+      return toast.warning("Debe seleccionar Área, Empaque, Riesgo y Unidad de Medida.");
     }
 
     if (!formData.fecha_caducidad) {
       return toast.warning("La Fecha de Caducidad es obligatoria.");
     }
 
-    // 2. Validación de Fecha con los límites (Ahora sí saltará el Toast)
     const yearIngresado = new Date(formData.fecha_caducidad).getFullYear();
     
     if (yearIngresado > currentYear + 15) {
-      return toast.warning(`Fecha irreal: La caducidad no puede superar el año ${currentYear + 15}. Revisa si hay un error de tipeo.`);
+      return toast.warning(`Fecha irreal: La caducidad no puede superar el año ${currentYear + 15}.`);
     }
-    
     if (yearIngresado < currentYear - 15) {
       return toast.warning(`Fecha muy antigua: La caducidad no puede ser menor al año ${currentYear - 15}.`);
     }
@@ -123,7 +263,7 @@ export default function RegistroMuestraPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          cantidad: parseInt(formData.cantidad),
+          cantidad: Number(formData.cantidad),
           fecha_fin_retencion: fechaFinRetencion
         }),
       });
@@ -151,7 +291,6 @@ export default function RegistroMuestraPage() {
         <p className="text-slate-500 text-[14px] font-medium">Ingresa los datos del producto para iniciar su cadena de custodia.</p>
       </div>
 
-      {/* Agregamos noValidate aquí para matar los tooltips del navegador */}
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
@@ -195,20 +334,40 @@ export default function RegistroMuestraPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Cantidad <span className="text-red-500">*</span></label>
-                  <input required type="number" min="1" name="cantidad" value={formData.cantidad} onChange={handleChange} placeholder="Ej. 150" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all" />
+                  <input required type="number" step="0.01" min="0" name="cantidad" value={formData.cantidad} onChange={handleChange} placeholder="Ej. 150" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all" />
                 </div>
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Unidad de Medida <span className="text-red-500">*</span></label>
-                  <CustomSelect options={UNIDADES_MEDIDA} value={formData.unidad_medida} onChange={(val) => setFormData(p => ({...p, unidad_medida: val}))} defaultLabel="Seleccionar" />
+                  <CustomSelect 
+                    name="unidad_medida_id"
+                    options={unidades} 
+                    value={formData.unidad_medida_id} 
+                    onChange={handleSelectChange} 
+                    defaultLabel="Seleccionar"
+                    onAddNew={crearUnidadMedida} 
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Riesgo de Bioseguridad <span className="text-red-500">*</span></label>
-                <CustomSelect options={RIESGOS_BIOSEGURIDAD} value={formData.riesgo_bioseguridad} onChange={(val) => setFormData(p => ({...p, riesgo_bioseguridad: val}))} defaultLabel="Nivel de Riesgo" />
+                <CustomSelect 
+                  name="riesgo_bioseguridad"
+                  options={RIESGOS_BIOSEGURIDAD} 
+                  value={formData.riesgo_bioseguridad} 
+                  onChange={handleSelectChange} 
+                  defaultLabel="Nivel de Riesgo" 
+                />
               </div>
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Tipo de Empaque <span className="text-red-500">*</span></label>
-                <CustomSelect options={TIPOS_EMPAQUE} value={formData.tipo_empaque} onChange={(val) => setFormData(p => ({...p, tipo_empaque: val}))} defaultLabel="Seleccionar Empaque" />
+                <CustomSelect 
+                  name="tipo_empaque_id"
+                  options={empaques} 
+                  value={formData.tipo_empaque_id} 
+                  onChange={handleSelectChange} 
+                  defaultLabel="Seleccionar Empaque"
+                  onAddNew={crearTipoEmpaque} 
+                />
               </div>
             </div>
           </div>
@@ -225,7 +384,6 @@ export default function RegistroMuestraPage() {
             <div className="space-y-5">
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Fecha de Caducidad Impresa <span className="text-red-500">*</span></label>
-                {/* Dejamos min y max porque algunos celulares lo usan para bloquear días en el calendario visual */}
                 <input 
                   required 
                   type="date" 
@@ -258,10 +416,16 @@ export default function RegistroMuestraPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Área de Almacenamiento <span className="text-red-500">*</span></label>
-                {loadingAreas ? (
+                {loadingInitial ? (
                   <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] text-slate-400 flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Cargando áreas...</div>
                 ) : (
-                  <CustomSelect options={areasOpciones} value={formData.area_id} onChange={(val) => setFormData(p => ({...p, area_id: val}))} defaultLabel="Seleccione el área física" />
+                  <CustomSelect 
+                    name="area_id"
+                    options={areasOpciones} 
+                    value={formData.area_id} 
+                    onChange={handleSelectChange} 
+                    defaultLabel="Seleccione el área física" 
+                  />
                 )}
               </div>
               
@@ -288,7 +452,7 @@ export default function RegistroMuestraPage() {
         <div className="flex justify-center pt-4">
           <button 
             type="submit" 
-            disabled={isSubmitting} 
+            disabled={isSubmitting || loadingInitial} 
             className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 active:scale-95 disabled:opacity-70 disabled:active:scale-100 text-white px-4 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-[15px] sm:text-[18px] transition-all shadow-lg shadow-brand-secondary/30 leading-tight"
           >
             {isSubmitting ? (

@@ -10,44 +10,38 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 // 1. GET: Obtener muestras separadas por Fases (Activa, Descarte, Inactiva)
 export async function GET(request: Request) {
   try {
-    // Leemos el parámetro de fase desde la URL (por defecto será 'activa')
     const { searchParams } = new URL(request.url);
     const fase = searchParams.get("fase") || "activa"; 
     const hoy = new Date();
 
-    // Construimos las reglas de filtrado de forma dinámica
     let whereClause: any = {};
 
     if (fase === "activa") {
-      // FASE 1: Inventario Activo (Vigentes y Vencidas en custodia)
-      // Condición: La fecha de retención AÚN NO se ha cumplido y NO está destruida
       whereClause = {
         fecha_fin_retencion: { gt: hoy },
         estado: { nombre: { not: "Destruida / Segregada" } }
       };
     } else if (fase === "descarte") {
-      // FASE 2: Cola de Logística Inversa (Retención Cumplida)
-      // Condición: La fecha de retención YA SE CUMPLIÓ, pero NO ha sido destruida
       whereClause = {
         fecha_fin_retencion: { lte: hoy },
         estado: { nombre: { not: "Destruida / Segregada" } }
       };
     } else if (fase === "inactiva") {
-      // FASE 3: Archivo Histórico
-      // Condición: Ya completaron el protocolo y se firmó su destrucción
       whereClause = {
         estado: { nombre: "Destruida / Segregada" }
       };
     }
 
-    // Ejecutamos la consulta limpia
-const muestras = await prisma.muestraFarmaceutica.findMany({
+    // Actualizamos el Include para traer la información completa
+    const muestras = await prisma.muestraFarmaceutica.findMany({
       where: whereClause,
       include: {
         area: {
           include: { direccion: { include: { piso: true } } }
         },
         estado: true,
+        tipo_empaque: true, 
+        unidad_medida: true, 
         usuarioRegistrador: {
           select: { nombre: true, rol: true }
         },
@@ -71,8 +65,9 @@ const muestras = await prisma.muestraFarmaceutica.findMany({
 
 // 2. POST: Registrar una nueva muestra
 export async function POST(request: Request) {
+  let body: any;
+
   try {
-    // Extraemos la sesión del usuario para auditoría
     const token = await getToken({ 
       req: request as any, 
       secret: process.env.NEXTAUTH_SECRET 
@@ -82,26 +77,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No autorizado. Inicie sesión." }, { status: 401 });
     }
 
-    const body = await request.json();
+    body = await request.json();
 
-    // Buscamos el estado inicial en la BD
     const estadoInicial = await prisma.estadoMuestra.findFirst({
       where: { nombre: "Recibida (Pendiente de Análisis)" }
     });
 
     if (!estadoInicial) throw new Error("No existe el estado inicial en la BD.");
 
-    // Guardamos la muestra inyectando el ID del usuario
+    // AQUI ESTÁ LA CORRECCIÓN CLAVE: Usar '_id' y convertir a Number
     const nuevaMuestra = await prisma.muestraFarmaceutica.create({
       data: {
         codigo_interno: body.codigo_interno,
         lote: body.lote,
         registro_sanitario: body.registro_sanitario,
         principio_activo: body.principio_activo,
-        tipo_empaque: body.tipo_empaque,
+        
+        tipo_empaque_id: Number(body.tipo_empaque_id),
+        unidad_medida_id: Number(body.unidad_medida_id),
         riesgo_bioseguridad: body.riesgo_bioseguridad,
+        
         cantidad: Number(body.cantidad),
-        unidad_medida: body.unidad_medida,
         proposito_analisis: body.proposito_analisis,
         fecha_caducidad: new Date(body.fecha_caducidad),
         fecha_fin_retencion: new Date(body.fecha_fin_retencion),
@@ -112,7 +108,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Guardamos el primer paso en el historial
     await prisma.historialTrazabilidad.create({
       data: {
         muestra_id: nuevaMuestra.id,
@@ -127,6 +122,19 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error("Error al registrar muestra:", error);
+
+    // MANEJO DE ERRORES DE PRISMA
+    if (error.code === 'P2002') {
+      const target = error.meta?.target;
+      
+      if (target && target.includes('codigo_interno')) {
+        return NextResponse.json(
+          { error: `El Código Interno "${body?.codigo_interno || 'ingresado'}" ya existe en el sistema. Verifique y use uno distinto.` }, 
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
