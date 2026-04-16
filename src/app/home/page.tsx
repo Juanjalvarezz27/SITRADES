@@ -56,12 +56,10 @@ export default function DashboardPage() {
 
   const { kpis, recientes } = data;
   const primerNombre = session?.user?.name?.split(" ")[0] || "Usuario";
-
-  // Limitamos los recientes a solo los últimos 3 para que encajen perfecto en el diseño Bento
   const ultimosTres = recientes.slice(0, 3);
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto space-y-8">
       
       {/* SECCIÓN HERO PREMIUM CON DATOS DEL USUARIO */}
       <div className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -223,10 +221,8 @@ export default function DashboardPage() {
                 key={muestra.id} 
                 className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all relative overflow-hidden group flex flex-col justify-between min-h-[220px]"
               >
-                {/* Fondo decorativo flotante */}
                 <div className="absolute -right-10 -top-10 w-40 h-40 bg-slate-50 rounded-full blur-3xl group-hover:bg-brand-primary/5 transition-colors"></div>
 
-                {/* Cabecera de la tarjeta */}
                 <div className="flex items-start justify-between z-10 mb-4">
                   <div className="w-14 h-14 rounded-[1.2rem] bg-slate-50 border border-slate-100 text-slate-400 flex items-center justify-center group-hover:bg-brand-primary/10 group-hover:text-brand-primary group-hover:border-transparent transition-all shadow-sm">
                     <FlaskConical size={26} strokeWidth={1.5} />
@@ -236,7 +232,6 @@ export default function DashboardPage() {
                   </span>
                 </div>
 
-                {/* Cuerpo de la tarjeta */}
                 <div className="z-10 flex-1 flex flex-col justify-end">
                   <h4 className="font-black text-[22px] text-slate-800 tracking-tight leading-none mb-2 truncate">
                     {muestra.codigo_interno}
@@ -245,7 +240,6 @@ export default function DashboardPage() {
                     {muestra.principio_activo}
                   </p>
 
-                  {/* Etiquetas de metadatos (Footer de la tarjeta) */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="px-2.5 py-1.5 rounded-lg bg-brand-secondary/10 text-brand-secondary text-[10px] font-black uppercase tracking-wider">
                       LOTE: {muestra.lote}
