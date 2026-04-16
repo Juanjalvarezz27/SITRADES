@@ -1,23 +1,31 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export async function GET() {
   try {
-    const empaques = await prisma.tipoEmpaque.findMany({ orderBy: { nombre: 'asc' } });
+    const empaques = await prisma.tipoEmpaque.findMany({ // Verifica si en tu esquema es tipo_empaque o tipoEmpaque
+      orderBy: { nombre: "asc" }
+    });
     return NextResponse.json(empaques);
-  } catch (error) {
-    return NextResponse.json({ error: "Error al obtener empaques" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Error en GET tipos-empaque:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const { nombre } = await request.json();
-    const nuevoEmpaque = await prisma.tipoEmpaque.create({ data: { nombre } });
-    return NextResponse.json(nuevoEmpaque, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: "Error al crear empaque" }, { status: 500 });
+    const nuevo = await prisma.tipoEmpaque.create({
+      data: { nombre }
+    });
+    return NextResponse.json(nuevo);
+  } catch (error: any) {
+    console.error("Error en POST tipos-empaque:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

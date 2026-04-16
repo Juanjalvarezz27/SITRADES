@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-50/50 backdrop-blur-sm z-50">
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-50/50 z-50">
         <Loader2 size={48} className="animate-spin text-brand-primary mb-4" />
         <p className="text-slate-500 font-semibold animate-pulse">Cargando Panel de Control...</p>
       </div>

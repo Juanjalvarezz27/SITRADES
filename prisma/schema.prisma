@@ -7,9 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. SEGURIDAD Y CATÁLOGOS BASE
-// ============================================================================
-
 model Rol {
   id       Int       @id @default(autoincrement())
   nombre   String    @unique
@@ -17,23 +14,19 @@ model Rol {
 }
 
 model Usuario {
-  id            String @id @default(uuid())
-  nombre        String
-  email         String @unique
-  password_hash String
-
-  rol_id Int
-  rol    Rol @relation(fields: [rol_id], references: [id])
-
-  area_id Int
-  area    Area @relation(fields: [area_id], references: [id])
-
-  creado_en DateTime @default(now())
-
-  muestrasRegistradas  MuestraFarmaceutica[]
+  id                   String                  @id @default(uuid())
+  nombre               String
+  email                String                  @unique
+  password_hash        String
+  rol_id               Int
+  area_id              Int
+  creado_en            DateTime                @default(now())
   historialesCambiados HistorialTrazabilidad[]
+  muestrasRegistradas  MuestraFarmaceutica[]
   descartesAutorizados ReporteDescarte[]       @relation("AutorizadoPor")
   descartesEjecutados  ReporteDescarte[]       @relation("EjecutadoPor")
+  area                 Area                    @relation(fields: [area_id], references: [id])
+  rol                  Rol                     @relation(fields: [rol_id], references: [id])
 }
 
 model Piso {
@@ -46,32 +39,27 @@ model Direccion {
   id      Int    @id @default(autoincrement())
   nombre  String
   piso_id Int
-
-  piso  Piso   @relation(fields: [piso_id], references: [id])
-  areas Area[]
+  areas   Area[]
+  piso    Piso   @relation(fields: [piso_id], references: [id])
 }
 
 model Area {
-  id           Int    @id @default(autoincrement())
+  id           Int                   @id @default(autoincrement())
   nombre       String
   direccion_id Int
-
-  direccion Direccion @relation(fields: [direccion_id], references: [id])
-
-  usuarios Usuario[]
-  muestras MuestraFarmaceutica[]
+  direccion    Direccion             @relation(fields: [direccion_id], references: [id])
+  muestras     MuestraFarmaceutica[]
+  usuarios     Usuario[]
 }
 
 model EstadoMuestra {
-  id     Int    @id @default(autoincrement())
-  nombre String @unique
-
-  muestras              MuestraFarmaceutica[]
+  id                    Int                     @id @default(autoincrement())
+  nombre                String                  @unique
   historialesAnteriores HistorialTrazabilidad[] @relation("EstadoAnterior")
   historialesNuevos     HistorialTrazabilidad[] @relation("EstadoNuevo")
+  muestras              MuestraFarmaceutica[]
 }
 
-// NUEVOS CATÁLOGOS DINÁMICOS
 model UnidadMedida {
   id       Int                   @id @default(autoincrement())
   nombre   String                @unique
@@ -84,99 +72,67 @@ model TipoEmpaque {
   muestras MuestraFarmaceutica[]
 }
 
-
-// 2. MÓDULO DE INVENTARIO Y TRAZABILIDAD (Especialidades Farmacéuticas)
-// ============================================================================
-
 model MuestraFarmaceutica {
-  id                 String @id @default(uuid())
-  codigo_interno     String @unique
-  lote               String
-  registro_sanitario String
-  principio_activo   String
-
-  // RELACIONES ACTUALIZADAS
-  tipo_empaque_id Int
-  tipo_empaque    TipoEmpaque @relation(fields: [tipo_empaque_id], references: [id])
-
-  unidad_medida_id Int
-  unidad_medida    UnidadMedida @relation(fields: [unidad_medida_id], references: [id])
-
-  riesgo_bioseguridad String // Este lo dejamos como String por ser un estándar fijo, a menos que también quieras hacerlo tabla.
-
-  cantidad           Int
-  proposito_analisis String @db.Text
-
-  fecha_ingreso       DateTime @default(now())
-  fecha_caducidad     DateTime @db.Date
-  fecha_fin_retencion DateTime @db.Date
-
-  estado_id Int
-  estado    EstadoMuestra @relation(fields: [estado_id], references: [id])
-
-  area_id Int
-  area    Area @relation(fields: [area_id], references: [id])
-
-  ubicacion_detalle String? @db.Text
-
-  registrado_por     String
-  usuarioRegistrador Usuario @relation(fields: [registrado_por], references: [id])
-
-  creado_en      DateTime @default(now())
-  actualizado_en DateTime @updatedAt
-
-  historiales      HistorialTrazabilidad[]
-  reporte_descarte ReporteDescarte?
+  id                  String                  @id @default(uuid())
+  codigo_interno      String                  @unique
+  lote                String
+  registro_sanitario  String
+  principio_activo    String
+  tipo_empaque_id     Int
+  unidad_medida_id    Int
+  riesgo_bioseguridad String
+  cantidad            Int
+  proposito_analisis  String
+  fecha_ingreso       DateTime                @default(now())
+  fecha_caducidad     DateTime                @db.Date
+  fecha_fin_retencion DateTime                @db.Date
+  estado_id           Int
+  area_id             Int
+  ubicacion_detalle   String?
+  registrado_por      String
+  creado_en           DateTime                @default(now())
+  actualizado_en      DateTime                @updatedAt
+  historiales         HistorialTrazabilidad[]
+  area                Area                    @relation(fields: [area_id], references: [id])
+  estado              EstadoMuestra           @relation(fields: [estado_id], references: [id])
+  usuarioRegistrador  Usuario                 @relation(fields: [registrado_por], references: [id])
+  tipo_empaque        TipoEmpaque             @relation(fields: [tipo_empaque_id], references: [id])
+  unidad_medida       UnidadMedida            @relation(fields: [unidad_medida_id], references: [id])
+  reporte_descarte    ReporteDescarte?
 }
 
-
-// 3. MÓDULO DE AUDITORÍA Y LOGÍSTICA INVERSA
-// ============================================================================
-
 model HistorialTrazabilidad {
-  id String @id @default(uuid())
-
-  muestra_id String
-  muestra    MuestraFarmaceutica @relation(fields: [muestra_id], references: [id])
-
+  id                 String              @id @default(uuid())
+  muestra_id         String
   estado_anterior_id Int
-  estado_anterior    EstadoMuestra @relation("EstadoAnterior", fields: [estado_anterior_id], references: [id])
-
-  estado_nuevo_id Int
-  estado_nuevo    EstadoMuestra @relation("EstadoNuevo", fields: [estado_nuevo_id], references: [id])
-
-  cambiado_por String?
-  usuario      Usuario? @relation(fields: [cambiado_por], references: [id])
-
-  fecha_cambio DateTime @default(now())
-  motivo       String   @db.Text
+  estado_nuevo_id    Int
+  cambiado_por       String?
+  fecha_cambio       DateTime            @default(now())
+  motivo             String
+  usuario            Usuario?            @relation(fields: [cambiado_por], references: [id])
+  estado_anterior    EstadoMuestra       @relation("EstadoAnterior", fields: [estado_anterior_id], references: [id])
+  estado_nuevo       EstadoMuestra       @relation("EstadoNuevo", fields: [estado_nuevo_id], references: [id])
+  muestra            MuestraFarmaceutica @relation(fields: [muestra_id], references: [id])
 }
 
 model ReporteDescarte {
-  id String @id @default(uuid())
-
-  muestra_id String              @unique
-  muestra    MuestraFarmaceutica @relation(fields: [muestra_id], references: [id])
-
-  autorizado_por String
-  autorizador    Usuario @relation("AutorizadoPor", fields: [autorizado_por], references: [id])
-
-  ejecutado_por String
-  ejecutor      Usuario @relation("EjecutadoPor", fields: [ejecutado_por], references: [id])
-
-  fecha_descarte        DateTime @default(now())
-  
-  metodo_disposicion_id Int      
-  metodo_disposicion    MetodoDisposicion @relation(fields: [metodo_disposicion_id], references: [id])
-  
-  observaciones         String   @db.Text
+  id                    String              @id @default(uuid())
+  muestra_id            String              @unique
+  autorizado_por        String
+  ejecutado_por         String
+  fecha_descarte        DateTime            @default(now())
+  metodo_disposicion_id Int
+  observaciones         String
+  autorizador           Usuario             @relation("AutorizadoPor", fields: [autorizado_por], references: [id])
+  ejecutor              Usuario             @relation("EjecutadoPor", fields: [ejecutado_por], references: [id])
+  metodo_disposicion    MetodoDisposicion   @relation(fields: [metodo_disposicion_id], references: [id])
+  muestra               MuestraFarmaceutica @relation(fields: [muestra_id], references: [id])
 }
 
 model MetodoDisposicion {
-  id          Int               @id @default(autoincrement())
-  nombre      String            @unique
-  activo      Boolean           @default(true)
-  creado_en   DateTime          @default(now())
-  
-  reportes    ReporteDescarte[] 
+  id        Int               @id @default(autoincrement())
+  nombre    String            @unique
+  activo    Boolean           @default(true)
+  creado_en DateTime          @default(now())
+  reportes  ReporteDescarte[]
 }

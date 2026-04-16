@@ -25,7 +25,8 @@ import {
   PackagePlus,
   BookOpen,
   Archive,
-  Trash 
+  Trash,
+  Settings 
 } from "lucide-react";
 
 import ConfirmModal from "../ui/ConfirmModal"; 
@@ -115,6 +116,13 @@ const MENU_ITEMS = [
       }
     ]
   },
+  {
+    path: "/home/configuracion",
+    name: "Configuración",
+    icon: Settings,
+    rolesPermitidos: ["Administrador"],
+    exact: true,
+  },
 ];
 
 export default function Sidebar({ userRol }: { userRol: string }) {
@@ -195,7 +203,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
           <p className={`px-2 text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-4 transition-all duration-300 ${isCollapsed ? "text-center opacity-0" : "opacity-100"}`}>
-            {isCollapsed ? "..." : "Menú Principal"}
+            {isCollapsed ? "..." : "Menu Principal"}
           </p>
           
           {menuFiltrado.map((item) => {
@@ -282,7 +290,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:flex items-center justify-center p-2 mb-1 text-slate-400 hover:text-brand-secondary hover:bg-brand-secondary/5 rounded-xl transition-all"
-            title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+            title={isCollapsed ? "Expandir menu" : "Colapsar menu"}
           >
             {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
@@ -301,12 +309,12 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
           <button
             onClick={() => setIsLogoutModalOpen(true)}
-            title={isCollapsed ? "Cerrar Sesión" : ""}
+            title={isCollapsed ? "Cerrar Sesion" : ""}
             className={`w-full flex items-center gap-3 px-3 py-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-700 font-semibold text-[13px] rounded-xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
           >
             <LogOut size={18} className="shrink-0 transition-transform group-hover:-translate-x-1" />
             <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
-              Cerrar Sesión
+              Cerrar Sesion
             </span>
           </button>
         </div>
@@ -316,9 +324,9 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={() => signOut({ callbackUrl: "/" })}
-        title="¿Cerrar Sesión?"
-        message="Estás a punto de salir del sistema SITRADES. Tendrás que ingresar tus credenciales nuevamente para acceder."
-        confirmText="Sí, cerrar sesión"
+        title="Cerrar Sesion?"
+        message="Estas a punto de salir del sistema SITRADES. Tendras que ingresar tus credenciales nuevamente para acceder."
+        confirmText="Si, cerrar sesion"
         cancelText="Cancelar"
         isDanger={true}
       />
