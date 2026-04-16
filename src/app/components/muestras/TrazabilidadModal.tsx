@@ -64,9 +64,6 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
     setIsExporting(true);
     const toastId = toast.loading("Preparando documento...");
 
-    //  TRUCO DE RENDIMIENTO: 
-    // Le damos 150ms al navegador para que actualice la interfaz, 
-    // cambie el botón y empiece la animación ANTES de congelarse generando el PDF.
     await new Promise(resolve => setTimeout(resolve, 150));
 
     try {
@@ -137,21 +134,23 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                   <Package size={18} className="text-brand-primary" /> Identificación del Producto
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="col-span-2">
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Principio Activo</span>
-                    <p className="font-bold text-slate-700 text-[13px] leading-tight">{muestra.principio_activo}</p>
+                    <p className="font-bold text-slate-700 text-[14px] leading-tight">{muestra.principio_activo}</p>
                   </div>
                   <div>
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Reg. Sanitario</span>
-                    <p className="font-bold text-slate-700 text-[13px]">{muestra.registro_sanitario}</p>
+                    <p className="font-bold text-slate-700 text-[13px]">{muestra.registro_sanitario || "N/A"}</p>
                   </div>
                   <div>
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Cantidad Total</span>
-                    <p className="font-black text-brand-primary text-[15px]">{muestra.cantidad} <span className="text-[12px] font-bold text-slate-500">{muestra.unidad_medida}</span></p>
+                    {/* CORRECCIÓN: Acceso al nombre de unidad */}
+                    <p className="font-black text-brand-primary text-[15px]">{muestra.cantidad} <span className="text-[12px] font-bold text-slate-500">{muestra.unidad_medida?.nombre || ""}</span></p>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Tipo de Empaque</span>
-                    <p className="font-bold text-slate-700 text-[13px] leading-tight">{muestra.tipo_empaque}</p>
+                    {/* CORRECCIÓN: Acceso al nombre de empaque */}
+                    <p className="font-bold text-slate-700 text-[13px] leading-tight">{muestra.tipo_empaque?.nombre || "N/A"}</p>
                   </div>
                 </div>
               </div>
@@ -169,15 +168,10 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                       <span className="text-[11px] font-bold text-slate-400 uppercase block">Ubicación Física</span>
                       <p className="font-bold text-slate-700 text-[13px] leading-snug">
                         {muestra.area?.nombre || "Sin área"} <br/>
-                        <span className="font-medium text-slate-500">
+                        <span className="font-medium text-slate-500 text-[11px]">
                           {muestra.area?.direccion?.nombre} • {muestra.area?.direccion?.piso?.nombre}
                         </span>
                       </p>
-                      {muestra.ubicacion_detalle && (
-                        <p className="mt-2 text-[12px] text-slate-500 bg-white p-2 rounded-xl border border-slate-100 shadow-sm inline-block">
-                          <strong className="text-brand-secondary">Nota:</strong> {muestra.ubicacion_detalle}
-                        </p>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -199,15 +193,15 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm">
                     <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Ingreso</span>
-                    <p className="font-bold text-slate-700 text-[12px]">{formatearFecha(muestra.creado_en)}</p>
+                    <p className="font-bold text-slate-700 text-[11px]">{formatearFecha(muestra.creado_en)}</p>
                   </div>
                   <div className="bg-white p-2.5 rounded-xl border border-amber-100 shadow-sm">
                     <span className="text-[10px] font-bold text-amber-600 uppercase block mb-1">Caducidad</span>
-                    <p className="font-bold text-amber-900 text-[12px]">{formatearFecha(muestra.fecha_caducidad)}</p>
+                    <p className="font-bold text-amber-900 text-[11px]">{formatearFecha(muestra.fecha_caducidad)}</p>
                   </div>
                   <div className={`p-2.5 rounded-xl border shadow-sm ${esDescartable ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
                     <span className={`text-[10px] font-bold uppercase block mb-1 ${esDescartable ? 'text-red-600' : 'text-blue-600'}`}>Fin Retención</span>
-                    <p className={`font-bold text-[12px] ${esDescartable ? 'text-red-700' : 'text-blue-900'}`}>{formatearFecha(muestra.fecha_fin_retencion)}</p>
+                    <p className={`font-bold text-[11px] ${esDescartable ? 'text-red-700' : 'text-blue-900'}`}>{formatearFecha(muestra.fecha_fin_retencion)}</p>
                   </div>
                 </div>
               </div>
@@ -242,7 +236,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                   </div>
                   <div className="text-left">
                     <h3 className="font-bold text-slate-800 text-[15px]">Línea de Tiempo de Sucesos</h3>
-                    <p className="text-[12px] text-slate-500 font-medium">Ver el historial completo de auditoría y movimientos ({historial.length} registros)</p>
+                    <p className="text-[12px] text-slate-500 font-medium">Ver el historial completo de auditoría ({historial.length} registros)</p>
                   </div>
                 </div>
                 <ChevronDown size={24} className={`text-slate-400 transition-transform duration-300 ${isTimelineOpen ? "rotate-180" : ""}`} />
@@ -251,7 +245,6 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isTimelineOpen ? 'max-h-[1000px] opacity-100 mt-6' : 'max-h-0 opacity-0'}`}>
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-10 text-brand-primary">
-                    {/* SVG estático de carga */}
                     <svg className="animate-spin h-7 w-7 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -277,11 +270,11 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                           <div className="flex items-center gap-2 font-bold text-[14px] text-slate-800 mb-2">
                             {hito.estado_anterior_id !== hito.estado_nuevo_id && (
                               <>
-                                <span className="text-slate-400 line-through decoration-red-400">{hito.estado_anterior.nombre}</span>
+                                <span className="text-slate-400 line-through decoration-red-400">{hito.estado_anterior?.nombre}</span>
                                 <ArrowRight size={14} className="text-brand-primary" />
                               </>
                             )}
-                            <span className="text-brand-primary">{hito.estado_nuevo.nombre}</span>
+                            <span className="text-brand-primary">{hito.estado_nuevo?.nombre}</span>
                           </div>
 
                           <p className="text-[13px] text-slate-600 leading-relaxed mb-3">
@@ -298,7 +291,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                             ) : (
                               <>
                                 <Activity size={12} className="text-brand-primary" />
-                                <span className="text-brand-primary uppercase tracking-wider">Sistema Automático (Robot de Auditoría)</span>
+                                <span className="text-brand-primary uppercase tracking-wider">Sistema Automático</span>
                               </>
                             )}
                           </div>
@@ -309,7 +302,6 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                 )}
               </div>
             </div>
-
           </div>
 
           <div className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between mt-auto">
@@ -318,7 +310,6 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
             </div>
             
             <div className="flex gap-3 w-full sm:w-auto">
-              {/*  BOTÓN MEJORADO: Ancho fijo (w-[160px]) y SVG puro */}
               <button 
                 onClick={handleExportPDF} 
                 disabled={isExporting || loading}

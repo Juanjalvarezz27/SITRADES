@@ -1,20 +1,138 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ShieldAlert, PackageX, CheckCircle2, ArrowRight, ArrowLeft, 
-  Trash2, FileSignature, AlertOctagon, Loader2, Thermometer, Info, ChevronDown
+  Trash2, FileSignature, AlertOctagon, Loader2, Thermometer, Info,
+  ChevronDown, Check, Plus, Save, X
 } from "lucide-react";
 import { toast } from "react-toastify";
 
-// Opciones del menú personalizado
-const OPCIONES_METODO = [
-  "Esterilización por Autoclave (Vapor)",
-  "Incineración Controlada",
-  "Inactivación Térmica",
-  "Neutralización Química / Disolución"
-];
+function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newValue, setNewValue] = useState("");
+  const [loadingNew, setLoadingNew] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setIsAddingNew(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o: any) => o.value === value?.toString());
+
+  const handleAddNew = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!newValue.trim() || !onAddNew) return;
+    setLoadingNew(true);
+    await onAddNew(newValue);
+    setNewValue("");
+    setIsAddingNew(false);
+    setLoadingNew(false);
+  };
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full px-4 py-4 rounded-2xl border ${
+          isOpen 
+            ? 'border-rose-500 ring-4 ring-rose-500/10 bg-white text-slate-800' 
+            : 'border-slate-200 bg-white hover:border-rose-300'
+        } outline-none transition-all text-[14px] font-bold text-left flex justify-between items-center shadow-sm pl-12`}
+      >
+        <span className={`truncate pr-4 ${value ? "text-slate-700" : "text-slate-400 font-medium"}`}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronDown size={20} className={`shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-rose-500' : 'text-slate-400'}`} />
+      </button>
+
+      {/* Ícono de termómetro fijo en la izquierda */}
+      <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors z-10 pointer-events-none ${isOpen ? 'text-rose-600' : 'text-rose-500'}`}>
+        <Thermometer size={20} />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 min-w-full sm:min-w-[280px] mt-2 bg-white border border-slate-100 rounded-[1.2rem] shadow-[0_12px_40px_rgb(0,0,0,0.12)] py-2 max-h-60 overflow-y-auto overflow-x-hidden custom-scrollbar animate-in fade-in slide-in-from-top-2 origin-top flex flex-col">
+          <div
+            onClick={() => { onChange(name, ""); setIsOpen(false); }}
+            className={`mx-2 my-1 px-3 py-3 text-[13px] rounded-xl font-medium cursor-pointer transition-colors flex justify-between items-center ${
+              !value ? 'bg-rose-50 text-rose-700 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+            }`}
+          >
+            {placeholder}
+            {!value && <Check size={16} strokeWidth={3} className="shrink-0 text-rose-600" />}
+          </div>
+          
+          {options.map((opt: any) => (
+            <div
+              key={opt.value}
+              onClick={() => { onChange(name, opt.value); setIsOpen(false); }}
+              className={`mx-2 my-1 px-3 py-3 text-[13px] rounded-xl font-medium cursor-pointer transition-colors flex justify-between items-center ${
+                value?.toString() === opt.value ? 'bg-rose-50 text-rose-700 font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <span className="truncate pr-2">{opt.label}</span>
+              {value?.toString() === opt.value && <Check size={16} strokeWidth={3} className="shrink-0 text-rose-600" />}
+            </div>
+          ))}
+
+          {onAddNew && (
+            <div className="border-t border-slate-100 mt-2 p-2 shrink-0">
+              {!isAddingNew ? (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setIsAddingNew(true); }}
+                  className="w-full text-left px-3 py-2.5 text-[13px] text-rose-600 font-bold hover:bg-rose-50 rounded-xl flex items-center gap-2 transition-colors"
+                >
+                  <Plus size={16} /> Añadir nueva técnica
+                </button>
+              ) : (
+                <div className="flex items-center p-1 bg-slate-50 border border-slate-200 rounded-xl focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/20 transition-all w-full shadow-inner">
+                  <input
+                    autoFocus
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="Escriba aquí..."
+                    className="flex-1 min-w-[100px] bg-transparent px-2.5 py-1.5 text-[13px] font-semibold text-slate-700 outline-none placeholder:font-medium placeholder:text-slate-400"
+                  />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      disabled={loadingNew || !newValue.trim()}
+                      onClick={handleAddNew}
+                      className="flex items-center justify-center w-8 h-8 bg-rose-600 text-white rounded-lg disabled:opacity-50 hover:bg-rose-700 transition-all shadow-sm"
+                    >
+                      {loadingNew ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setIsAddingNew(false); }}
+                      className="flex items-center justify-center w-8 h-8 bg-slate-200 text-slate-500 rounded-lg hover:bg-slate-300 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DescarteWizardPage() {
   const params = useParams();
@@ -30,40 +148,67 @@ export default function DescarteWizardPage() {
   const [check2, setCheck2] = useState(false);
   const [check3, setCheck3] = useState(false);
   
-  const [metodo, setMetodo] = useState("");
+  // NUEVOS ESTADOS PARA MÉTODOS DINÁMICOS 
+  const [metodosOpciones, setMetodosOpciones] = useState<{value: string, label: string}[]>([]);
+  const [metodoId, setMetodoId] = useState(""); 
   const [observaciones, setObservaciones] = useState("");
-  
-  // Estado para controlar nuestro Select Personalizado
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const fetchMuestra = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/muestras?fase=descarte`); 
-        const data = await res.json();
-        const encontrada = data.find((m: any) => m.id === params.id);
+        const [resMuestras, resMetodos] = await Promise.all([
+          fetch(`/api/muestras?fase=descarte`),
+          fetch(`/api/metodos-disposicion`)
+        ]);
+        
+        const dataMuestras = await resMuestras.json();
+        const encontrada = dataMuestras.find((m: any) => m.id === params.id);
         
         if (!encontrada) throw new Error("Muestra no encontrada");
         setMuestra(encontrada);
+
+        if (resMetodos.ok) {
+          const dataMetodos = await resMetodos.json();
+          setMetodosOpciones(dataMetodos.map((m: any) => ({ value: m.id.toString(), label: m.nombre })));
+        }
+
       } catch (error) {
-        toast.error("Error al cargar los datos de la muestra.");
+        toast.error("Error al cargar los datos necesarios.");
         router.push("/home/muestras/descarte");
       } finally {
         setLoading(false);
       }
     };
-    fetchMuestra();
+    fetchData();
   }, [params.id, router]);
 
+  // FUNCIÓN PARA CREAR NUEVO MÉTODO 
+  const crearMetodo = async (nombre: string) => {
+    try {
+      const res = await fetch("/api/metodos-disposicion", { 
+        method: "POST", 
+        body: JSON.stringify({ nombre }) 
+      });
+      const nuevo = await res.json();
+      const nuevaOpcion = { value: nuevo.id.toString(), label: nuevo.nombre };
+      
+      setMetodosOpciones(prev => [...prev, nuevaOpcion].sort((a,b) => a.label.localeCompare(b.label)));
+      setMetodoId(nuevo.id.toString()); 
+      toast.success("Técnica añadida al catálogo exitosamente");
+    } catch { 
+      toast.error("Error al añadir la nueva técnica"); 
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!metodo) return toast.warning("Debe seleccionar un método de disposición final.");
+    if (!metodoId) return toast.warning("Debe seleccionar un método de disposición final.");
     
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/muestras/${muestra.id}/descarte`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ metodo_disposicion: metodo, observaciones })
+        body: JSON.stringify({ metodo_disposicion_id: metodoId, observaciones })
       });
 
       const responseData = await res.json();
@@ -151,7 +296,7 @@ export default function DescarteWizardPage() {
                 </div>
                 <div className="bg-white p-3 rounded-xl border border-rose-100">
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Cantidad Total</p>
-                  <p className="font-black text-rose-600">{muestra.cantidad} {muestra.unidad_medida}</p>
+                  <p className="font-black text-rose-600">{muestra.cantidad} {muestra.unidad_medida?.nombre || ""}</p>
                 </div>
                 <div className="bg-white p-3 rounded-xl border border-slate-100">
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Nivel de Riesgo</p>
@@ -227,60 +372,18 @@ export default function DescarteWizardPage() {
 
             <div className="space-y-6">
               
-              {/*  NUEVO SELECT PERSONALIZADO CON REACT */}
+              {/* SELECT DINÁMICO IMPLEMENTADO AQUÍ */}
               <div className="relative">
                 <label className="block text-[12px] font-bold text-slate-600 uppercase mb-2">Método de Disposición o Tratamiento (Obligatorio)</label>
                 
-                <div className="relative">
-                  {/* Ícono Izquierdo */}
-                  <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors z-10 ${isDropdownOpen ? 'text-rose-600' : 'text-rose-500'}`}>
-                    <Thermometer size={20} />
-                  </div>
-                  
-                  {/* Botón "Trigger" del Select */}
-                  <button 
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full text-left pl-12 pr-10 py-4 bg-white border-2 rounded-2xl font-bold text-[14px] transition-all shadow-sm flex items-center justify-between outline-none
-                      ${isDropdownOpen ? 'border-rose-500 ring-4 ring-rose-500/10 text-slate-800' : 'border-slate-200 hover:border-rose-300 text-slate-700'}
-                    `}
-                  >
-                    <span className={!metodo ? "text-slate-400 font-medium" : ""}>
-                      {metodo || "Seleccione técnica de inactivación..."}
-                    </span>
-                  </button>
-
-                  {/* Flecha Derecha */}
-                  <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-300 z-10 ${isDropdownOpen ? 'rotate-180 text-rose-500' : 'text-slate-400'}`}>
-                    <ChevronDown size={20} />
-                  </div>
-
-                  {/* Caja de Opciones */}
-                  {isDropdownOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
-                      <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] overflow-hidden animate-in fade-in slide-in-from-top-2">
-                        <div className="max-h-60 overflow-y-auto p-2 space-y-1">
-                          {OPCIONES_METODO.map((opcion) => (
-                            <button
-                              key={opcion}
-                              type="button"
-                              onClick={() => {
-                                setMetodo(opcion);
-                                setIsDropdownOpen(false);
-                              }}
-                              className={`w-full text-left px-4 py-3.5 rounded-xl text-[13px] font-bold transition-all flex items-center 
-                                ${metodo === opcion ? 'bg-rose-50 text-rose-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
-                              `}
-                            >
-                              {opcion}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <CustomSelect 
+                  name="metodoId" 
+                  value={metodoId} 
+                  options={metodosOpciones} 
+                  onChange={(name: string, val: string) => setMetodoId(val)} 
+                  onAddNew={crearMetodo} 
+                  placeholder="Seleccione técnica de inactivación..."
+                />
               </div>
 
               <div>
@@ -308,7 +411,7 @@ export default function DescarteWizardPage() {
               
               <button 
                 onClick={handleSubmit} 
-                disabled={isSubmitting || !metodo}
+                disabled={isSubmitting || !metodoId}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 text-white min-w-[260px] py-4 px-6 rounded-2xl font-black text-[15px] transition-all shadow-lg shadow-rose-600/30 active:scale-95 disabled:shadow-none disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (

@@ -33,7 +33,8 @@ const DescartePDFTemplate = forwardRef<HTMLDivElement, DescartePDFTemplateProps>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Registro Sanitario</strong> {muestra.registro_sanitario}</p>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Lote</strong> {muestra.lote}</p>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Código Interno</strong> {muestra.codigo_interno}</p>
-              <p><strong className="text-slate-400 uppercase text-[9px] block">Cantidad</strong> {muestra.cantidad} {muestra.unidad_medida}</p>
+              {/* CORRECCIÓN: Acceso al nombre de la unidad */}
+              <p><strong className="text-slate-400 uppercase text-[9px] block">Cantidad</strong> {muestra.cantidad} {muestra.unidad_medida?.nombre || ""}</p>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Área de Origen</strong> {muestra.area?.nombre}</p>
             </div>
           </div>
@@ -46,7 +47,8 @@ const DescartePDFTemplate = forwardRef<HTMLDivElement, DescartePDFTemplateProps>
             <div className="space-y-4">
               <div className="bg-white border border-slate-200 p-4 rounded-xl">
                 <span className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Método Aplicado</span>
-                <span className="font-bold text-[13px] text-slate-800">{reporte.metodo_disposicion}</span>
+                {/* CORRECCIÓN: Acceso al nombre del método */}
+                <span className="font-bold text-[13px] text-slate-800">{reporte.metodo_disposicion?.nombre || "N/A"}</span>
               </div>
               <div className="bg-white border border-slate-200 p-4 rounded-xl">
                 <span className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Observaciones Técnicas</span>

@@ -48,8 +48,13 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
               <p><strong className="text-slate-500 uppercase text-[9px] block">Lote</strong> {muestra.lote}</p>
               <p><strong className="text-slate-500 uppercase text-[9px] block">Principio Activo</strong> {muestra.principio_activo}</p>
               <p><strong className="text-slate-500 uppercase text-[9px] block">Reg. Sanitario</strong> {muestra.registro_sanitario}</p>
-              <p><strong className="text-slate-500 uppercase text-[9px] block">Cantidad Total</strong> {muestra.cantidad} {muestra.unidad_medida}</p>
-              <p><strong className="text-slate-500 uppercase text-[9px] block">Tipo de Empaque</strong> {muestra.tipo_empaque}</p>
+              
+              {/* CORRECCIÓN: Acceso a unidad_medida.nombre */}
+              <p><strong className="text-slate-500 uppercase text-[9px] block">Cantidad Total</strong> {muestra.cantidad} {muestra.unidad_medida?.nombre || ""}</p>
+              
+              {/* CORRECCIÓN: Acceso a tipo_empaque.nombre */}
+              <p><strong className="text-slate-500 uppercase text-[9px] block">Tipo de Empaque</strong> {muestra.tipo_empaque?.nombre || "N/A"}</p>
+              
               <p className="col-span-2"><strong className="text-slate-500 uppercase text-[9px] block">Propósito del Análisis</strong> {muestra.proposito_analisis}</p>
             </div>
           </div>
@@ -81,7 +86,7 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
             </div>
           </div>
 
-          {/* BLOQUE 3: HISTORIAL PROTEGIDO CONTRA CORTES */}
+          {/* BLOQUE 3: HISTORIAL */}
           <div className="border border-indigo-100 p-5 rounded-2xl bg-slate-50/50 mt-6">
             <h3 className="font-bold text-indigo-900 mb-4 border-b border-indigo-100 pb-2">
               Línea de Tiempo de Auditoría
@@ -102,7 +107,7 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
                           PASO #{historial.length - i}
                         </span>
                       </div>
-                      <p className="text-[12px] font-bold text-slate-800">{hito.estado_nuevo.nombre}</p>
+                      <p className="text-[12px] font-bold text-slate-800">{hito.estado_nuevo?.nombre || "N/A"}</p>
                       <p className="text-[11px] text-slate-500 mt-1 italic">"{hito.motivo}"</p>
                       <p className="text-[10px] font-medium text-slate-400 mt-2 flex items-center gap-1">
                         <User size={10} /> {hito.usuario?.nombre || "Sistema Automático"}

@@ -27,15 +27,13 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   const pdfRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  // FUNCIÓN PARA EXPORTAR CORREGIDA (Carga dinámica para evitar error de SSR)
+  // FUNCIÓN PARA EXPORTAR CORREGIDA
   const exportarPDF = async () => {
     if (!pdfRef.current) return;
     setIsExporting(true);
 
     try {
-      // Cargamos la librería dinámicamente solo en el cliente
       const html2pdf = (await import("html2pdf.js")).default;
-      
       const element = pdfRef.current;
       
       const opt = {
@@ -67,15 +65,16 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   if (!isOpen || !muestra) return null;
 
   const reporte = muestra.reporte_descarte;
-  const metodo = reporte?.metodo_disposicion || "Método no especificado";
+  
+  // CORRECCIÓN AQUÍ: Accedemos al .nombre del objeto relacional ✨
+  const metodoNombre = reporte?.metodo_disposicion?.nombre || "Método no especificado";
+  
   const observaciones = reporte?.observaciones || "Sin observaciones adicionales.";
   const fechaDescarte = reporte?.fecha_descarte;
   const responsable = reporte?.ejecutor?.nombre || "Usuario no registrado";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      
-      {/* Fondo oscuro sólido para rendimiento */}
       <div 
         className="absolute inset-0 bg-slate-900/70 transition-opacity"
         onClick={onClose}
@@ -102,10 +101,10 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
           </button>
         </div>
 
-        {/* CUERPO DEL MODAL (Vista Detallada) */}
+        {/* CUERPO DEL MODAL */}
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
           
-          {/* Sección 1: Identificación */}
+          {/* Identificación */}
           <div>
             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
               <ShieldCheck size={14} className="text-slate-400" />
@@ -123,7 +122,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
             </div>
           </div>
 
-          {/* Sección 2: Protocolo */}
+          {/* Protocolo */}
           <div>
             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
               <Thermometer size={14} className="text-slate-400" />
@@ -135,7 +134,8 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
                   <Thermometer size={18} />
                 </div>
                 <div>
-                  <span className="block text-slate-800 font-black text-[14px]">{metodo}</span>
+                  {/* USAMOS EL NOMBRE DEL MÉTODO */}
+                  <span className="block text-slate-800 font-black text-[14px]">{metodoNombre}</span>
                   <span className="block text-slate-500 font-medium text-[12px] mt-0.5">Método de disposición final ejecutado.</span>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
             </div>
           </div>
 
-          {/* Sección 3: Firmas */}
+          {/* Firmas */}
           <div>
             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
               <User size={14} className="text-slate-400" />

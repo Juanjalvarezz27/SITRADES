@@ -164,7 +164,19 @@ model ReporteDescarte {
   ejecutado_por String
   ejecutor      Usuario @relation("EjecutadoPor", fields: [ejecutado_por], references: [id])
 
-  fecha_descarte     DateTime @default(now())
-  metodo_disposicion String   // Ej: Incineración controlada, Neutralización
-  observaciones      String   @db.Text
+  fecha_descarte        DateTime @default(now())
+  
+  metodo_disposicion_id Int      
+  metodo_disposicion    MetodoDisposicion @relation(fields: [metodo_disposicion_id], references: [id])
+  
+  observaciones         String   @db.Text
+}
+
+model MetodoDisposicion {
+  id          Int               @id @default(autoincrement())
+  nombre      String            @unique
+  activo      Boolean           @default(true)
+  creado_en   DateTime          @default(now())
+  
+  reportes    ReporteDescarte[] 
 }

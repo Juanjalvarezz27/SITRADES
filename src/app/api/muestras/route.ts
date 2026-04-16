@@ -49,7 +49,8 @@ export async function GET(request: Request) {
           include: {
             ejecutor: {
               select: { nombre: true }
-            }
+            },
+            metodo_disposicion: true
           }
         }
       },
