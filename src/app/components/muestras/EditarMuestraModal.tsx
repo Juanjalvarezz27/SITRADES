@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Save, FlaskConical, Loader2, ChevronDown, Check, Plus } from "lucide-react";
+import { X, Save, FlaskConical, Loader2, ChevronDown, Check, Plus, Info } from "lucide-react";
 import { toast } from "react-toastify";
 
 // --- COMPONENTE SELECT PREMIUM (DISEÑO PILL + ANCHO ADAPTATIVO) ---
@@ -136,8 +136,7 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
   const [formData, setFormData] = useState({
     codigo_interno: "", lote: "", registro_sanitario: "", principio_activo: "",
     tipo_empaque_id: "", unidad_medida_id: "", riesgo_bioseguridad: "",
-    cantidad: "", proposito_analisis: "", fecha_caducidad: "", fecha_fin_retencion: "",
-    area_id: "", ubicacion_detalle: "",
+    cantidad: "", proposito_analisis: "", fecha_caducidad: "", area_id: "", ubicacion_detalle: "",
   });
 
   const OPCIONES_RIESGO = [
@@ -169,7 +168,6 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
         area_id: muestra.area_id?.toString() || "",
         ubicacion_detalle: muestra.ubicacion_detalle || "",
         fecha_caducidad: muestra.fecha_caducidad ? new Date(muestra.fecha_caducidad).toISOString().split('T')[0] : "",
-        fecha_fin_retencion: muestra.fecha_fin_retencion ? new Date(muestra.fecha_fin_retencion).toISOString().split('T')[0] : "",
       });
     }
   }, [muestra, isOpen]);
@@ -197,20 +195,34 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
     } catch { toast.error("Error al añadir empaque"); }
   };
 
+  //  CÁLCULO AUTOMÁTICO DE LA FECHA DE RETENCIÓN (+1 AÑO) 
+  const fechaFinRetencion = formData.fecha_caducidad 
+    ? new Date(new Date(formData.fecha_caducidad).setFullYear(new Date(formData.fecha_caducidad).getFullYear() + 1)).toISOString().split('T')[0]
+    : "";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const res = await fetch(`/api/muestras/${muestra.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          fecha_fin_retencion: fechaFinRetencion // Enviamos la fecha calculada
+        }),
       });
+
       if (!res.ok) throw new Error("Error");
-      toast.success("Expediente actualizado");
-      onSuccess(); onClose(); 
-    } catch (error) { toast.error("Error al guardar cambios"); } 
-    finally { setLoading(false); }
+      toast.success("Expediente actualizado exitosamente");
+      onSuccess(); 
+      onClose(); 
+    } catch (error) { 
+      toast.error("Error al guardar cambios"); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   if (!isOpen || !muestra) return null;
@@ -305,7 +317,8 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
             {/* BLOQUE 3: Ubicación y Fechas */}
             <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 space-y-4">
               <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Ubicación y Retención Legal</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Área Física *</label>
                   <CustomSelect 
@@ -316,18 +329,26 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
                     placeholder="Seleccione un área..."
                   />
                 </div>
+                
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Detalle (Estante, Nevera)</label>
                   <input name="ubicacion_detalle" value={formData.ubicacion_detalle} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-semibold text-slate-700 shadow-sm transition-all" />
                 </div>
+
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Fecha de Vencimiento *</label>
-                  <input required type="date" name="fecha_caducidad" value={formData.fecha_caducidad} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-semibold text-slate-700 shadow-sm cursor-pointer transition-all" />
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Fecha de Caducidad Impresa *</label>
+                  <input required type="date" name="fecha_caducidad" value={formData.fecha_caducidad} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-bold text-brand-primary shadow-sm cursor-pointer transition-all" />
                 </div>
+
+                {/*  CAMPO DE RETENCIÓN AUTOMÁTICO  */}
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Fin Retención (Res. 072) *</label>
-                  <input required type="date" name="fecha_fin_retencion" value={formData.fecha_fin_retencion} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-semibold text-slate-700 shadow-sm cursor-pointer transition-all" />
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 items-center justify-between">
+                    <span>Fin Retención (Res. 072)</span>
+                    <span className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded text-[9px] flex items-center gap-1"><Info size={10} /> Automático</span>
+                  </label>
+                  <input type="date" readOnly value={fechaFinRetencion} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-[13px] font-semibold text-slate-500 cursor-not-allowed outline-none" />
                 </div>
+
               </div>
             </div>
 
