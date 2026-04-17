@@ -1,9 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { X, FileSignature, Thermometer, Calendar, User, ShieldCheck, Download, Loader2 } from "lucide-react";
-import DescartePDFTemplate from "./DescartePDFTemplate";
+import { 
+  X, FileSignature, Thermometer, Calendar, User, ShieldCheck, Download, Loader2, ExternalLink 
+} from "lucide-react";
 import { toast } from "react-toastify";
+import { QRCodeCanvas } from "qrcode.react"; // <-- Importamos el generador QR
+
+import DescartePDFTemplate from "./DescartePDFTemplate";
 
 interface CertificadoDescarteModalProps {
   isOpen: boolean;
@@ -13,13 +17,13 @@ interface CertificadoDescarteModalProps {
 
 const formatearFechaHora = (fecha: string) => {
   if (!fecha) return "N/A";
-  return new Date(fecha).toLocaleString("es-VE", { 
-    year: "numeric", 
-    month: "long", 
+  return new Date(fecha).toLocaleString("es-VE", {
+    year: "numeric",
+    month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC" 
+    timeZone: "UTC"
   });
 };
 
@@ -27,7 +31,6 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   const pdfRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  // FUNCIÓN PARA EXPORTAR CORREGIDA
   const exportarPDF = async () => {
     if (!pdfRef.current) return;
     setIsExporting(true);
@@ -35,21 +38,21 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const element = pdfRef.current;
-      
+
       const opt = {
         margin: 0,
         filename: `ACTA_DESCARTE_${muestra.codigo_interno}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
           letterRendering: true,
           scrollY: 0
         },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'letter', 
-          orientation: 'portrait' 
+        jsPDF: {
+          unit: 'mm',
+          format: 'letter',
+          orientation: 'portrait'
         }
       } as const;
 
@@ -65,23 +68,24 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   if (!isOpen || !muestra) return null;
 
   const reporte = muestra.reporte_descarte;
-  
-  // CORRECCIÓN AQUÍ: Accedemos al .nombre del objeto relacional ✨
   const metodoNombre = reporte?.metodo_disposicion?.nombre || "Método no especificado";
-  
   const observaciones = reporte?.observaciones || "Sin observaciones adicionales.";
   const fechaDescarte = reporte?.fecha_descarte;
   const responsable = reporte?.ejecutor?.nombre || "Usuario no registrado";
 
+  // Generamos la URL dinámica apuntando a la vista pública de consulta
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const qrPayload = baseUrl ? `${baseUrl}/consulta/${muestra.id}` : "";
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div 
+      <div
         className="absolute inset-0 bg-slate-900/70 transition-opacity"
         onClick={onClose}
       />
 
       <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-[0.98] duration-200 flex flex-col max-h-[90vh]">
-        
+
         {/* CABECERA */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-4">
@@ -93,7 +97,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
               <p className="text-slate-500 font-medium text-xs mt-0.5">Certificación de Destrucción e Inactivación</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
           >
@@ -103,14 +107,34 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
 
         {/* CUERPO DEL MODAL */}
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
-          
-          {/* Identificación */}
+
+          {/* Identificación con QR */}
           <div>
-            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-              <ShieldCheck size={14} className="text-slate-400" />
-              Identificación del Residuo
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                <ShieldCheck size={14} className="text-slate-400" />
+                Identificación del Residuo
+              </h3>
+              
+              {/* GENERADOR DE CÓDIGO QR EN EL MODAL */}
+              {qrPayload && (
+                <div className="flex flex-col items-center gap-1.5 -mt-3">
+                  <div className="bg-white p-1.5 rounded-lg shadow-sm border border-slate-100" title="Escanea para consultar">
+                    <QRCodeCanvas value={qrPayload} size={50} level="M" />
+                  </div>
+                  <a 
+                    href={qrPayload} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 hover:bg-brand-primary hover:text-white px-2 py-1 rounded transition-colors"
+                  >
+                    <ExternalLink size={10} /> Visitar
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 -mt-2">
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Principio Activo</span>
                 <span className="font-black text-slate-700 text-[14px] leading-tight">{muestra.principio_activo}</span>
@@ -134,7 +158,6 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
                   <Thermometer size={18} />
                 </div>
                 <div>
-                  {/* USAMOS EL NOMBRE DEL MÉTODO */}
                   <span className="block text-slate-800 font-black text-[14px]">{metodoNombre}</span>
                   <span className="block text-slate-500 font-medium text-[12px] mt-0.5">Método de disposición final ejecutado.</span>
                 </div>
@@ -183,7 +206,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
 
         {/* FOOTER */}
         <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-          <button 
+          <button
             onClick={exportarPDF}
             disabled={isExporting}
             className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-primary hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-primary/20 text-[13px] active:scale-95 disabled:opacity-70"
@@ -191,8 +214,8 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
             {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
             {isExporting ? "Generando PDF..." : "Descargar Acta PDF"}
           </button>
-          
-          <button 
+
+          <button
             onClick={onClose}
             className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition-all shadow-sm text-[13px] active:scale-95"
           >
@@ -200,9 +223,9 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
           </button>
         </div>
 
-        {/* TEMPLATE OCULTO PARA PDF */}
-        <DescartePDFTemplate ref={pdfRef} muestra={muestra} />
-        
+        {/* TEMPLATE OCULTO PARA PDF PASANDO EL QR PAYLOAD */}
+        <DescartePDFTemplate ref={pdfRef} muestra={muestra} qrUrl={qrPayload} />
+
       </div>
     </div>
   );

@@ -1,82 +1,102 @@
 "use client";
 
 import { forwardRef } from "react";
-import { ShieldCheck, Thermometer, User, ClipboardList } from "lucide-react";
-import PlantillaPDF from "../ui/PlantillaPDF";
+import PlantillaPDF from "../ui/PlantillaPDF"; // Asumo que usas este wrapper
+import { QRCodeCanvas } from "qrcode.react";
+
+const formatearFechaHora = (fecha: string) => {
+  if (!fecha) return "N/A";
+  return new Date(fecha).toLocaleString("es-VE", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC"
+  });
+};
 
 interface DescartePDFTemplateProps {
   muestra: any;
+  qrUrl?: string; // <-- Recibimos la URL del QR
 }
 
 const DescartePDFTemplate = forwardRef<HTMLDivElement, DescartePDFTemplateProps>(
-  ({ muestra }, ref) => {
-    if (!muestra || !muestra.reporte_descarte) return null;
+  ({ muestra, qrUrl }, ref) => {
+    if (!muestra) return null;
 
     const reporte = muestra.reporte_descarte;
+    const metodoNombre = reporte?.metodo_disposicion?.nombre || "Método no especificado";
+    const observaciones = reporte?.observaciones || "Sin observaciones adicionales.";
+    const fechaDescarte = reporte?.fecha_descarte;
+    const responsable = reporte?.ejecutor?.nombre || "Usuario no registrado";
 
     return (
-      <PlantillaPDF 
+      <PlantillaPDF
         ref={ref}
-        titulo="Certificado de Descarte Legal"
-        subtitulo="Acta de disposición final de especialidades farmacéuticas"
-        fechaEmision={new Date().toLocaleDateString("es-VE")}
+        titulo="ACTA DE DESCARTE Y DESTRUCCIÓN"
+        subtitulo="Certificación Oficial de Disposición de Residuos"
+        fechaEmision={formatearFechaHora(fechaDescarte)}
       >
-        <div className="space-y-8 mt-6">
+        <div className="space-y-6">
           
-          {/* SECCIÓN 1: IDENTIFICACIÓN */}
-          <div className="border border-slate-200 p-6 rounded-2xl bg-slate-50/30">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 uppercase text-[11px] tracking-wider">
-              <ShieldCheck size={16} className="text-brand-primary" /> Identificación del Residuo Farmacéutico
-            </h3>
-            <div className="grid grid-cols-2 gap-y-5 text-[12px]">
-              <p><strong className="text-slate-400 uppercase text-[9px] block">Principio Activo</strong> {muestra.principio_activo}</p>
-              <p><strong className="text-slate-400 uppercase text-[9px] block">Registro Sanitario</strong> {muestra.registro_sanitario}</p>
-              <p><strong className="text-slate-400 uppercase text-[9px] block">Lote</strong> {muestra.lote}</p>
-              <p><strong className="text-slate-400 uppercase text-[9px] block">Código Interno</strong> {muestra.codigo_interno}</p>
-              {/* CORRECCIÓN: Acceso al nombre de la unidad */}
-              <p><strong className="text-slate-400 uppercase text-[9px] block">Cantidad</strong> {muestra.cantidad} {muestra.unidad_medida?.nombre || ""}</p>
-              <p><strong className="text-slate-400 uppercase text-[9px] block">Área de Origen</strong> {muestra.area?.nombre}</p>
+          {/* BLOQUE DE IDENTIFICACIÓN CON CÓDIGO QR */}
+          <div className="border border-indigo-100 p-5 rounded-2xl bg-slate-50/50 break-inside-avoid">
+            <div className="flex justify-between items-start mb-4 border-b border-indigo-100 pb-2">
+              <h3 className="font-bold text-indigo-900">
+                1. Identificación del Residuo Biológico/Químico
+              </h3>
+              {/* RENDERIZAMOS EL QR EN EL PDF */}
+              {qrUrl && (
+                <div className="-mt-1">
+                  <QRCodeCanvas value={qrUrl} size={50} level="M" />
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-y-4 text-[12px]">
+              <p><strong className="text-slate-500 uppercase text-[9px] block">Código Interno</strong> {muestra.codigo_interno}</p>
+              <p><strong className="text-slate-500 uppercase text-[9px] block">Lote</strong> {muestra.lote}</p>
+              <p><strong className="text-slate-500 uppercase text-[9px] block">Principio Activo</strong> {muestra.principio_activo}</p>
+              <p><strong className="text-slate-500 uppercase text-[9px] block">Reg. Sanitario</strong> {muestra.registro_sanitario || "N/A"}</p>
             </div>
           </div>
 
-          {/* SECCIÓN 2: PROTOCOLO */}
-          <div className="border border-slate-200 p-6 rounded-2xl bg-slate-50/30">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 uppercase text-[11px] tracking-wider">
-              <Thermometer size={16} className="text-brand-primary" /> Protocolo de Disposición Final
+          {/* PROTOCOLO APLICADO */}
+          <div className="border border-indigo-100 p-5 rounded-2xl bg-slate-50/50 break-inside-avoid">
+            <h3 className="font-bold text-indigo-900 mb-4 border-b border-indigo-100 pb-2">
+              2. Certificación de Destrucción
             </h3>
-            <div className="space-y-4">
-              <div className="bg-white border border-slate-200 p-4 rounded-xl">
-                <span className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Método Aplicado</span>
-                {/* CORRECCIÓN: Acceso al nombre del método */}
-                <span className="font-bold text-[13px] text-slate-800">{reporte.metodo_disposicion?.nombre || "N/A"}</span>
-              </div>
-              <div className="bg-white border border-slate-200 p-4 rounded-xl">
-                <span className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Observaciones Técnicas</span>
-                <p className="text-[12px] text-slate-700 italic leading-relaxed">"{reporte.observaciones}"</p>
-              </div>
+            <div className="space-y-4 text-[12px]">
+              <p>
+                <strong className="text-slate-500 uppercase text-[9px] block">Método Aplicado</strong> 
+                {metodoNombre}
+              </p>
+              <p>
+                <strong className="text-slate-500 uppercase text-[9px] block">Observaciones y N° de Acta</strong> 
+                {observaciones}
+              </p>
             </div>
           </div>
 
-          {/* SECCIÓN 3: VALIDACIÓN */}
-          <div className="pt-10">
-            <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2 uppercase text-[11px] tracking-wider">
-              <User size={16} className="text-brand-primary" /> Validación de Ejecución
+          {/* FIRMAS DE RESPONSABILIDAD */}
+          <div className="border border-indigo-100 p-5 rounded-2xl bg-slate-50/50 break-inside-avoid mt-8">
+            <h3 className="font-bold text-indigo-900 mb-4 border-b border-indigo-100 pb-2">
+              3. Firmas de Responsabilidad Técnica
             </h3>
-            <div className="grid grid-cols-2 gap-10 text-[12px]">
+            <div className="grid grid-cols-2 gap-8 text-[12px] text-center mt-12 pt-8">
               <div>
-                <p><strong className="text-slate-400 uppercase text-[9px] block">Responsable</strong> {reporte.ejecutor?.nombre || "Analista Autorizado"}</p>
-                <p className="mt-4"><strong className="text-slate-400 uppercase text-[9px] block">Fecha de Cierre</strong> {new Date(reporte.fecha_descarte).toLocaleString("es-VE")}</p>
+                <div className="border-t border-slate-400 w-3/4 mx-auto pt-2">
+                  <strong className="block text-slate-800">{responsable}</strong>
+                  <span className="text-slate-500">Analista Ejecutor</span>
+                </div>
               </div>
-              <div className="flex flex-col items-center justify-end border-t border-slate-300 pt-2 h-24">
-                <p className="text-[9px] font-bold text-slate-400 uppercase">Firma y Sello del Analista</p>
+              <div>
+                <div className="border-t border-slate-400 w-3/4 mx-auto pt-2">
+                  <strong className="block text-slate-800">Sello del Departamento</strong>
+                  <span className="text-slate-500">{muestra.area?.nombre}</span>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="mt-10 p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <p className="text-[9px] text-slate-400 text-center leading-relaxed">
-              Documento generado por SITRADES. Este certificado avala que la muestra ha sido tratada siguiendo los protocolos de bioseguridad del INHRR y el Decreto N° 2.218.
-            </p>
           </div>
 
         </div>

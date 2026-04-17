@@ -20,14 +20,19 @@ const apiPermissions: Record<string, string[]> = {
   "/api/muestras": ["Administrador", "Analista de Laboratorio"],
 };
 
-// 3. Rutas públicas
+// 3. Rutas públicas exactas
 const publicRoutes = ["/", "/manual"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
-  if (publicRoutes.includes(pathname)) {
+  // A. EXCEPCIONES PÚBLICAS: Dejamos pasar el home, manual y TODA la rama de consulta de QR
+  if (
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith("/consulta") ||
+    pathname.startsWith("/api/consulta")
+  ) {
     return NextResponse.next();
   }
 
@@ -36,6 +41,7 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
+  // B. REDIRECCIÓN SI NO HAY SESIÓN (Aplica para todo lo que no esté en el bloque A)
   if (!token) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "No autorizado. Debes iniciar sesión." }, { status: 401 });
@@ -45,7 +51,7 @@ export async function middleware(request: NextRequest) {
 
   const userRole = token.rol as string;
 
-  // D. PROTECCIÓN DE ENDPOINTS (API) -> Retornan JSON (403 Forbidden)
+  // C. PROTECCIÓN DE ENDPOINTS (API) -> Retornan JSON (403 Forbidden)
   if (pathname.startsWith("/api/")) {
     
     // EXCEPCIÓN: Los Analistas necesitan hacer GET a infraestructura para registrar muestras
@@ -71,7 +77,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next(); 
   }
 
-  // E. PROTECCIÓN DE VISTAS (FRONTEND) -> Retornan Redirect
+  // D. PROTECCIÓN DE VISTAS (FRONTEND) -> Retornan Redirect
   let hasAccess = false;
   let routeRequiresProtection = false;
 
