@@ -27,7 +27,7 @@ export async function PUT(request: Request, context: any) {
 
       for (const dir of direcciones) {
         if (!dir.nombre || dir.nombre.trim() === "") continue;
-        
+
         if (dir.id) {
           await tx.direccion.update({ where: { id: dir.id }, data: { nombre: dir.nombre.trim() } });
         } else {
@@ -43,22 +43,27 @@ export async function PUT(request: Request, context: any) {
   }
 }
 
-// --- NUEVO MÉTODO PATCH PARA SOFT DELETE ---
 export async function PATCH(request: Request, context: any) {
   try {
     const params = await context.params;
     const id = parseInt(params?.id);
-    const { activo } = await request.json();
+    const body = await request.json();
+    const { activo, nombre } = body; // Recibimos ambos posibles campos
 
     if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
+    const dataToUpdate: any = {};
+    if (activo !== undefined) dataToUpdate.activo = activo;
+    if (nombre !== undefined) dataToUpdate.nombre = nombre.trim();
+
     await prisma.piso.update({
       where: { id },
-      data: { activo }
+      data: dataToUpdate
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Error al cambiar estado del piso" }, { status: 500 });
+    console.error("Error en PATCH pisos:", error);
+    return NextResponse.json({ error: "Error al actualizar el piso" }, { status: 500 });
   }
 }

@@ -65,7 +65,7 @@ export default function DashboardPage() {
       <div className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight flex items-center gap-3">
-            ¡Hola, {primerNombre}! 👋
+            ¡Hola, {primerNombre}! 
           </h1>
           <p className="text-slate-500 font-medium mt-1.5 max-w-xl">
             Bienvenido al Panel de Control Ejecutivo de SITRADES.

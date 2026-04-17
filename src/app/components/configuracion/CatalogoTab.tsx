@@ -8,9 +8,10 @@ import ConfigTable from "./ConfigTable";
 interface CatalogoTabProps {
   endpoint: string;
   nombreCatalogo: string;
+  isSoftDelete?: boolean;
 }
 
-export default function CatalogoTab({ endpoint, nombreCatalogo }: CatalogoTabProps) {
+export default function CatalogoTab({ endpoint, nombreCatalogo, isSoftDelete }: CatalogoTabProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -57,7 +58,7 @@ export default function CatalogoTab({ endpoint, nombreCatalogo }: CatalogoTabPro
     <div className="space-y-6">
       <div className="flex justify-center sm:justify-end mb-8">
         {!isAdding ? (
-          <button 
+          <button
             onClick={() => setIsAdding(true)}
             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand-primary text-white px-8 py-3 rounded-2xl font-medium text-[15px] active:scale-95 transition-all"
           >
@@ -65,7 +66,7 @@ export default function CatalogoTab({ endpoint, nombreCatalogo }: CatalogoTabPro
           </button>
         ) : (
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto animate-in fade-in slide-in-from-top-1">
-            <input 
+            <input
               autoFocus
               className="w-full sm:w-80 px-5 py-3 bg-white border-2 border-slate-200 rounded-2xl outline-none focus:border-brand-primary text-slate-700 text-sm font-medium"
               placeholder="Escribe el nombre..."
@@ -91,7 +92,12 @@ export default function CatalogoTab({ endpoint, nombreCatalogo }: CatalogoTabPro
           <p className="text-slate-600 font-medium text-sm tracking-tight">No se encontraron registros en este catálogo</p>
         </div>
       ) : (
-        <ConfigTable data={data} endpoint={endpoint} onRefresh={fetchData} />
+        <ConfigTable 
+            data={data} 
+            endpoint={endpoint} 
+            onRefresh={fetchData} 
+            isSoftDelete={isSoftDelete} 
+        />
       )}
     </div>
   );

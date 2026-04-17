@@ -7,24 +7,31 @@ export async function PATCH(request: Request, context: any) {
     const params = await context.params;
     const id = params?.id;
     const body = await request.json();
-    const { activo } = body; // Recibimos true (activar) o false (inhabilitar)
+    const { activo, nombre } = body; // Detectamos ambos campos
 
     if (!id) {
       return NextResponse.json({ error: "ID de usuario no proporcionado" }, { status: 400 });
     }
 
+    const dataToUpdate: any = {};
+    if (activo !== undefined) dataToUpdate.activo = activo;
+    if (nombre !== undefined) dataToUpdate.nombre = nombre.trim();
+
     await prisma.usuario.update({
       where: { id },
-      data: { activo }
+      data: dataToUpdate
     });
 
-    const accion = activo ? "reactivado" : "inhabilitado";
-    return NextResponse.json({ success: true, message: `Usuario ${accion} correctamente` }, { status: 200 });
+    const accion = activo !== undefined ? (activo ? "reactivado" : "inhabilitado") : "actualizado";
+    return NextResponse.json({ 
+      success: true, 
+      message: `Usuario ${accion} correctamente` 
+    }, { status: 200 });
 
   } catch (error) {
-    console.error("Error al cambiar estado del usuario:", error);
+    console.error("Error al actualizar usuario (PATCH):", error);
     return NextResponse.json(
-      { error: "No se pudo actualizar el estado del usuario. Verifique la conexión." },
+      { error: "No se pudo procesar la actualización del usuario." },
       { status: 500 }
     );
   }
@@ -59,7 +66,7 @@ export async function PUT(request: Request, context: any) {
     return NextResponse.json(usuarioActualizado, { status: 200 });
 
   } catch (error) {
-    console.error("Error al actualizar usuario:", error);
+    console.error("Error al actualizar usuario (PUT):", error);
     return NextResponse.json({ error: "Error al actualizar la información del usuario" }, { status: 500 });
   }
 }
