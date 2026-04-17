@@ -26,7 +26,8 @@ import {
   BookOpen,
   Archive,
   Trash,
-  Settings 
+  Settings,
+  UserCog 
 } from "lucide-react";
 
 import ConfirmModal from "../ui/ConfirmModal"; 
@@ -116,11 +117,18 @@ const MENU_ITEMS = [
       }
     ]
   },
-  {
+    {
     path: "/home/configuracion",
     name: "Configuración",
     icon: Settings,
     rolesPermitidos: ["Administrador"],
+    exact: true,
+  },
+  {
+    path: "/home/perfil",
+    name: "Mi Perfil",
+    icon: UserCog,
+    rolesPermitidos: ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
     exact: true,
   },
 ];
@@ -176,7 +184,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
       )}
 
       <aside 
-        className={`fixed md:sticky top-0 left-0 h-screen bg-white border-r border-slate-100 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-[4px_0_24px_rgb(0,0,0,0.02)]
+        className={`fixed md:sticky top-0 left-0 h-screen bg-white border-r border-slate-100 flex flex-col z-10 transition-all duration-300 ease-in-out shadow-[4px_0_24px_rgb(0,0,0,0.02)]
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
           ${isCollapsed ? "md:w-[88px]" : "md:w-[260px] w-[280px]"}
         `}
@@ -309,12 +317,12 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
           <button
             onClick={() => setIsLogoutModalOpen(true)}
-            title={isCollapsed ? "Cerrar Sesion" : ""}
+            title={isCollapsed ? "Cerrar Sesión" : ""}
             className={`w-full flex items-center gap-3 px-3 py-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-700 font-semibold text-[13px] rounded-xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
           >
             <LogOut size={18} className="shrink-0 transition-transform group-hover:-translate-x-1" />
             <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
-              Cerrar Sesion
+              Cerrar Sesión
             </span>
           </button>
         </div>
@@ -324,9 +332,9 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={() => signOut({ callbackUrl: "/" })}
-        title="Cerrar Sesion?"
-        message="Estas a punto de salir del sistema SITRADES. Tendras que ingresar tus credenciales nuevamente para acceder."
-        confirmText="Si, cerrar sesion"
+        title="¿Cerrar Sesión?"
+        message="Estás a punto de salir del sistema SITRADES. Tendrás que ingresar tus credenciales nuevamente para acceder."
+        confirmText="Sí, cerrar sesión"
         cancelText="Cancelar"
         isDanger={true}
       />

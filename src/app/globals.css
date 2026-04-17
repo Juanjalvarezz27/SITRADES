@@ -3,16 +3,18 @@
 @tailwind utilities;
 
 @keyframes page-drop-in {
-  from {
+  0% {
     opacity: 0;
     transform: translateY(-8px); 
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0); 
+    transform: none; 
   }
 }
 
 .animate-page-transition {
-  animation: page-drop-in 0.2s ease-out forwards; 
+  opacity: 1;
+  transform: none;
+  animation: page-drop-in 0.2s ease-out; 
 }
