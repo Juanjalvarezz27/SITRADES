@@ -3,18 +3,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  MapPin, Plus, Edit2, Trash2, Loader2, 
+  MapPin, Plus, Edit2, Trash2, 
   Building2, Layers, Users, ChevronDown, User 
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { AreaAPI } from "@/types";
 
+// Ajusta estas rutas según tu estructura real
 import AreaModal from "../../../components/infraestructura/AreaModal";
 import ConfirmarEliminacionModal from "../../../components/personal/ConfirmarEliminacionModal";
 import SearchBar from "../../../components/ui/SearchBar";
 import FilterSelect from "../../../components/ui/FilterSelect";
-
-// Importamos nuestro componente de paginación reutilizable
 import Pagination from "../../../components/ui/Pagination";
 
 // Función auxiliar para ignorar acentos y mayúsculas en las búsquedas
@@ -77,8 +76,8 @@ function AreaCard({
           disabled={!tieneUsuarios}
           className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-all font-bold text-[13px] ${
             !tieneUsuarios 
-            ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
-            : "bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-brand-primary/5 hover:border-brand-primary/30 hover:text-brand-primary"
+              ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
+              : "bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-brand-primary/5 hover:border-brand-primary/30 hover:text-brand-primary"
           }`}
         >
           <div className="flex items-center gap-2">
@@ -293,7 +292,7 @@ export default function GestionAreasPage() {
   const direccionesOrdenadas = Object.keys(areasPorDireccion).sort((a, b) => a.localeCompare(b));
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto relative">
       
       {/* Cabecera */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-8">
@@ -336,9 +335,7 @@ export default function GestionAreasPage() {
       )}
 
       {/* Contenido */}
-      {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3"><Loader2 className="animate-spin text-brand-secondary" size={36} /><span className="font-semibold text-brand-secondary">Cargando infraestructura...</span></div>
-      ) : areas.length === 0 ? (
+      {loading ? null : areas.length === 0 ? (
         <div className="py-20 text-center text-slate-500 px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm"><MapPin size={48} className="mx-auto text-slate-200 mb-4" /><p className="font-semibold text-slate-700">No hay áreas registradas</p></div>
       ) : areasFiltradas.length === 0 ? (
         <div className="py-20 text-center text-slate-500 px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm">
@@ -348,7 +345,8 @@ export default function GestionAreasPage() {
         </div>
       ) : (
         <>
-          <div className="space-y-6">
+          {/* Animación aplicada directamente a este contenedor para evitar conflictos */}
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {direccionesOrdenadas.map((dir) => (
               <DireccionSeccion
                 key={dir}

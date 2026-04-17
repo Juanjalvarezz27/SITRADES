@@ -1,8 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { User, Mail, Shield, MapPin, Loader2, Calendar, Fingerprint, Edit } from "lucide-react";
+import { 
+  User, 
+  Mail, 
+  Shield, 
+  MapPin, 
+  Calendar, 
+  Fingerprint, 
+  Edit 
+} from "lucide-react";
 import { toast } from "react-toastify";
+
+// Ajusta esta ruta si es necesario
 import EditProfileModal from "../../components/ui/EditProfileModal"; 
 
 const formatearFecha = (fecha: string) => {
@@ -16,6 +26,7 @@ export default function PerfilPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchPerfil = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/perfil");
       if (!res.ok) throw new Error("Error al cargar datos");
@@ -32,17 +43,14 @@ export default function PerfilPage() {
     fetchPerfil();
   }, [fetchPerfil]);
 
+  // Si está cargando o no hay data, devolvemos null para que el contenedor quede limpio
+  // sin mostrar spinners molestos que rompan la fluidez
   if (loading || !data) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 text-slate-600 gap-4">
-        <Loader2 className="animate-spin text-brand-primary" size={40} />
-        <p className="font-semibold text-sm tracking-widest text-slate-500">Cargando datos...</p>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-5xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-5xl mx-auto space-y-8 relative">
       
       {/* Cabecera y Botón de Edición */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -54,11 +62,12 @@ export default function PerfilPage() {
             Información de cuenta y credenciales de acceso al sistema.
           </p>
         </div>
+        {/* BOTÓN CON MÁS COLOR */}
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-white border-2 border-slate-200 text-slate-700 hover:border-brand-primary hover:text-brand-primary px-6 py-3 rounded-2xl font-semibold transition-all shadow-sm active:scale-95"
+          className="flex items-center justify-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary text-white hover:opacity-90 px-6 py-3 rounded-2xl font-bold transition-all shadow-md shadow-brand-primary/20 active:scale-95 shrink-0"
         >
-          <Edit size={18} /> Modificar perfil
+          <Edit size={18} strokeWidth={2.5} /> Modificar perfil
         </button>
       </div>
 
@@ -66,11 +75,13 @@ export default function PerfilPage() {
         
         {/* Tarjeta Principal (Identidad) */}
         <div className="lg:col-span-1 bg-white border-2 border-slate-100 rounded-[2rem] p-8 text-center shadow-sm flex flex-col items-center justify-center relative overflow-hidden min-h-[320px]">
-          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-brand-primary/5 to-brand-secondary/5"></div>
+          {/* FRANJA DE COLOR VIBRANTE */}
+          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-brand-primary to-brand-secondary"></div>
           
           <div className="relative z-10 flex flex-col items-center mt-4">
-            <div className="w-28 h-28 rounded-full bg-white border-4 border-slate-50 shadow-lg flex items-center justify-center text-slate-300 mb-5">
-              <User size={48} strokeWidth={1.5} />
+            {/* AVATAR CON BORDE BLANCO GRUESO PARA CONTRASTAR */}
+            <div className="w-28 h-28 rounded-full bg-white border-[6px] border-white shadow-md flex items-center justify-center text-brand-primary mb-5">
+              <User size={48} strokeWidth={2} />
             </div>
             <h2 className="font-black text-2xl text-slate-800 mb-2">{data.nombre}</h2>
             <div className="flex flex-col gap-2 w-full mt-2">
@@ -141,7 +152,7 @@ export default function PerfilPage() {
               <span className="text-[12px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
                 <Fingerprint size={14} /> ID Interno de Sistema
               </span>
-              <p className="font-medium text-slate-500 text-[14px] bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 font-mono">
+              <p className="font-medium text-slate-500 text-[14px] bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 font-mono break-all">
                 {data.id}
               </p>
             </div>
@@ -155,7 +166,7 @@ export default function PerfilPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         userData={{ nombre: data.nombre, email: data.email }}
-        onSuccess={fetchPerfil} // Recarga los datos al guardar
+        onSuccess={fetchPerfil} 
       />
     </div>
   );

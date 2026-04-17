@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, SetStateAction } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
-  Loader2, 
   PackageX, 
   Trash2, 
   AlertOctagon, 
-  SearchX,
   MapPin
 } from "lucide-react";
 import { toast } from "react-toastify";
+
+// Ajusta estas rutas de importación según la estructura exacta de tus carpetas
 import SearchBar from "../../../components/ui/SearchBar";
 import Pagination from "../../../components/ui/Pagination";
 import FilterSelect from "../../../components/ui/FilterSelect";
@@ -24,6 +24,7 @@ export default function ColaDescartePage() {
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const [busqueda, setBusqueda] = useState("");
   const [filtroArea, setFiltroArea] = useState("TODOS");
 
@@ -76,10 +77,13 @@ export default function ColaDescartePage() {
   }, [busqueda, filtroArea, muestrasOriginales]);
 
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
-  const muestrasPaginadas = muestrasFiltradas.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const muestrasPaginadas = muestrasFiltradas.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE, 
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in duration-500 relative">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto relative">
       
       {/* HEADER CON CONTADOR RESPONSIVO EQUILIBRADO */}
       <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 mb-10">
@@ -104,7 +108,7 @@ export default function ColaDescartePage() {
               Pendientes
             </p>
             <p className="text-2xl font-black text-rose-700 leading-none">
-              {muestrasFiltradas.length}
+              {loading ? "..." : muestrasFiltradas.length}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
@@ -136,14 +140,9 @@ export default function ColaDescartePage() {
       </div>
 
       {/* GRID DE RESULTADOS */}
-      <div className="w-full relative min-h-[500px]">
-        {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-rose-400 gap-4">
-            <Loader2 className="animate-spin" size={48} />
-            <span className="text-sm font-black text-rose-500 uppercase tracking-widest animate-pulse">Consultando pendientes...</span>
-          </div>
-        ) : muestrasFiltradas.length === 0 ? (
-          <div className="py-32 text-center bg-white border border-slate-100 rounded-[3rem] flex flex-col items-center justify-center animate-in zoom-in duration-500">
+      <div className="w-full relative min-h-[400px]">
+        {loading ? null : muestrasFiltradas.length === 0 ? (
+          <div className="py-32 text-center bg-white border border-slate-100 rounded-[3rem] flex flex-col items-center justify-center">
             <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6">
               <PackageX size={40} className="text-emerald-500" />
             </div>

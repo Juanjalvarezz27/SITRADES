@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { 
-  PackagePlus, Loader2, Package, Calendar, MapPin, 
+  PackagePlus, Package, Calendar, MapPin, 
   ShieldAlert, Eye, FlaskConical, Edit3 
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -214,7 +214,7 @@ export default function InventarioMuestrasPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto relative">
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-8">
         <div>
@@ -259,12 +259,7 @@ export default function InventarioMuestrasPage() {
       </div>
 
       <div className="w-full relative min-h-[400px]">
-        {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3 bg-slate-50/50 backdrop-blur-sm rounded-3xl z-20">
-            <Loader2 className="animate-spin text-brand-secondary" size={36} />
-            <span className="text-[15px] font-semibold text-brand-secondary">Cargando inventario activo...</span>
-          </div>
-        ) : muestrasFiltradas.length === 0 ? (
+        {loading ? null : muestrasFiltradas.length === 0 ? (
           <div className="py-24 text-center text-slate-500 text-[15px] px-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center">
             <Package size={48} className="text-slate-300 mb-4 opacity-50" />
             <p className="font-bold text-slate-700 text-lg">Inventario vacío</p>

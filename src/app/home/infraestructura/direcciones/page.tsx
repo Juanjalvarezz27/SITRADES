@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation"; 
 import { 
-  Building2, Plus, Edit2, Trash2, Loader2, 
+  Building2, Plus, Edit2, Trash2, 
   MapPin, ChevronDown, Layers 
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { DireccionAPI, AreaData } from "@/types";
 
+// Ajusta estas rutas según tu estructura real
 import DireccionModal from "../../../components/infraestructura/DireccionModal";
 import ConfirmarEliminacionModal from "../../../components/personal/ConfirmarEliminacionModal";
 import SearchBar from "../../../components/ui/SearchBar";
@@ -73,8 +74,8 @@ function DireccionCard({
           disabled={!tieneAreas}
           className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-all font-bold text-[13px] ${
             !tieneAreas 
-            ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
-            : "bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-brand-primary/5 hover:border-brand-primary/30 hover:text-brand-primary"
+              ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
+              : "bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-brand-primary/5 hover:border-brand-primary/30 hover:text-brand-primary"
           }`}
         >
           <span>{direccion._count?.areas || 0} {(direccion._count?.areas === 1) ? 'Área Interna' : 'Áreas Internas'}</span>
@@ -249,7 +250,7 @@ export default function GestionDireccionesPage() {
   const opcionesPisos = Array.from(new Map(direcciones.filter(d => d.piso).map(d => [d.piso?.id, d.piso])).values())
     .map(p => ({ value: p?.id.toString() || "", label: p?.nombre || "" }));
 
-const direccionesFiltradas = direcciones.filter(dir => {
+  const direccionesFiltradas = direcciones.filter(dir => {
     const matchBusqueda = quitarAcentos(dir.nombre).includes(quitarAcentos(busqueda));
     const matchPiso = filtroPiso === "TODOS" || dir.piso_id?.toString() === filtroPiso;
     
@@ -268,7 +269,7 @@ const direccionesFiltradas = direcciones.filter(dir => {
   const pisosOrdenados = Object.keys(direccionesPorPiso).sort((a, b) => a.localeCompare(b));
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto relative">
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-8">
         <div>
@@ -312,12 +313,7 @@ const direccionesFiltradas = direcciones.filter(dir => {
         </div>
       )}
 
-      {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
-          <Loader2 className="animate-spin text-brand-secondary" size={36} />
-          <span className="font-semibold text-brand-secondary">Cargando direcciones...</span>
-        </div>
-      ) : direcciones.length === 0 ? (
+      {loading ? null : direcciones.length === 0 ? (
         <div className="py-20 text-center text-slate-500 px-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
           <Building2 size={48} className="mx-auto text-slate-200 mb-4" />
           <p className="font-semibold text-slate-700">No hay direcciones registradas</p>

@@ -2,19 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { toast } from "react-toastify"; 
 import { UsuarioAPI } from "@/types";
+
+// Ajusta estas rutas según tu estructura
 import Buscador from "../../components/personal/Buscador";
 import UsuarioCard from "../../components/personal/UsuarioCard";
 import GestionarUsuarioModal from "../../components/personal/GestionarUsuarioModal";
 import ConfirmarEliminacionModal from "../../components/personal/ConfirmarEliminacionModal";
 import EditarUsuarioModal from "../../components/personal/EditarUsuarioModal";
-
-// Importamos nuestro componente reutilizable de paginación
 import Pagination from "../../components/ui/Pagination";
 
-// Función auxiliar para limpiar acentos
 const quitarAcentos = (str: string) => {
   if (!str) return "";
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -34,7 +33,7 @@ export default function DirectorioPersonalPage() {
 
   // Estados para la Paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10; // Configuramos de 10 en 10 como pediste
+  const ITEMS_PER_PAGE = 10; 
 
   // Modales y Selección
   const [selectedUser, setSelectedUser] = useState<UsuarioAPI | null>(null);
@@ -64,7 +63,6 @@ export default function DirectorioPersonalPage() {
     fetchUsuarios();
   }, [fetchUsuarios]);
 
-  // EFECTO DE FILTRADO CORREGIDO PARA TYPESCRIPT
   useEffect(() => {
     const filtrados = todosLosUsuarios.filter((user) => {
       // 1. Filtro de Texto
@@ -84,8 +82,6 @@ export default function DirectorioPersonalPage() {
     });
 
     setUsuariosFiltrados(filtrados);
-    
-    // Cada vez que se cambia un filtro o se busca a alguien, devolvemos a la página 1
     setCurrentPage(1);
   }, [searchTerm, roleFilter, pisoFilter, direccionFilter, areaFilter, todosLosUsuarios]);
 
@@ -93,7 +89,6 @@ export default function DirectorioPersonalPage() {
   const totalPages = Math.ceil(usuariosFiltrados.length / ITEMS_PER_PAGE);
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  // Extraemos solo los 10 usuarios de la página actual
   const usuariosPaginados = usuariosFiltrados.slice(indexOfFirstItem, indexOfLastItem);
 
   // Handlers para modales
@@ -141,7 +136,7 @@ export default function DirectorioPersonalPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto relative">
       
       {/* Cabecera */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-6 sm:mb-8">
@@ -174,12 +169,7 @@ export default function DirectorioPersonalPage() {
 
       {/* Cuadrícula de Usuarios */}
       <div className="w-full relative min-h-[400px]">
-        {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-3 bg-brand-bg/50 backdrop-blur-sm rounded-3xl z-20">
-            <Loader2 className="animate-spin text-brand-secondary" size={36} />
-            <span className="text-[15px] font-semibold text-brand-secondary">Cargando personal...</span>
-          </div>
-        ) : usuariosFiltrados.length === 0 ? (
+        {loading ? null : usuariosFiltrados.length === 0 ? (
           <div className="py-24 text-center text-slate-500 text-[15px] px-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col items-center justify-center">
             <UserPlus size={48} className="text-slate-300 mb-4 opacity-50" />
             <p className="font-bold text-slate-700 text-lg">No se encontraron perfiles</p>
@@ -187,7 +177,6 @@ export default function DirectorioPersonalPage() {
           </div>
         ) : (
           <>
-            {/* Mapeamos sobre usuariosPaginados en lugar de todos los filtrados */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {usuariosPaginados.map((user) => (
                 <UsuarioCard 
@@ -198,13 +187,12 @@ export default function DirectorioPersonalPage() {
               ))}
             </div>
 
-            {/* Componente de Paginación al final de la cuadrícula */}
             <Pagination 
               currentPage={currentPage} 
               totalPages={totalPages} 
               onPageChange={(page) => {
                 setCurrentPage(page);
-                window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll automático hacia arriba
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }} 
             />
           </>

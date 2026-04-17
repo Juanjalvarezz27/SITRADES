@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation"; 
 import { 
-  Layers, Plus, Edit2, Trash2, Loader2, 
+  Layers, Plus, Edit2, Trash2,
   Building2, MapPin, ChevronDown 
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { PisoAPI, DireccionData } from "@/types";
 
+// Ajusta estas rutas según tu estructura real
 import PisoModal from "../../../components/infraestructura/PisoModal";
 import ConfirmarEliminacionModal from "../../../components/personal/ConfirmarEliminacionModal";
 import SearchBar from "../../../components/ui/SearchBar";
@@ -67,8 +68,8 @@ function PisoCard({
         disabled={!tieneDirecciones}
         className={`mt-5 w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-all font-bold text-[13px] ${
           !tieneDirecciones 
-          ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
-          : "bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-brand-primary/5 hover:border-brand-primary/30 hover:text-brand-primary"
+            ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
+            : "bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-brand-primary/5 hover:border-brand-primary/30 hover:text-brand-primary"
         }`}
       >
         <span>Ver Estructura Interna</span>
@@ -178,12 +179,12 @@ export default function GestionPisosPage() {
   };
 
   // Lógica de Filtrado
-const pisosFiltrados = pisos.filter(piso => 
+  const pisosFiltrados = pisos.filter(piso => 
     quitarAcentos(piso.nombre).includes(quitarAcentos(busqueda))
   );
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1400px] mx-auto relative">
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-8">
         <div>
@@ -218,12 +219,7 @@ const pisosFiltrados = pisos.filter(piso =>
         </div>
       )}
 
-      {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
-          <Loader2 className="animate-spin text-brand-secondary" size={36} />
-          <span className="font-semibold text-brand-secondary">Cargando infraestructura...</span>
-        </div>
-      ) : pisos.length === 0 ? (
+      {loading ? null : pisos.length === 0 ? (
         <div className="py-20 text-center text-slate-500 px-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
           <Layers size={48} className="mx-auto text-slate-200 mb-4" />
           <p className="font-semibold text-slate-700">No hay pisos registrados</p>

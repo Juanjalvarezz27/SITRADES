@@ -13,6 +13,8 @@ import {
   Trash2 
 } from "lucide-react";
 import { toast } from "react-toastify";
+
+// Ajusta estas rutas según tu estructura real
 import SearchBar from "../../../components/ui/SearchBar";
 import FilterSelect from "../../../components/ui/FilterSelect";
 import TrazabilidadModal from "../../../components/muestras/TrazabilidadModal";
@@ -44,17 +46,21 @@ export default function InventarioInactivoPage() {
   const [isExpedienteModalOpen, setIsExpedienteModalOpen] = useState(false);
   const [isCertificadoModalOpen, setIsCertificadoModalOpen] = useState(false);
 
-  // CORRECCIÓN: Opciones dinámicas para los métodos de disposición (accediendo al objeto relacional)
-  const opcionesAreas = Array.from(new Set(muestrasOriginales.map(m => m.area?.nombre))).filter(Boolean).sort().map(n => ({ value: n as string, label: n as string }));
+  // Opciones dinámicas para los selectores
+  const opcionesAreas = Array.from(new Set(muestrasOriginales.map(m => m.area?.nombre)))
+    .filter(Boolean)
+    .sort()
+    .map(n => ({ value: n as string, label: n as string }));
   
- const opcionesMetodos = Array.from(
-  new Set(muestrasOriginales.map(m => m.reporte_descarte?.metodo_disposicion?.nombre))
-  )
-  .filter(Boolean)
-  .sort()
-  .map(m => ({ value: m as string, label: m as string }));
+  const opcionesMetodos = Array.from(new Set(muestrasOriginales.map(m => m.reporte_descarte?.metodo_disposicion?.nombre)))
+    .filter(Boolean)
+    .sort()
+    .map(m => ({ value: m as string, label: m as string }));
 
-  const opcionesRiesgo = Array.from(new Set(muestrasOriginales.map(m => m.riesgo_bioseguridad))).filter(Boolean).sort().map(r => ({ value: r as string, label: r as string }));
+  const opcionesRiesgo = Array.from(new Set(muestrasOriginales.map(m => m.riesgo_bioseguridad)))
+    .filter(Boolean)
+    .sort()
+    .map(r => ({ value: r as string, label: r as string }));
 
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
@@ -71,7 +77,9 @@ export default function InventarioInactivoPage() {
     }
   }, []);
 
-  useEffect(() => { fetchMuestras(); }, [fetchMuestras]);
+  useEffect(() => { 
+    fetchMuestras(); 
+  }, [fetchMuestras]);
 
   useEffect(() => {
     const filtrados = muestrasOriginales.filter((muestra) => {
@@ -82,7 +90,6 @@ export default function InventarioInactivoPage() {
       
       const cumpleArea = filtroArea === "TODOS" || muestra.area?.nombre === filtroArea;
       
-      // CORRECCIÓN: Filtrado por método comparando con el nombre del objeto relacional
       const cumpleMetodo = filtroMetodo === "TODOS" || muestra.reporte_descarte?.metodo_disposicion?.nombre === filtroMetodo;
       
       const cumpleRiesgo = filtroRiesgo === "TODOS" || muestra.riesgo_bioseguridad === filtroRiesgo;
@@ -113,7 +120,7 @@ export default function InventarioInactivoPage() {
   const hayFiltrosActivos = fechaInicio || fechaFin || filtroArea !== "TODOS" || filtroMetodo !== "TODOS" || filtroRiesgo !== "TODOS" || busqueda;
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto animate-in fade-in duration-500 relative">
+    <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto relative">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 mb-10">
@@ -134,7 +141,7 @@ export default function InventarioInactivoPage() {
         <div className="w-full sm:w-auto md:min-w-[180px] bg-white border border-slate-200 px-6 py-3.5 rounded-[2rem] shadow-sm flex items-center justify-center md:justify-end gap-4 transition-all">
           <div className="text-center md:text-right">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Expedientes</p>
-            <p className="text-2xl font-black text-brand-primary leading-none">{muestrasFiltradas.length}</p>
+            <p className="text-2xl font-black text-brand-primary leading-none">{loading ? "..." : muestrasFiltradas.length}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-indigo-50 text-brand-primary flex items-center justify-center shrink-0">
             <Archive size={18} />
@@ -153,7 +160,6 @@ export default function InventarioInactivoPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <FilterSelect value={filtroArea} onChange={setFiltroArea} options={opcionesAreas} defaultLabel="Todas las Áreas" icon={MapPin} />
           <FilterSelect value={filtroRiesgo} onChange={setFiltroRiesgo} options={opcionesRiesgo} defaultLabel="Cualquier Riesgo" icon={ShieldAlert} />
-          {/* El filtro de método ahora usará los nombres dinámicos */}
           <FilterSelect value={filtroMetodo} onChange={setFiltroMetodo} options={opcionesMetodos} defaultLabel="Todos los Métodos" icon={Thermometer} />
         </div>
 
@@ -184,13 +190,8 @@ export default function InventarioInactivoPage() {
 
       {/* RESULTADOS */}
       <div className="w-full relative min-h-[500px]">
-        {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-indigo-400 gap-4">
-            <Loader2 className="animate-spin" size={48} />
-            <span className="text-sm font-black text-indigo-500 uppercase tracking-widest animate-pulse">Consultando Archivo...</span>
-          </div>
-        ) : muestrasFiltradas.length === 0 ? (
-          <div className="py-32 text-center bg-white border border-slate-100 rounded-[3rem] flex flex-col items-center justify-center animate-in zoom-in duration-500">
+        {loading ? null : muestrasFiltradas.length === 0 ? (
+          <div className="py-32 text-center bg-white border border-slate-100 rounded-[3rem] flex flex-col items-center justify-center">
             <SearchX size={48} className="text-slate-200 mb-4" />
             <p className="font-black text-slate-800 text-xl tracking-tight">Sin resultados</p>
             <p className="text-slate-400 mt-1 font-medium text-sm">No hay expedientes que coincidan con los filtros aplicados.</p>
@@ -208,14 +209,30 @@ export default function InventarioInactivoPage() {
               ))}
             </div>
             <div className="mt-12">
-              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page: number) => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={(page: number) => { 
+                  setCurrentPage(page); 
+                  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                }} 
+              />
             </div>
           </>
         )}
       </div>
 
-      <TrazabilidadModal isOpen={isExpedienteModalOpen} onClose={() => setIsExpedienteModalOpen(false)} muestra={muestraSeleccionada} />
-      <CertificadoDescarteModal isOpen={isCertificadoModalOpen} onClose={() => setIsCertificadoModalOpen(false)} muestra={muestraSeleccionada} />
+      <TrazabilidadModal 
+        isOpen={isExpedienteModalOpen} 
+        onClose={() => setIsExpedienteModalOpen(false)} 
+        muestra={muestraSeleccionada} 
+      />
+      
+      <CertificadoDescarteModal 
+        isOpen={isCertificadoModalOpen} 
+        onClose={() => setIsCertificadoModalOpen(false)} 
+        muestra={muestraSeleccionada} 
+      />
     </div>
   );
 }
