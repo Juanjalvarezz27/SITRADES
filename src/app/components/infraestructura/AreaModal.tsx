@@ -39,7 +39,9 @@ function CustomSelectForm({ name, options, value, onChange, placeholder, icon: I
           isOpen ? "bg-white border-brand-primary ring-4 ring-brand-primary/10 text-slate-800" : value ? "bg-slate-50/50 border-brand-primary/30 text-slate-800" : "bg-slate-50/50 border-slate-200 text-slate-500"
         }`}
       >
-        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none"><Icon size={18} className={isOpen || value ? "text-brand-primary" : "text-slate-400"} /></div>
+        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+          <Icon size={18} className={isOpen || value ? "text-brand-primary" : "text-slate-400"} />
+        </div>
         <span className={`truncate font-medium ${!value ? "text-slate-400" : "text-slate-700"}`}>{selectedLabel}</span>
         <ChevronDown size={18} className={`shrink-0 transition-transform ${isOpen ? "rotate-180 text-brand-primary" : "text-slate-400"}`} />
       </button>
@@ -76,15 +78,18 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
   const [nombre, setNombre] = useState("");
   const [pisoId, setPisoId] = useState("");
   const [direccionId, setDireccionId] = useState("");
-  
   const [pisos, setPisos] = useState<PisoAPI[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      // Cargamos solo pisos activos para nuevas áreas, pero permitimos el actual si estamos editando
       fetch("/api/pisos")
         .then(res => res.json())
-        .then((data) => setPisos(data));
+        .then((data: PisoAPI[]) => {
+          const filtrados = data.filter(p => p.activo !== false || (areaToEdit && p.id === areaToEdit.direccion?.piso?.id));
+          setPisos(filtrados);
+        });
 
       if (areaToEdit) {
         setNombre(areaToEdit.nombre);
@@ -102,13 +107,22 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
 
   const isEditing = !!areaToEdit;
 
-  // Lógica de cascada
+  // Lógica de cascada corregida
   const opcionesPisos = pisos.map(p => ({ value: p.id.toString(), label: p.nombre }));
   const pisoSeleccionado = pisos.find(p => p.id.toString() === pisoId);
-  const opcionesDirecciones = (pisoSeleccionado?.direcciones || []).map(d => ({ value: d.id.toString(), label: d.nombre }));
+  
+  // Filtramos direcciones activas del piso seleccionado
+  const opcionesDirecciones = (pisoSeleccionado?.direcciones || [])
+    .filter(d => d.activo !== false || (areaToEdit && d.id === areaToEdit.direccion_id))
+    .map(d => ({ value: d.id.toString(), label: d.nombre }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!direccionId) {
+      toast.warning("Debe seleccionar una dirección");
+      return;
+    }
+    
     setLoading(true);
     const toastId = toast.loading(isEditing ? "Actualizando área..." : "Registrando área...");
 
@@ -125,7 +139,7 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Ocurrió un error");
 
-      toast.update(toastId, { render: isEditing ? "¡Actualizada con éxito!" : "¡Registrada con éxito!", type: "success", isLoading: false, autoClose: 3000 });
+      toast.update(toastId, { render: isEditing ? "¡Área actualizada!" : "¡Área registrada!", type: "success", isLoading: false, autoClose: 3000 });
       onSaved();
       onClose();
     } catch (err: any) {
@@ -144,9 +158,11 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
             <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
               <MapPin size={20} />
             </div>
-            <div><h2 className="font-black text-lg text-slate-800">{isEditing ? "Editar Área" : "Registrar Área"}</h2></div>
+            <h2 className="font-black text-lg text-slate-800">{isEditing ? "Editar Área" : "Registrar Área"}</h2>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+            <X size={20} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
@@ -156,7 +172,7 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
               name="piso_id" 
               options={opcionesPisos} 
               value={pisoId} 
-              onChange={(name, val) => { setPisoId(val); setDireccionId(""); }} // Limpia dirección al cambiar de piso
+              onChange={(_, val) => { setPisoId(val); setDireccionId(""); }} 
               placeholder="Seleccione el piso..." 
               icon={Layers} 
             />
@@ -168,7 +184,7 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
               name="direccion_id" 
               options={opcionesDirecciones} 
               value={direccionId} 
-              onChange={(name, val) => setDireccionId(val)} 
+              onChange={(_, val) => setDireccionId(val)} 
               placeholder="Seleccione la dirección..." 
               icon={Building2} 
               disabled={!pisoId}
@@ -177,18 +193,26 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
 
           <div className="space-y-1.5 pt-2 border-t border-slate-100">
             <label className="text-[13px] font-bold text-slate-600">Nombre del Área</label>
-            <input type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Área de Análisis Físico-Químico..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all" />
+            <input 
+              type="text" 
+              required 
+              value={nombre} 
+              onChange={(e) => setNombre(e.target.value)} 
+              placeholder="Ej. Análisis de Laboratorio..." 
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all" 
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <button type="button" onClick={onClose} disabled={loading} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition-colors">Cancelar</button>
+            <button type="button" onClick={onClose} disabled={loading} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition-colors">
+              Cancelar
+            </button>
             <button type="submit" disabled={loading} className="flex items-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-md shadow-brand-secondary/20">
               {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
               {isEditing ? "Guardar" : "Registrar"}
             </button>
           </div>
         </form>
-
       </div>
     </div>
   );

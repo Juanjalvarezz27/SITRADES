@@ -6,18 +6,20 @@ export interface Rol {
 export interface AreaData {
   id: number;
   nombre: string;
+  direccion_id: number;
+  activo?: boolean;
 }
 
 export interface DireccionData {
   id: number;
   nombre: string;
+  piso_id: number;
+  activo?: boolean;
   areas?: AreaData[];
-}
-
-export interface PisoData {
-  id: number;
-  nombre: string;
-  direcciones: DireccionData[];
+  piso?: PisoAPI;
+  _count?: {
+    areas: number;
+  };
 }
 
 export interface SelectOption {
@@ -28,6 +30,7 @@ export interface SelectOption {
 export interface PisoAPI {
   id: number;
   nombre: string;
+  activo?: boolean;
   direcciones?: DireccionData[];
   _count?: {
     direcciones: number;
@@ -38,9 +41,11 @@ export interface DireccionAPI {
   id: number;
   nombre: string;
   piso_id: number;
+  activo: boolean;
   piso?: {
     id: number;
     nombre: string;
+    activo?: boolean;
   };
   areas?: AreaData[];
   _count?: {
@@ -52,12 +57,15 @@ export interface AreaAPI {
   id: number;
   nombre: string;
   direccion_id: number;
+  activo: boolean;
   direccion?: {
     id: number;
     nombre: string;
+    activo?: boolean; 
     piso?: {
       id: number;
       nombre: string;
+      activo?: boolean; 
     }
   };
   usuarios?: {
@@ -70,22 +78,25 @@ export interface AreaAPI {
 }
 
 export interface UsuarioAPI {
-  activo: boolean;
   id: string;
   nombre: string;
   email: string;
   rol_id: number;
+  activo: boolean;
   rol: Rol;
   area_id?: number;
   area?: {
     id: number;
     nombre: string;
+    activo?: boolean;
     direccion?: {
       id: number;
       nombre: string;
+      activo?: boolean;
       piso?: {
         id: number;
         nombre: string;
+        activo?: boolean;
       }
     }
   };

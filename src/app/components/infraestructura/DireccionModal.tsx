@@ -30,12 +30,11 @@ function CustomSelectForm({ name, options, value, onChange, placeholder, icon: I
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      <input type="text" name={name} value={value} readOnly required className="absolute opacity-0 w-0 h-0 pointer-events-none" tabIndex={-1} />
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between pl-11 pr-4 py-3 border rounded-2xl text-[14px] transition-all focus:outline-none ${
-          isOpen ? "bg-white border-brand-primary ring-4 ring-brand-primary/10 text-slate-800" : value ? "bg-slate-50/50 border-brand-primary/30 text-slate-800" : "bg-slate-50/50 border-slate-200 text-slate-500"
+          isOpen ? "bg-white border-brand-primary ring-4 ring-brand-primary/10 text-slate-800" : value ? "bg-slate-50 border-brand-primary/20 text-slate-800" : "bg-slate-50 border-slate-200 text-slate-500"
         }`}
       >
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none"><Icon size={18} className={isOpen || value ? "text-brand-primary" : "text-slate-400"} /></div>
@@ -44,34 +43,18 @@ function CustomSelectForm({ name, options, value, onChange, placeholder, icon: I
       </button>
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 max-h-60 overflow-y-auto">
-          <ul className="flex flex-col gap-1 px-1">
-            {options.map((opt) => (
-              <li key={opt.value}>
-                <button
-                  type="button"
-                  onClick={() => { onChange(name, opt.value); setIsOpen(false); }}
-                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[14px] font-medium transition-colors text-left ${value === opt.value ? "bg-brand-primary/10 text-brand-primary" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
-                >
-                  <span className="truncate pr-2">{opt.label}</span>
-                  {value === opt.value && <Check size={16} strokeWidth={3} />}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {options.map((opt) => (
+            <button key={opt.value} type="button" onClick={() => { onChange(name, opt.value); setIsOpen(false); }} className={`w-full flex items-center justify-between px-4 py-2.5 text-[14px] font-medium transition-colors text-left ${value === opt.value ? "bg-brand-primary/10 text-brand-primary" : "text-slate-600 hover:bg-slate-50"}`}>
+              {opt.label} {value === opt.value && <Check size={16} />}
+            </button>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-interface DireccionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  direccionToEdit: DireccionAPI | null;
-  onSaved: () => void;
-}
-
-export default function DireccionModal({ isOpen, onClose, direccionToEdit, onSaved }: DireccionModalProps) {
+export default function DireccionModal({ isOpen, onClose, direccionToEdit, onSaved }: { isOpen: boolean, onClose: () => void, direccionToEdit: DireccionAPI | null, onSaved: () => void }) {
   const [nombre, setNombre] = useState("");
   const [pisoId, setPisoId] = useState("");
   const [pisosDisponibles, setPisosDisponibles] = useState<SelectOption[]>([]);
@@ -79,89 +62,43 @@ export default function DireccionModal({ isOpen, onClose, direccionToEdit, onSav
 
   useEffect(() => {
     if (isOpen) {
-      fetch("/api/pisos")
-        .then(res => res.json())
-        .then((data: PisoAPI[]) => {
-          setPisosDisponibles(data.map(p => ({ value: p.id.toString(), label: p.nombre })));
-        });
+      fetch("/api/pisos").then(res => res.json()).then((data: PisoAPI[]) => {
+        setPisosDisponibles(data.filter(p => p.activo !== false).map(p => ({ value: p.id.toString(), label: p.nombre })));
+      });
       setNombre(direccionToEdit ? direccionToEdit.nombre : "");
       setPisoId(direccionToEdit ? direccionToEdit.piso_id.toString() : "");
     }
   }, [isOpen, direccionToEdit]);
 
   if (!isOpen) return null;
-
   const isEditing = !!direccionToEdit;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!pisoId) return toast.warning("Debe seleccionar un piso");
     setLoading(true);
-    const toastId = toast.loading(isEditing ? "Actualizando dirección..." : "Registrando dirección...");
-
     try {
       const url = isEditing ? `/api/direcciones/${direccionToEdit.id}` : "/api/direcciones";
       const method = isEditing ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, piso_id: pisoId }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ocurrió un error");
-
-      toast.update(toastId, { render: isEditing ? "¡Actualizada con éxito!" : "¡Registrada con éxito!", type: "success", isLoading: false, autoClose: 3000 });
-      onSaved();
-      onClose();
-    } catch (err: any) {
-      toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 });
-    } finally {
-      setLoading(false);
-    }
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre, piso_id: pisoId }) });
+      if (!res.ok) throw new Error("Error al guardar");
+      toast.success("¡Operación exitosa!");
+      onSaved(); onClose();
+    } catch (err: any) { toast.error(err.message); } finally { setLoading(false); }
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 transition-opacity">
-      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden transform scale-100 transition-transform duration-150">
-        
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
-              <Building2 size={20} />
-            </div>
-            <div><h2 className="font-black text-lg text-slate-800">{isEditing ? "Editar Dirección" : "Registrar Dirección"}</h2></div>
-          </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"><X size={20} /></button>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3"><div className="p-2 bg-brand-primary/10 rounded-lg text-brand-primary"><Building2 size={20} /></div><h2 className="font-black text-slate-800">{isEditing ? "Editar" : "Registrar"} Dirección</h2></div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-bold text-slate-600">Piso de Ubicación</label>
-            <CustomSelectForm 
-              name="piso_id" 
-              options={pisosDisponibles} 
-              value={pisoId} 
-              onChange={(name, val) => setPisoId(val)} 
-              placeholder="Seleccione el piso..." 
-              icon={Layers} 
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-bold text-slate-600">Nombre de la Dirección</label>
-            <input type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Dirección de Producción..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all" />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <button type="button" onClick={onClose} disabled={loading} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition-colors">Cancelar</button>
-            <button type="submit" disabled={loading} className="flex items-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-md shadow-brand-secondary/20">
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              {isEditing ? "Guardar" : "Registrar"}
-            </button>
-          </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="space-y-1"><label className="text-[13px] font-bold text-slate-600">Piso</label><CustomSelectForm name="piso_id" options={pisosDisponibles} value={pisoId} onChange={(_, val) => setPisoId(val)} placeholder="Seleccione..." icon={Layers} /></div>
+          <div className="space-y-1"><label className="text-[13px] font-bold text-slate-600">Nombre</label><input type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary" /></div>
+          <div className="flex gap-3 pt-4"><button type="button" onClick={onClose} className="flex-1 py-3 font-bold text-slate-500">Cancelar</button><button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-brand-primary to-brand-secondary text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2">{loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Guardar</button></div>
         </form>
-
       </div>
     </div>
   );
