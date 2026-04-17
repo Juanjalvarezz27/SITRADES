@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  ArrowLeft, Save, Package, ShieldAlert, 
+import {
+  ArrowLeft, Save, Package, ShieldAlert,
   CalendarClock, MapPin, Loader2, Info, ChevronDown, Check, Plus, X
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newValue, setNewValue] = useState("");
   const [loadingNew, setLoadingNew] = useState(false);
@@ -47,8 +47,8 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full px-4 py-3 rounded-2xl border ${
-          isOpen 
-            ? 'border-brand-primary ring-4 ring-brand-primary/10 bg-white text-slate-800' 
+          isOpen
+            ? 'border-brand-primary ring-4 ring-brand-primary/10 bg-white text-slate-800'
             : 'border-slate-200 bg-slate-50 hover:bg-white'
         } outline-none transition-all text-[14px] font-medium text-left flex justify-between items-center`}
       >
@@ -69,7 +69,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
             {placeholder}
             {!value && <Check size={16} strokeWidth={3} className="shrink-0" />}
           </div>
-          
+
           {options.map((opt: any) => (
             <div
               key={opt.value}
@@ -83,7 +83,6 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
             </div>
           ))}
 
-          {/* SECCIÓN DE AÑADIR NUEVO CORREGIDA (min-w-0 y shrink-0) */}
           {onAddNew && (
             <div className="border-t border-slate-100 mt-2 pt-2 px-2">
               {!isAddingNew ? (
@@ -139,7 +138,7 @@ const RIESGOS_BIOSEGURIDAD = [
 export default function RegistroMuestraPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // ESTADOS DINÁMICOS
   const [areasOpciones, setAreasOpciones] = useState<{value: string, label: string}[]>([]);
   const [unidades, setUnidades] = useState<{value: string, label: string}[]>([]);
@@ -147,16 +146,16 @@ export default function RegistroMuestraPage() {
   const [loadingInitial, setLoadingInitial] = useState(true);
 
   const currentYear = new Date().getFullYear();
-  const MIN_DATE = `${currentYear - 15}-01-01`; 
-  const MAX_DATE = `${currentYear + 15}-12-31`; 
+  const MIN_DATE = `${currentYear - 15}-01-01`;
+  const MAX_DATE = `${currentYear + 15}-12-31`;
 
   const [formData, setFormData] = useState({
     codigo_interno: "",
     lote: "",
     registro_sanitario: "",
     principio_activo: "",
-    tipo_empaque_id: "", 
-    unidad_medida_id: "", 
+    tipo_empaque_id: "",
+    unidad_medida_id: "",
     riesgo_bioseguridad: "",
     cantidad: "",
     proposito_analisis: "",
@@ -165,7 +164,6 @@ export default function RegistroMuestraPage() {
     ubicacion_detalle: "",
   });
 
-  // CARGAR DATOS AL INICIAR
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -200,7 +198,6 @@ export default function RegistroMuestraPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // FUNCIONES PARA AÑADIR NUEVOS ELEMENTOS
   const crearUnidadMedida = async (nombre: string) => {
     try {
       const res = await fetch("/api/unidades-medida", { method: "POST", body: JSON.stringify({ nombre }) });
@@ -223,7 +220,7 @@ export default function RegistroMuestraPage() {
     } catch { toast.error("Error al añadir empaque"); }
   };
 
-  const fechaFinRetencion = formData.fecha_caducidad 
+  const fechaFinRetencion = formData.fecha_caducidad
     ? new Date(new Date(formData.fecha_caducidad).setFullYear(new Date(formData.fecha_caducidad).getFullYear() + 1)).toISOString().split('T')[0]
     : "";
 
@@ -231,7 +228,7 @@ export default function RegistroMuestraPage() {
     e.preventDefault();
 
     if (
-      !formData.codigo_interno || !formData.lote || !formData.registro_sanitario || 
+      !formData.codigo_interno || !formData.lote || !formData.registro_sanitario ||
       !formData.principio_activo || !formData.cantidad || !formData.proposito_analisis
     ) {
       return toast.warning("Por favor, completa todos los campos obligatorios (*).");
@@ -246,7 +243,7 @@ export default function RegistroMuestraPage() {
     }
 
     const yearIngresado = new Date(formData.fecha_caducidad).getFullYear();
-    
+
     if (yearIngresado > currentYear + 15) {
       return toast.warning(`Fecha irreal: La caducidad no puede superar el año ${currentYear + 15}.`);
     }
@@ -272,8 +269,8 @@ export default function RegistroMuestraPage() {
       if (!res.ok) throw new Error(data.error || "Error al registrar la muestra");
 
       toast.update(toastId, { render: "¡Muestra registrada con éxito!", type: "success", isLoading: false, autoClose: 3000 });
-      router.push("/home/muestras"); 
-      
+      router.push("/home/muestras");
+
     } catch (error: any) {
       toast.update(toastId, { render: error.message, type: "error", isLoading: false, autoClose: 5000 });
       setIsSubmitting(false);
@@ -282,7 +279,7 @@ export default function RegistroMuestraPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       <div className="flex flex-col gap-2 mb-8">
         <Link href="/home/muestras" className="inline-flex items-center gap-2 text-slate-500 hover:text-brand-primary transition-colors text-[14px] font-semibold w-fit mb-2">
           <ArrowLeft size={16} /> Volver al inventario
@@ -293,7 +290,7 @@ export default function RegistroMuestraPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+
           <div className="bg-white border border-slate-100 rounded-[2rem] p-6 sm:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary">
@@ -338,35 +335,35 @@ export default function RegistroMuestraPage() {
                 </div>
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Unidad de Medida <span className="text-red-500">*</span></label>
-                  <CustomSelect 
+                  <CustomSelect
                     name="unidad_medida_id"
-                    options={unidades} 
-                    value={formData.unidad_medida_id} 
-                    onChange={handleSelectChange} 
+                    options={unidades}
+                    value={formData.unidad_medida_id}
+                    onChange={handleSelectChange}
                     defaultLabel="Seleccionar"
-                    onAddNew={crearUnidadMedida} 
+                    onAddNew={crearUnidadMedida}
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Riesgo de Bioseguridad <span className="text-red-500">*</span></label>
-                <CustomSelect 
+                <CustomSelect
                   name="riesgo_bioseguridad"
-                  options={RIESGOS_BIOSEGURIDAD} 
-                  value={formData.riesgo_bioseguridad} 
-                  onChange={handleSelectChange} 
-                  defaultLabel="Nivel de Riesgo" 
+                  options={RIESGOS_BIOSEGURIDAD}
+                  value={formData.riesgo_bioseguridad}
+                  onChange={handleSelectChange}
+                  defaultLabel="Nivel de Riesgo"
                 />
               </div>
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Tipo de Empaque <span className="text-red-500">*</span></label>
-                <CustomSelect 
+                <CustomSelect
                   name="tipo_empaque_id"
-                  options={empaques} 
-                  value={formData.tipo_empaque_id} 
-                  onChange={handleSelectChange} 
+                  options={empaques}
+                  value={formData.tipo_empaque_id}
+                  onChange={handleSelectChange}
                   defaultLabel="Seleccionar Empaque"
-                  onAddNew={crearTipoEmpaque} 
+                  onAddNew={crearTipoEmpaque}
                 />
               </div>
             </div>
@@ -384,15 +381,15 @@ export default function RegistroMuestraPage() {
             <div className="space-y-5">
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Fecha de Caducidad Impresa <span className="text-red-500">*</span></label>
-                <input 
-                  required 
-                  type="date" 
-                  name="fecha_caducidad" 
-                  value={formData.fecha_caducidad} 
-                  onChange={handleChange} 
+                <input
+                  required
+                  type="date"
+                  name="fecha_caducidad"
+                  value={formData.fecha_caducidad}
+                  onChange={handleChange}
                   min={MIN_DATE}
                   max={MAX_DATE}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all text-slate-700" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all text-slate-700"
                 />
               </div>
               <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
@@ -419,25 +416,25 @@ export default function RegistroMuestraPage() {
                 {loadingInitial ? (
                   <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] text-slate-400 flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Cargando áreas...</div>
                 ) : (
-                  <CustomSelect 
+                  <CustomSelect
                     name="area_id"
-                    options={areasOpciones} 
-                    value={formData.area_id} 
-                    onChange={handleSelectChange} 
-                    defaultLabel="Seleccione el área física" 
+                    options={areasOpciones}
+                    value={formData.area_id}
+                    onChange={handleSelectChange}
+                    defaultLabel="Seleccione el área física"
                   />
                 )}
               </div>
-              
+
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Detalle de Ubicación (Opcional)</label>
-                <input 
-                  type="text" 
-                  name="ubicacion_detalle" 
-                  value={formData.ubicacion_detalle} 
-                  onChange={handleChange} 
-                  placeholder="Ej. Nevera 2, Estante B, Gabinete 4..." 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all" 
+                <input
+                  type="text"
+                  name="ubicacion_detalle"
+                  value={formData.ubicacion_detalle}
+                  onChange={handleChange}
+                  placeholder="Ej. Nevera 2, Estante B, Gabinete 4..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition-all"
                 />
               </div>
 
@@ -450,19 +447,19 @@ export default function RegistroMuestraPage() {
         </div>
 
         <div className="flex justify-center pt-4">
-          <button 
-            type="submit" 
-            disabled={isSubmitting || loadingInitial} 
+          <button
+            type="submit"
+            disabled={isSubmitting || loadingInitial}
             className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 active:scale-95 disabled:opacity-70 disabled:active:scale-100 text-white px-4 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-[15px] sm:text-[18px] transition-all shadow-lg shadow-brand-secondary/30 leading-tight"
           >
             {isSubmitting ? (
               <>
-                <Loader2 size={22} className="animate-spin shrink-0" /> 
+                <Loader2 size={22} className="animate-spin shrink-0" />
                 <span>Registrando en Sistema...</span>
               </>
             ) : (
               <>
-                <Save size={22} className="shrink-0" /> 
+                <Save size={22} className="shrink-0" />
                 <span>Guardar y Generar Trazabilidad</span>
               </>
             )}

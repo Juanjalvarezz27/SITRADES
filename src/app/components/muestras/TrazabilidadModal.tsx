@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { 
-  X, Activity, User, Calendar, FileText, 
-  ShieldAlert, ArrowRight, MapPin, Package, Clock, Info, ChevronDown, Download
+import {
+  X, Activity, User, Calendar, FileText,
+  ShieldAlert, ArrowRight, MapPin, Package, Clock, Info, ChevronDown, Download, ExternalLink
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { QRCodeCanvas } from "qrcode.react";
 
-import MuestraPDFTemplate from "./MuestraPDFTemplate"; 
+import MuestraPDFTemplate from "./MuestraPDFTemplate";
 
 interface TrazabilidadModalProps {
   isOpen: boolean;
@@ -54,13 +55,13 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
         }
       };
       fetchHistorial();
-      setIsTimelineOpen(false); 
+      setIsTimelineOpen(false);
     }
   }, [isOpen, muestra]);
 
   const handleExportPDF = async () => {
     if (!pdfRef.current) return;
-    
+
     setIsExporting(true);
     const toastId = toast.loading("Preparando documento...");
 
@@ -68,27 +69,27 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
 
     try {
       const html2pdf = (await import("html2pdf.js")).default;
-      
+
       const opt = {
-        margin:       [5, 0, 5, 0] as [number, number, number, number], 
-        filename:     `Muestra_Detalles_${muestra.codigo_interno}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 1 },
-        html2canvas:  { 
-          scale: 2, 
-          useCORS: true, 
+        margin: [5, 0, 5, 0] as [number, number, number, number],
+        filename: `Muestra_Detalles_${muestra.codigo_interno}.pdf`,
+        image: { type: 'jpeg' as const, quality: 1 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
           letterRendering: true,
-          scrollY: 0 
+          scrollY: 0
         },
-        jsPDF:        { 
-          unit: 'mm' as const, 
-          format: 'a4' as const, 
-          orientation: 'portrait' as const 
+        jsPDF: {
+          unit: 'mm' as const,
+          format: 'a4' as const,
+          orientation: 'portrait' as const
         },
-        pagebreak:    { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
       await html2pdf().set(opt).from(pdfRef.current).save();
-      
+
       toast.update(toastId, { render: "¡PDF generado correctamente!", type: "success", isLoading: false, autoClose: 3000 });
     } catch (error) {
       console.error(error);
@@ -104,13 +105,17 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
   const fechaRetencion = new Date(muestra.fecha_fin_retencion);
   const esDescartable = hoy >= fechaRetencion;
 
+  // Generamos la URL dinámica apuntando a la vista pública de consulta
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const qrPayload = baseUrl ? `${baseUrl}/consulta/${muestra.id}` : "";
+
   return (
     <>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
         <div className="absolute inset-0 bg-slate-900/70 transition-opacity" onClick={onClose} />
-        
+
         <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden animate-in zoom-in-95 duration-300">
-          
+
           <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
             <div>
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
@@ -128,10 +133,29 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
-                <div className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2">
-                  <Package size={18} className="text-brand-primary" /> Identificación del Producto
+                <div className="flex items-start justify-between mb-4 border-b border-slate-200 pb-2">
+                  <div className="flex items-center gap-2 text-slate-800 font-bold mt-1">
+                    <Package size={18} className="text-brand-primary" /> Identificación del Producto
+                  </div>
+                  
+                  {/* GENERADOR DE CÓDIGO QR Y BOTÓN DE PRUEBA */}
+                  {qrPayload && (
+                    <div className="flex flex-col items-center gap-1.5 -mt-2">
+                      <div className="bg-white p-1.5 rounded-lg shadow-sm border border-slate-100" title="Escanea para consultar">
+                        <QRCodeCanvas value={qrPayload} size={50} level="M" />
+                      </div>
+                      <a 
+                        href={qrPayload} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 hover:bg-brand-primary hover:text-white px-2 py-1 rounded transition-colors"
+                      >
+                        <ExternalLink size={10} /> Visitar
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
@@ -144,12 +168,10 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                   </div>
                   <div>
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Cantidad Total</span>
-                    {/* CORRECCIÓN: Acceso al nombre de unidad */}
                     <p className="font-black text-brand-primary text-[15px]">{muestra.cantidad} <span className="text-[12px] font-bold text-slate-500">{muestra.unidad_medida?.nombre || ""}</span></p>
                   </div>
                   <div className="col-span-2">
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Tipo de Empaque</span>
-                    {/* CORRECCIÓN: Acceso al nombre de empaque */}
                     <p className="font-bold text-slate-700 text-[13px] leading-tight">{muestra.tipo_empaque?.nombre || "N/A"}</p>
                   </div>
                 </div>
@@ -218,7 +240,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-[12px] text-slate-500 bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm">
-                    <User size={14} className="text-brand-primary" /> 
+                    <User size={14} className="text-brand-primary" />
                     Registrado por: <strong className="text-slate-700 truncate">{muestra.usuarioRegistrador?.nombre || "Sistema"}</strong>
                   </div>
                 </div>
@@ -226,7 +248,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
             </div>
 
             <div className="mt-4 pt-2">
-              <button 
+              <button
                 onClick={() => setIsTimelineOpen(!isTimelineOpen)}
                 className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group"
               >
@@ -256,7 +278,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                     {historial.map((hito, index) => (
                       <div key={hito.id} className="relative pl-6">
                         <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white shadow-sm ${index === 0 ? 'bg-brand-primary' : 'bg-slate-300'}`} />
-                        
+
                         <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-[12px] font-bold text-slate-400 flex items-center gap-1.5">
@@ -308,10 +330,10 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
             <div className="text-[13px] font-medium text-slate-500 hidden sm:block">
               Última actualización: {historial[0] ? formatearFechaHora(historial[0].fecha_cambio) : "..."}
             </div>
-            
+
             <div className="flex gap-3 w-full sm:w-auto">
-              <button 
-                onClick={handleExportPDF} 
+              <button
+                onClick={handleExportPDF}
                 disabled={isExporting || loading}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 w-[160px] py-2.5 rounded-xl font-bold text-[14px] bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-brand-primary transition-all duration-300 disabled:opacity-70 disabled:cursor-wait"
               >
@@ -340,7 +362,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
         </div>
       </div>
 
-      <MuestraPDFTemplate ref={pdfRef} muestra={muestra} historial={historial} />
+      <MuestraPDFTemplate ref={pdfRef} muestra={muestra} historial={historial} qrUrl={qrPayload} />
     </>
   );
 }

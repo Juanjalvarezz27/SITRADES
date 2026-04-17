@@ -2,9 +2,9 @@
 
 import { forwardRef } from "react";
 import { User } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react"; 
 import PlantillaPDF from "../ui/PlantillaPDF";
 
-// Funciones de formateo (las mismas que usa el modal)
 const formatearFechaHora = (fecha: string) => {
   if (!fecha) return "N/A";
   return new Date(fecha).toLocaleString("es-VE", {
@@ -23,38 +23,46 @@ const formatearFecha = (fecha: string) => {
 interface MuestraPDFTemplateProps {
   muestra: any;
   historial: any[];
+  qrUrl?: string; // Recibimos la URL del QR generada en el modal principal
 }
 
 const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
-  ({ muestra, historial }, ref) => {
+  ({ muestra, historial, qrUrl }, ref) => {
     if (!muestra) return null;
 
     return (
-      <PlantillaPDF 
+      <PlantillaPDF
         ref={ref}
         titulo="Detalles de la Muestra"
         subtitulo="Reporte técnico de trazabilidad y custodia farmacéutica"
         fechaEmision={new Date().toLocaleDateString("es-VE")}
       >
         <div className="space-y-6">
-          
+
           {/* BLOQUE 1: IDENTIFICACIÓN Y LOGÍSTICA */}
           <div className="border border-indigo-100 p-5 rounded-2xl bg-slate-50/50 break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
-            <h3 className="font-bold text-indigo-900 mb-4 border-b border-indigo-100 pb-2">
-              Identificación Técnica y Operativa
-            </h3>
+            <div className="flex justify-between items-start mb-4 border-b border-indigo-100 pb-2">
+              <h3 className="font-bold text-indigo-900">
+                Identificación Técnica y Operativa
+              </h3>
+              {/* RENDERIZAMOS EL QR EN EL PDF ENLAZADO A LA VISTA PÚBLICA */}
+              {qrUrl && (
+                <div className="-mt-1">
+                  <QRCodeCanvas value={qrUrl} size={50} level="M" />
+                </div>
+              )}
+            </div>
+            
             <div className="grid grid-cols-2 gap-y-4 text-[12px]">
               <p><strong className="text-slate-500 uppercase text-[9px] block">Código Interno</strong> {muestra.codigo_interno}</p>
               <p><strong className="text-slate-500 uppercase text-[9px] block">Lote</strong> {muestra.lote}</p>
               <p><strong className="text-slate-500 uppercase text-[9px] block">Principio Activo</strong> {muestra.principio_activo}</p>
               <p><strong className="text-slate-500 uppercase text-[9px] block">Reg. Sanitario</strong> {muestra.registro_sanitario}</p>
-              
-              {/* CORRECCIÓN: Acceso a unidad_medida.nombre */}
+
               <p><strong className="text-slate-500 uppercase text-[9px] block">Cantidad Total</strong> {muestra.cantidad} {muestra.unidad_medida?.nombre || ""}</p>
-              
-              {/* CORRECCIÓN: Acceso a tipo_empaque.nombre */}
+
               <p><strong className="text-slate-500 uppercase text-[9px] block">Tipo de Empaque</strong> {muestra.tipo_empaque?.nombre || "N/A"}</p>
-              
+
               <p className="col-span-2"><strong className="text-slate-500 uppercase text-[9px] block">Propósito del Análisis</strong> {muestra.proposito_analisis}</p>
             </div>
           </div>
@@ -69,7 +77,7 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
               <p><strong className="text-slate-500 uppercase text-[9px] block">Nivel de Riesgo</strong> {muestra.riesgo_bioseguridad}</p>
               <p className="col-span-2"><strong className="text-slate-500 uppercase text-[9px] block">Registrado Por</strong> {muestra.usuarioRegistrador?.nombre || "Sistema"} ({formatearFechaHora(muestra.creado_en)})</p>
             </div>
-            
+
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="bg-white border border-slate-200 p-2.5 rounded-xl">
                 <span className="block text-[9px] font-bold text-slate-500 uppercase">Ingreso</span>
@@ -99,7 +107,7 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
                       <div className="w-3 h-3 rounded-full bg-indigo-600 border-2 border-indigo-200 shrink-0 mt-1" />
                       {i !== historial.length - 1 && <div className="w-[2px] bg-indigo-200 h-full my-1" />}
                     </div>
-                    
+
                     <div className="bg-white border border-slate-100 p-3.5 rounded-xl shadow-sm flex-1 mb-3">
                       <div className="flex justify-between mb-1.5">
                         <p className="font-bold text-indigo-600 text-[11px]">{formatearFechaHora(hito.fecha_cambio)}</p>
