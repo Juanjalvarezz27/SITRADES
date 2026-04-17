@@ -1,38 +1,36 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
-export async function DELETE(
-  request: Request,
-  context: any // Usamos any para evitar conflictos de TypeScript entre Next 14 y 15
-) {
+export async function PATCH(request: Request, context: any) {
   try {
     const params = await context.params;
     const id = params?.id;
+    const body = await request.json();
+    const { activo } = body; // Recibimos true (activar) o false (inhabilitar)
 
     if (!id) {
       return NextResponse.json({ error: "ID de usuario no proporcionado" }, { status: 400 });
     }
 
-    // Eliminamos el usuario de la base de datos
-    await prisma.usuario.delete({
-      where: { id }
+    await prisma.usuario.update({
+      where: { id },
+      data: { activo }
     });
 
-    return NextResponse.json({ success: true, message: "Usuario eliminado correctamente" }, { status: 200 });
+    const accion = activo ? "reactivado" : "inhabilitado";
+    return NextResponse.json({ success: true, message: `Usuario ${accion} correctamente` }, { status: 200 });
 
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
+    console.error("Error al cambiar estado del usuario:", error);
     return NextResponse.json(
-      { error: "No se pudo eliminar el usuario. Es posible que tenga registros asociados." }, 
+      { error: "No se pudo actualizar el estado del usuario. Verifique la conexión." },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(
-  request: Request,
-  context: any
-) {
+export async function PUT(request: Request, context: any) {
   try {
     const params = await context.params;
     const id = params?.id;
@@ -41,7 +39,6 @@ export async function PUT(
 
     if (!id) return NextResponse.json({ error: "ID no proporcionado" }, { status: 400 });
 
-    // Preparamos los datos a actualizar
     const updateData: any = {
       nombre,
       email,
@@ -49,7 +46,6 @@ export async function PUT(
       area_id: parseInt(area_id),
     };
 
-    // Si envió una nueva contraseña, la encriptamos y la agregamos
     if (password && password.trim() !== "") {
       const salt = await bcrypt.genSalt(10);
       updateData.password_hash = await bcrypt.hash(password, salt);

@@ -27,6 +27,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("No existe un usuario con este correo en el sistema.");
         }
 
+        // --- VALIDACIÓN DE BORRADO LÓGICO ---
+        if (usuario.activo === false) {
+          throw new Error("Acceso denegado. Esta cuenta ha sido inhabilitada por la administración.");
+        }
+
         const passwordValida = await bcrypt.compare(credentials.password, usuario.password_hash);
 
         if (!passwordValida) {
@@ -44,7 +49,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 8 * 60 * 60,
+    maxAge: 8 * 60 * 60, // Sesión de 8 horas
   },
   pages: {
     signIn: "/",

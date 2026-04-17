@@ -14,39 +14,43 @@ model Rol {
 }
 
 model Usuario {
-  id                   String                  @id @default(uuid())
-  nombre               String
-  email                String                  @unique
-  password_hash        String
-  rol_id               Int
-  area_id              Int
-  creado_en            DateTime                @default(now())
-  historialesCambiados HistorialTrazabilidad[]
-  muestrasRegistradas  MuestraFarmaceutica[]
-  descartesAutorizados ReporteDescarte[]       @relation("AutorizadoPor")
-  descartesEjecutados  ReporteDescarte[]       @relation("EjecutadoPor")
-  area                 Area                    @relation(fields: [area_id], references: [id])
-  rol                  Rol                     @relation(fields: [rol_id], references: [id])
+  id                    String                  @id @default(uuid())
+  nombre                String
+  email                 String                  @unique
+  password_hash         String
+  rol_id                Int
+  area_id               Int
+  activo                Boolean                 @default(true) 
+  creado_en             DateTime                @default(now())
+  historialesCambiados  HistorialTrazabilidad[]
+  muestrasRegistradas   MuestraFarmaceutica[]
+  descartesAutorizados  ReporteDescarte[]       @relation("AutorizadoPor")
+  descartesEjecutados   ReporteDescarte[]       @relation("EjecutadoPor")
+  area                  Area                    @relation(fields: [area_id], references: [id])
+  rol                   Rol                     @relation(fields: [rol_id], references: [id])
 }
 
 model Piso {
   id          Int         @id @default(autoincrement())
   nombre      String      @unique
+  activo      Boolean     @default(true) 
   direcciones Direccion[]
 }
 
 model Direccion {
-  id      Int    @id @default(autoincrement())
-  nombre  String
-  piso_id Int
-  areas   Area[]
-  piso    Piso   @relation(fields: [piso_id], references: [id])
+  id       Int     @id @default(autoincrement())
+  nombre   String
+  piso_id  Int
+  activo   Boolean @default(true) 
+  areas    Area[]
+  piso     Piso    @relation(fields: [piso_id], references: [id])
 }
 
 model Area {
   id           Int                   @id @default(autoincrement())
   nombre       String
   direccion_id Int
+  activo       Boolean               @default(true) 
   direccion    Direccion             @relation(fields: [direccion_id], references: [id])
   muestras     MuestraFarmaceutica[]
   usuarios     Usuario[]
@@ -130,9 +134,9 @@ model ReporteDescarte {
 }
 
 model MetodoDisposicion {
-  id        Int               @id @default(autoincrement())
-  nombre    String            @unique
-  activo    Boolean           @default(true)
-  creado_en DateTime          @default(now())
-  reportes  ReporteDescarte[]
+  id         Int               @id @default(autoincrement())
+  nombre     String            @unique
+  activo     Boolean           @default(true)
+  creado_en  DateTime          @default(now())
+  reportes   ReporteDescarte[]
 }

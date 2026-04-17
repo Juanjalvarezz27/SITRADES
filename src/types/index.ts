@@ -70,6 +70,7 @@ export interface AreaAPI {
 }
 
 export interface UsuarioAPI {
+  activo: boolean;
   id: string;
   nombre: string;
   email: string;

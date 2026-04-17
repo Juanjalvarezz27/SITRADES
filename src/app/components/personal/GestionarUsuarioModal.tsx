@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Edit2, Trash2 } from "lucide-react";
+import { X, Edit2, UserX, UserCheck } from "lucide-react";
 import { UsuarioAPI } from "@/types";
 
 interface GestionarUsuarioModalProps {
@@ -20,8 +20,8 @@ export default function GestionarUsuarioModal({
 }: GestionarUsuarioModalProps) {
   if (!isOpen || !usuario) return null;
 
-  // Extraemos la inicial de forma segura para mantener el JSX limpio
   const inicialUsuario = usuario.nombre ? usuario.nombre.charAt(0).toUpperCase() : "?";
+  const estaActivo = usuario.activo !== false; 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 transition-opacity">
@@ -43,7 +43,6 @@ export default function GestionarUsuarioModal({
           </div>
           <button
             onClick={onClose}
-            aria-label="Cerrar opciones"
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors shrink-0"
           >
             <X size={20} />
@@ -69,19 +68,26 @@ export default function GestionarUsuarioModal({
             </div>
           </button>
 
+          {/* BOTÓN DINÁMICO SEGÚN ESTADO */}
           <button
             onClick={onDeleteClick}
-            className="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl hover:border-red-500 hover:bg-red-50 hover:shadow-sm transition-all group text-left"
+            className={`flex items-center gap-4 p-4 border border-slate-100 rounded-2xl hover:shadow-sm transition-all group text-left ${
+              estaActivo 
+                ? "hover:border-rose-500 hover:bg-rose-50" 
+                : "hover:border-emerald-500 hover:bg-emerald-50"
+            }`}
           >
-            <div className="p-3 bg-red-100 text-red-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
-              <Trash2 size={20} />
+            <div className={`p-3 rounded-xl group-hover:scale-110 transition-transform shrink-0 ${
+              estaActivo ? "bg-rose-100 text-rose-500" : "bg-emerald-100 text-emerald-500"
+            }`}>
+              {estaActivo ? <UserX size={20} /> : <UserCheck size={20} />}
             </div>
             <div>
               <p className="font-bold text-slate-800 text-[14px]">
-                Eliminar usuario
+                {estaActivo ? "Inhabilitar usuario" : "Reactivar usuario"}
               </p>
               <p className="text-[12px] font-medium text-slate-500">
-                Revocar acceso permanentemente del sistema
+                {estaActivo ? "Bloquear acceso al sistema" : "Restaurar permisos de acceso"}
               </p>
             </div>
           </button>

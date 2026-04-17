@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { UserPlus } from "lucide-react";
-import { toast } from "react-toastify"; 
+import { UserPlus, UserMinus } from "lucide-react";
+import { toast } from "react-toastify";
 import { UsuarioAPI } from "@/types";
 
 // Ajusta estas rutas según tu estructura
@@ -30,10 +30,13 @@ export default function DirectorioPersonalPage() {
   const [pisoFilter, setPisoFilter] = useState("");
   const [direccionFilter, setDireccionFilter] = useState("");
   const [areaFilter, setAreaFilter] = useState("");
+  
+  // Filtro de Estado (Borrado Lógico)
+  const [filtroEstado, setFiltroEstado] = useState<"ACTIVOS" | "INACTIVOS">("ACTIVOS");
 
   // Estados para la Paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10; 
+  const ITEMS_PER_PAGE = 10;
 
   // Modales y Selección
   const [selectedUser, setSelectedUser] = useState<UsuarioAPI | null>(null);
@@ -50,7 +53,6 @@ export default function DirectorioPersonalPage() {
       
       const data = await res.json();
       setTodosLosUsuarios(data);
-      setUsuariosFiltrados(data);
     } catch (error) {
       console.error(error);
       toast.error("Error al cargar la lista de usuarios.");
@@ -65,25 +67,28 @@ export default function DirectorioPersonalPage() {
 
   useEffect(() => {
     const filtrados = todosLosUsuarios.filter((user) => {
-      // 1. Filtro de Texto
+      // 1. Filtro de Borrado Lógico (Activos vs Inactivos)
+      const matchEstado = filtroEstado === "ACTIVOS" ? user.activo !== false : user.activo === false;
+
+      // 2. Filtro de Texto
       const nombreLimpio = quitarAcentos(user.nombre);
       const correoLimpio = quitarAcentos(user.email);
       const matchBusqueda = nombreLimpio.includes(searchTerm) || correoLimpio.includes(searchTerm);
 
-      // 2. Filtro de Rol
+      // 3. Filtro de Rol
       const matchRol = roleFilter === "" || String(user.rol) === roleFilter;
 
-      // 3. Filtros Jerárquicos
+      // 4. Filtros Jerárquicos
       const matchArea = areaFilter === "" || user.area?.id?.toString() === areaFilter;
       const matchDireccion = direccionFilter === "" || user.area?.direccion?.id?.toString() === direccionFilter;
       const matchPiso = pisoFilter === "" || user.area?.direccion?.piso?.id?.toString() === pisoFilter;
 
-      return matchBusqueda && matchRol && matchArea && matchDireccion && matchPiso;
+      return matchEstado && matchBusqueda && matchRol && matchArea && matchDireccion && matchPiso;
     });
 
     setUsuariosFiltrados(filtrados);
     setCurrentPage(1);
-  }, [searchTerm, roleFilter, pisoFilter, direccionFilter, areaFilter, todosLosUsuarios]);
+  }, [searchTerm, roleFilter, pisoFilter, direccionFilter, areaFilter, filtroEstado, todosLosUsuarios]);
 
   // Cálculos de Paginación
   const totalPages = Math.ceil(usuariosFiltrados.length / ITEMS_PER_PAGE);
@@ -107,24 +112,29 @@ export default function DirectorioPersonalPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmToggleStatus = async () => {
     if (!selectedUser) return;
     
     setIsDeleting(true);
-    const toastId = toast.loading("Eliminando usuario...");
+    const estaActivo = selectedUser.activo !== false;
+    const nuevoEstado = !estaActivo; // Invertimos el estado actual
+    
+    const toastId = toast.loading(nuevoEstado ? "Reactivando usuario..." : "Inhabilitando acceso del usuario...");
 
     try {
       const res = await fetch(`/api/usuarios/${selectedUser.id}`, {
-        method: "DELETE",
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activo: nuevoEstado })
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Error al eliminar el usuario");
+        throw new Error(data.error || "Error al cambiar el estado del usuario");
       }
 
-      toast.update(toastId, { render: "¡Usuario eliminado con éxito!", type: "success", isLoading: false, autoClose: 3000 });
+      toast.update(toastId, { render: `¡Usuario ${nuevoEstado ? 'reactivado' : 'inhabilitado'} con éxito!`, type: "success", isLoading: false, autoClose: 3000 });
       setIsDeleteModalOpen(false);
       fetchUsuarios();
 
@@ -153,8 +163,9 @@ export default function DirectorioPersonalPage() {
         </Link>
       </div>
 
-      {/* Barra de Filtros */}
+      {/* Barra de Filtros y Toggle de Estado */}
       <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-6 flex flex-col gap-4 sticky top-20 z-10">
+        
         <Buscador 
           onSearch={setSearchTerm} 
           onRoleChange={setRoleFilter}
@@ -162,8 +173,28 @@ export default function DirectorioPersonalPage() {
           onDireccionChange={setDireccionFilter}
           onAreaChange={setAreaFilter}
         />
-        <div className="text-[13px] font-semibold text-slate-500 w-full text-right px-2 border-t border-slate-100 pt-3">
-          Total: <span className="text-brand-secondary font-bold">{loading ? "..." : usuariosFiltrados.length}</span> resultados
+        
+        {/* Fila Inferior: Toggle y Total */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-slate-100 pt-4 mt-1">
+          {/* Toggle de Activos / Inactivos */}
+          <div className="flex bg-slate-100 p-1 rounded-xl w-full sm:w-fit">
+            <button
+              onClick={() => setFiltroEstado("ACTIVOS")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[13px] font-bold transition-all ${filtroEstado === "ACTIVOS" ? "bg-white text-brand-primary shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            >
+              Personal Activo
+            </button>
+            <button
+              onClick={() => setFiltroEstado("INACTIVOS")}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[13px] font-bold transition-all ${filtroEstado === "INACTIVOS" ? "bg-white text-rose-500 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            >
+              Inhabilitados
+            </button>
+          </div>
+
+          <div className="text-[13px] font-semibold text-slate-500 text-center sm:text-right px-2">
+            Total: <span className="text-brand-secondary font-bold">{loading ? "..." : usuariosFiltrados.length}</span> {filtroEstado === "ACTIVOS" ? "activos" : "inhabilitados"}
+          </div>
         </div>
       </div>
 
@@ -171,9 +202,13 @@ export default function DirectorioPersonalPage() {
       <div className="w-full relative min-h-[400px]">
         {loading ? null : usuariosFiltrados.length === 0 ? (
           <div className="py-24 text-center text-slate-500 text-[15px] px-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col items-center justify-center">
-            <UserPlus size={48} className="text-slate-300 mb-4 opacity-50" />
+            {filtroEstado === "ACTIVOS" ? (
+              <UserPlus size={48} className="text-slate-300 mb-4 opacity-50" />
+            ) : (
+              <UserMinus size={48} className="text-rose-200 mb-4 opacity-50" />
+            )}
             <p className="font-bold text-slate-700 text-lg">No se encontraron perfiles</p>
-            <p className="text-slate-500 mt-1">No hay coincidencias con los filtros aplicados.</p>
+            <p className="text-slate-500 mt-1">No hay coincidencias con los filtros aplicados en esta categoría.</p>
           </div>
         ) : (
           <>
@@ -221,9 +256,10 @@ export default function DirectorioPersonalPage() {
       <ConfirmarEliminacionModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
+        onConfirm={confirmToggleStatus}
         nombreUsuario={selectedUser?.nombre || ""}
         isLoading={isDeleting}
+        isActivating={selectedUser?.activo === false}
       />
     </div>
   );
