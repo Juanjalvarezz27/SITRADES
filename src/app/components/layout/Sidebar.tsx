@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react"; 
-import { 
-  Home, 
-  Users, 
-  TestTube, 
-  AlertTriangle, 
-  LogOut, 
-  ShieldAlert, 
-  Menu, 
-  X, 
-  ChevronLeft, 
+import { signOut } from "next-auth/react";
+import {
+  Home,
+  Users,
+  TestTube,
+  AlertTriangle,
+  LogOut,
+  ShieldAlert,
+  Menu,
+  X,
+  ChevronLeft,
   ChevronRight,
   ChevronDown,
   UserPlus,
@@ -27,10 +27,10 @@ import {
   Archive,
   Trash,
   Settings,
-  UserCog 
+  UserCog
 } from "lucide-react";
 
-import ConfirmModal from "../ui/ConfirmModal"; 
+import ConfirmModal from "../ui/ConfirmModal";
 
 const MENU_ITEMS = [
   {
@@ -117,7 +117,7 @@ const MENU_ITEMS = [
       }
     ]
   },
-    {
+  {
     path: "/home/configuracion",
     name: "Configuración",
     icon: Settings,
@@ -138,7 +138,6 @@ export default function Sidebar({ userRol }: { userRol: string }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
-  
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   useEffect(() => {
@@ -161,6 +160,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
   return (
     <>
+      {/* HEADER MÓVIL - z-30 */}
       <div className="md:hidden w-full flex items-center justify-between bg-white border-b border-slate-100 p-4 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 p-2 rounded-xl text-brand-primary">
@@ -168,28 +168,29 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           </div>
           <h2 className="font-title font-black text-lg text-slate-800 tracking-tight">SITRADES</h2>
         </div>
-        <button 
-          onClick={() => setIsMobileOpen(true)} 
+        <button
+          onClick={() => setIsMobileOpen(true)}
           className="p-2 text-slate-600 hover:text-brand-secondary bg-slate-50 hover:bg-brand-secondary/5 rounded-xl transition-colors"
         >
           <Menu size={24} />
         </button>
       </div>
 
+      {/* OVERLAY MÓVIL - z-40 */}
       {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity" 
-          onClick={() => setIsMobileOpen(false)} 
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      <aside 
-        className={`fixed md:sticky top-0 left-0 h-screen bg-white border-r border-slate-100 flex flex-col z-10 transition-all duration-300 ease-in-out shadow-[4px_0_24px_rgb(0,0,0,0.02)]
-          ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-          ${isCollapsed ? "md:w-[88px]" : "md:w-[260px] w-[280px]"}
+      {/* SIDEBAR PRINCIPAL - z-50 */}
+      <aside
+        className={`fixed md:sticky top-0 left-0 h-screen bg-white border-r border-slate-100 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-[4px_0_24px_rgb(0,0,0,0.02)]
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        ${isCollapsed ? "md:w-[88px]" : "md:w-[260px] w-[280px]"}
         `}
       >
-        
         <div className="p-5 border-b border-slate-50 flex items-center justify-between relative">
           <div className="flex items-center gap-3 overflow-hidden pr-8">
             <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 p-2.5 rounded-xl text-brand-primary shrink-0">
@@ -201,8 +202,8 @@ export default function Sidebar({ userRol }: { userRol: string }) {
             </div>
           </div>
 
-          <button 
-            onClick={() => setIsMobileOpen(false)} 
+          <button
+            onClick={() => setIsMobileOpen(false)}
             className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
           >
             <X size={22} />
@@ -211,15 +212,15 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
           <p className={`px-2 text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-4 transition-all duration-300 ${isCollapsed ? "text-center opacity-0" : "opacity-100"}`}>
-            {isCollapsed ? "..." : "Menu Principal"}
+            {isCollapsed ? "..." : "Menú Principal"}
           </p>
-          
+
           {menuFiltrado.map((item) => {
             const isMenuOpen = openMenus[item.name];
-            const isActive = item.subItems 
+            const isActive = item.subItems
               ? pathname.startsWith(item.path)
               : item.exact ? pathname === item.path : pathname.startsWith(item.path);
-            
+
             const Icon = item.icon;
 
             return (
@@ -230,7 +231,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                     className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-[14px] font-semibold transition-all group relative w-full ${
                       isActive
                         ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
-                        : isMenuOpen 
+                        : isMenuOpen
                           ? "text-slate-800"
                           : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                     } ${isCollapsed ? "justify-center" : "justify-start"}`}
@@ -262,7 +263,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                 )}
 
                 {item.subItems && (
-                  <div 
+                  <div
                     className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col gap-1 ${
                       isMenuOpen && !isCollapsed ? "max-h-[200px] opacity-100 mt-1" : "max-h-0 opacity-0"
                     }`}
@@ -270,7 +271,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                     {item.subItems.map((subItem) => {
                       const isSubActive = subItem.exact ? pathname === subItem.path : pathname.startsWith(subItem.path);
                       const SubIcon = subItem.icon;
-                      
+
                       return (
                         <Link
                           key={subItem.path}
@@ -298,13 +299,13 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:flex items-center justify-center p-2 mb-1 text-slate-400 hover:text-brand-secondary hover:bg-brand-secondary/5 rounded-xl transition-all"
-            title={isCollapsed ? "Expandir menu" : "Colapsar menu"}
+            title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
           >
             {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
 
           <Link
-            href="/manual" 
+            href="/manual"
             target="_blank"
             title={isCollapsed ? "Manual de Usuario" : ""}
             className={`w-full flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-brand-primary font-semibold text-[13px] rounded-xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
@@ -328,7 +329,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         </div>
       </aside>
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={() => signOut({ callbackUrl: "/" })}
