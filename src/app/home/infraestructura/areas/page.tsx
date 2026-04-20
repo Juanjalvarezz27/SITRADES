@@ -55,7 +55,9 @@ function AreaCard({
         </div>
 
         <div className="flex gap-1 shrink-0">
-          <button onClick={() => onEdit(area)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"><Edit2 size={16} /></button>
+          <button onClick={() => onEdit(area)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all">
+            <Edit2 size={16} />
+          </button>
           <button onClick={() => onToggleStatus(area)} className={`p-2 rounded-xl transition-all ${estaActiva ? 'text-slate-400 hover:text-rose-500 hover:bg-rose-50' : 'text-emerald-500 hover:bg-emerald-50'}`}>
             {estaActiva ? <Trash2 size={16} /> : <CheckCircle size={16} />}
           </button>
@@ -122,8 +124,11 @@ export default function GestionAreasPage() {
       const res = await fetch("/api/areas");
       const data = await res.json();
       setAreas(data);
-    } catch (error) { toast.error("Error al cargar áreas."); }
-    finally { setLoading(false); }
+    } catch (error) { 
+      toast.error("Error al cargar áreas."); 
+    } finally { 
+      setLoading(false); 
+    }
   }, []);
 
   useEffect(() => { fetchAreas(); }, [fetchAreas]);
@@ -143,9 +148,13 @@ export default function GestionAreasPage() {
       });
       if (!res.ok) throw new Error("Error en servidor");
       toast.update(toastId, { render: "¡Estado actualizado!", type: "success", isLoading: false, autoClose: 3000 });
-      setIsDeleteModalOpen(false); fetchAreas();
-    } catch (err: any) { toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 }); }
-    finally { setIsDeleting(false); }
+      setIsDeleteModalOpen(false); 
+      fetchAreas();
+    } catch (err: any) { 
+      toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 }); 
+    } finally { 
+      setIsDeleting(false); 
+    }
   };
 
   const opcionesPisos = Array.from(new Map(areas.filter(a => a.direccion?.piso).map(a => [a.direccion?.piso?.id, a.direccion?.piso])).values()).map(p => ({ value: p?.id.toString() || "", label: p?.nombre || "" }));
@@ -161,6 +170,7 @@ export default function GestionAreasPage() {
 
   const totalPages = Math.ceil(areasFiltradas.length / ITEMS_PER_PAGE);
   const areasPaginadas = areasFiltradas.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  
   const areasPorDireccion = areasPaginadas.reduce((acc, area) => {
     const dir = area.direccion?.nombre || "Sin Dirección";
     if (!acc[dir]) acc[dir] = [];
@@ -175,6 +185,9 @@ export default function GestionAreasPage() {
           <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight flex items-center gap-3">
             <div className="p-2.5 bg-brand-primary/10 text-brand-primary rounded-xl"><MapPin size={24} /></div> Gestión de Áreas
           </h1>
+          <p className="text-slate-500 text-[13px] sm:text-[14px] font-medium mt-2">
+            Administra las áreas y laboratorios.
+          </p>
         </div>
         <button onClick={() => { setAreaToEdit(null); setIsModalOpen(true); }} className="w-full sm:w-auto bg-gradient-to-r from-brand-primary to-brand-secondary text-white px-6 py-3 rounded-2xl font-bold shadow-md transition-all flex items-center justify-center gap-2">
           <Plus size={18} strokeWidth={3} /> Registrar Área
@@ -199,13 +212,29 @@ export default function GestionAreasPage() {
         </div>
       </div>
 
-      <div className="space-y-8">
-        {Object.keys(areasPorDireccion).sort().map((dir) => (
-          <div key={dir} className="space-y-4">
-            <div className="flex items-center gap-3 px-2"><Building2 size={18} className="text-slate-400" /><h2 className="font-bold text-slate-700">{dir}</h2><div className="h-[1px] bg-slate-100 flex-1"></div></div>
+      {/* SEPARACIÓN VISUAL ENTRE DIRECCIONES - RESPONSIVE */}
+      <div className="space-y-10 md:space-y-8 mt-8">
+        {Object.keys(areasPorDireccion).sort().map((dir, index) => (
+          <div 
+            key={dir} 
+            className={`space-y-5 ${index > 0 ? "pt-10 md:pt-0 border-t-2 md:border-t-0 border-dashed border-slate-200/70" : ""}`}
+          >
+            {/* Encabezado de la Dirección mejorado */}
+            <div className="flex items-center gap-3 px-1 sm:px-2">
+              <div className="p-2 bg-slate-100/80 rounded-xl text-slate-500">
+                <Building2 size={20} />
+              </div>
+              <h2 className="font-black text-xl text-slate-800 tracking-tight">{dir}</h2>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {areasPorDireccion[dir].map((area) => (
-                <AreaCard key={area.id} area={area} onEdit={(a) => { setAreaToEdit(a); setIsModalOpen(true); }} onToggleStatus={(a) => { setAreaToDelete(a); setIsDeleteModalOpen(true); }} />
+                <AreaCard 
+                  key={area.id} 
+                  area={area} 
+                  onEdit={(a) => { setAreaToEdit(a); setIsModalOpen(true); }} 
+                  onToggleStatus={(a) => { setAreaToDelete(a); setIsDeleteModalOpen(true); }} 
+                />
               ))}
             </div>
           </div>

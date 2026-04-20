@@ -207,17 +207,28 @@ export default function GestionDireccionesPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        {pisosOrdenados.map((pisoNombre) => (
-          <div key={pisoNombre} className="space-y-4">
-            <div className="flex items-center gap-3 px-2">
-              <Layers size={18} className="text-slate-400" />
-              <h2 className="font-bold text-slate-700">{pisoNombre}</h2>
-              <div className="h-[1px] bg-slate-100 flex-1"></div>
+      <div className="space-y-10 md:space-y-8 mt-8">
+        {pisosOrdenados.map((pisoNombre, index) => (
+          <div 
+            key={pisoNombre} 
+            className={`space-y-5 ${index > 0 ? "pt-10 md:pt-0 border-t-2 md:border-t-0 border-dashed border-slate-200/70" : ""}`}
+          >
+            
+            <div className="flex items-center gap-3 px-1 sm:px-2">
+              <div className="p-2 bg-slate-100/80 rounded-xl text-slate-500">
+                <Layers size={20} />
+              </div>
+              <h2 className="font-black text-xl text-slate-800 tracking-tight">{pisoNombre}</h2>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {direccionesPorPiso[pisoNombre].map((dir) => (
-                <DireccionCard key={dir.id} direccion={dir} onEdit={(d) => { setDireccionToEdit(d); setIsModalOpen(true); }} onToggleStatus={(d) => { setDireccionToDelete(d); setIsDeleteModalOpen(true); }} />
+                <DireccionCard 
+                  key={dir.id} 
+                  direccion={dir} 
+                  onEdit={(d) => { setDireccionToEdit(d); setIsModalOpen(true); }} 
+                  onToggleStatus={(d) => { setDireccionToDelete(d); setIsDeleteModalOpen(true); }} 
+                />
               ))}
             </div>
           </div>
