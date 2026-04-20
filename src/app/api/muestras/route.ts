@@ -11,7 +11,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const fase = searchParams.get("fase") || "activa"; 
+    const fase = searchParams.get("fase") || "activa";
     const hoy = new Date();
 
     let whereClause: any = {};
@@ -19,16 +19,28 @@ export async function GET(request: Request) {
     if (fase === "activa") {
       whereClause = {
         fecha_fin_retencion: { gt: hoy },
-        estado: { nombre: { not: "Destruida / Segregada" } }
+        estado: { 
+          nombre: { 
+            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)"] 
+          } 
+        }
       };
     } else if (fase === "descarte") {
       whereClause = {
         fecha_fin_retencion: { lte: hoy },
-        estado: { nombre: { not: "Destruida / Segregada" } }
+        estado: { 
+          nombre: { 
+            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)"] 
+          } 
+        }
       };
     } else if (fase === "inactiva") {
       whereClause = {
-        estado: { nombre: "Destruida / Segregada" }
+        estado: { 
+          nombre: { 
+            in: ["Destruida / Segregada", "Anulada (Error de Registro)"] 
+          } 
+        }
       };
     }
 
@@ -40,8 +52,8 @@ export async function GET(request: Request) {
           include: { direccion: { include: { piso: true } } }
         },
         estado: true,
-        tipo_empaque: true, 
-        unidad_medida: true, 
+        tipo_empaque: true,
+        unidad_medida: true,
         usuarioRegistrador: {
           select: { nombre: true, rol: true }
         },
@@ -97,12 +109,12 @@ export async function POST(request: Request) {
 
     // Si el área, su dirección o su piso están inhabilitados, bloqueamos
     if (
-      areaValidacion.activo === false || 
-      areaValidacion.direccion.activo === false || 
+      areaValidacion.activo === false ||
+      areaValidacion.direccion.activo === false ||
       areaValidacion.direccion.piso.activo === false
     ) {
-      return NextResponse.json({ 
-        error: "No se puede registrar la muestra: La ubicación (Piso, Dirección o Área) se encuentra inhabilitada actualmente." 
+      return NextResponse.json({
+        error: "No se puede registrar la muestra: La ubicación (Piso, Dirección o Área) se encuentra inhabilitada actualmente."
       }, { status: 403 });
     }
 
@@ -146,7 +158,18 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error("Error al registrar muestra:", error);
-    // ... resto del manejo de errores igual
+
+    // MANEJO DE ERRORES DE PRISMA (Duplicidad de Código Interno)
+    if (error.code === 'P2002') {
+      const target = error.meta?.target;
+      if (target && target.includes('codigo_interno')) {
+        return NextResponse.json(
+          { error: `El Código Interno "${body?.codigo_interno || 'ingresado'}" ya existe en el sistema. Verifique y use uno distinto.` },
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

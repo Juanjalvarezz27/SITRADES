@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { 
   PackageX, 
   Trash2, 
@@ -14,6 +15,7 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Pagination from "../../../components/ui/Pagination";
 import FilterSelect from "../../../components/ui/FilterSelect";
 import MuestraDescarteCard from "../../../components/muestras/MuestraDescarteCard";
+import AnularMuestraModal from "../../../components/muestras/AnularMuestraModal"; // <-- NUEVO IMPORT
 
 const quitarAcentos = (str: string) => {
   if (!str) return "";
@@ -21,6 +23,9 @@ const quitarAcentos = (str: string) => {
 };
 
 export default function ColaDescartePage() {
+  const { data: session } = useSession(); // <-- SESIÓN PARA EL ROL
+  const userRol = (session?.user as any)?.rol || "";
+
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +35,10 @@ export default function ColaDescartePage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
+
+  // ESTADOS PARA EL MODAL DE ANULACIÓN
+  const [isAnularModalOpen, setIsAnularModalOpen] = useState(false);
+  const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
 
   const opcionesAreas = Array.from(
     new Set(muestrasOriginales.map((m) => m.area?.nombre))
@@ -156,6 +165,11 @@ export default function ColaDescartePage() {
                 <MuestraDescarteCard 
                   key={muestra.id} 
                   muestra={muestra} 
+                  userRol={userRol} // <-- PASAMOS EL ROL
+                  onAnular={() => { // <-- PASAMOS LA FUNCIÓN
+                    setMuestraSeleccionada(muestra);
+                    setIsAnularModalOpen(true);
+                  }}
                 />
               ))}
             </div>
@@ -173,6 +187,15 @@ export default function ColaDescartePage() {
           </>
         )}
       </div>
+
+      {/* MODAL DE ANULACIÓN */}
+      <AnularMuestraModal 
+        isOpen={isAnularModalOpen} 
+        onClose={() => setIsAnularModalOpen(false)} 
+        muestra={muestraSeleccionada} 
+        onSuccess={fetchMuestras} 
+      />
+
     </div>
   );
 }

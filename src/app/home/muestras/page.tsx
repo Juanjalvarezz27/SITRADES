@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { 
-  PackagePlus, Package, Calendar, MapPin, 
-  ShieldAlert, Eye, FlaskConical, Edit3 
+import { useSession } from "next-auth/react";
+import {
+  PackagePlus, Package, Calendar, MapPin,
+  ShieldAlert, Eye, FlaskConical, Edit3, AlertOctagon
 } from "lucide-react";
 import { toast } from "react-toastify";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterSelect from "../../components/ui/FilterSelect";
 import TrazabilidadModal from "../../components/muestras/TrazabilidadModal";
 import Pagination from "../../components/ui/Pagination";
-import EditarMuestraModal from "../../components/muestras/EditarMuestraModal"; 
+import EditarMuestraModal from "../../components/muestras/EditarMuestraModal";
+import AnularMuestraModal from "../../components/muestras/AnularMuestraModal";
 
 const quitarAcentos = (str: string) => {
   if (!str) return "";
@@ -24,7 +26,19 @@ const formatearFecha = (fecha: string) => {
 };
 
 // --- TARJETA DE MUESTRA ---
-function MuestraCard({ muestra, onClick, onEdit }: { muestra: any, onClick: () => void, onEdit: () => void }) {
+function MuestraCard({ 
+  muestra, 
+  onClick, 
+  onEdit, 
+  onAnular, 
+  userRol 
+}: { 
+  muestra: any, 
+  onClick: () => void, 
+  onEdit: () => void, 
+  onAnular: () => void,
+  userRol: string 
+}) {
   const hoy = new Date();
   const fechaCaducidad = new Date(muestra.fecha_caducidad);
 
@@ -33,10 +47,29 @@ function MuestraCard({ muestra, onClick, onEdit }: { muestra: any, onClick: () =
     estadoLegal = { texto: "Vencida (En Custodia)", color: "bg-amber-50 text-amber-600 border-amber-200" };
   }
 
+  const esAdmin = userRol === "Administrador";
+
   return (
-    <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm hover:shadow-xl hover:shadow-brand-primary/5 transition-all duration-300 flex flex-col h-full group">
-      
-      <div className="flex items-start justify-between gap-4 mb-5">
+    <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm hover:shadow-xl hover:shadow-brand-primary/5 transition-all duration-300 flex flex-col h-full group relative overflow-hidden">
+
+      {/* BOTÓN DE ANULAR CON TOOLTIP PERSONALIZADO */}
+      {esAdmin && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAnular(); }}
+          className="absolute top-4 right-4 p-2.5 bg-red-400 hover:bg-red-600 text-white  rounded-xl transition-all shadow-sm hover:opacity-100 group/btn z-10"
+        >
+          <AlertOctagon size={16} strokeWidth={2.5} />
+          
+          {/* Tooltip CSS Custom - Aparece a la izquierda del botón */}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-3 py-1.5 bg-slate-800 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all duration-200 whitespace-nowrap shadow-xl flex items-center pointer-events-none">
+            Anular Registro por Error
+            {/* Flecha del tooltip */}
+            <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-800 rotate-45 rounded-sm"></div>
+          </div>
+        </button>
+      )}
+
+      <div className="flex items-start justify-between gap-4 mb-5 pr-10">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand-primary group-hover:bg-brand-primary/5 transition-all shrink-0">
             <FlaskConical size={24} />
@@ -97,15 +130,14 @@ function MuestraCard({ muestra, onClick, onEdit }: { muestra: any, onClick: () =
         </div>
       </div>
 
-      {/* BOTONES 50/50 */}
       <div className="mt-auto pt-2 grid grid-cols-2 gap-3 border-t border-slate-100">
-        <button 
+        <button
           onClick={onClick}
           className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white font-bold text-[13px] rounded-xl transition-all border border-brand-primary/20 hover:border-brand-primary shadow-sm"
         >
           <Eye size={16} /> Trazabilidad
         </button>
-        <button 
+        <button
           onClick={onEdit}
           className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-secondary/10 hover:bg-brand-secondary text-brand-secondary hover:text-white font-bold text-[13px] rounded-xl transition-all border border-brand-secondary/20 hover:border-brand-secondary shadow-sm"
         >
@@ -118,6 +150,9 @@ function MuestraCard({ muestra, onClick, onEdit }: { muestra: any, onClick: () =
 
 // --- COMPONENTE PRINCIPAL ---
 export default function InventarioMuestrasPage() {
+  const { data: session } = useSession(); 
+  const userRol = (session?.user as any)?.rol || "";
+
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,6 +168,7 @@ export default function InventarioMuestrasPage() {
   const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAnularModalOpen, setIsAnularModalOpen] = useState(false); 
 
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
@@ -159,10 +195,10 @@ export default function InventarioMuestrasPage() {
 
   useEffect(() => {
     const hoy = new Date();
-    
+
     const filtrados = muestrasOriginales.filter((muestra) => {
       const busquedaLimpia = quitarAcentos(busqueda);
-      const matchBusqueda = 
+      const matchBusqueda =
         quitarAcentos(muestra.codigo_interno).includes(busquedaLimpia) ||
         quitarAcentos(muestra.lote).includes(busquedaLimpia) ||
         quitarAcentos(muestra.principio_activo).includes(busquedaLimpia);
@@ -181,7 +217,7 @@ export default function InventarioMuestrasPage() {
     });
 
     setMuestrasFiltradas(filtrados);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   }, [busqueda, filtroPiso, filtroDireccion, filtroEstadoLegal, muestrasOriginales]);
 
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
@@ -213,9 +249,14 @@ export default function InventarioMuestrasPage() {
     setIsEditModalOpen(true);
   };
 
+  const handleOpenAnularModal = (muestra: any) => {
+    setMuestraSeleccionada(muestra);
+    setIsAnularModalOpen(true);
+  };
+
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto relative">
-      
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 mb-8">
         <div>
           <h1 className="font-title font-black text-2xl sm:text-3xl text-slate-800 tracking-tight flex items-center gap-3">
@@ -228,8 +269,8 @@ export default function InventarioMuestrasPage() {
             Control de trazabilidad y gestión de vida útil de las especialidades farmacéuticas en almacenamiento.
           </p>
         </div>
-        
-        <Link 
+
+        <Link
           href="/home/muestras/nuevo"
           className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90 active:scale-95 text-white px-6 py-3 rounded-2xl font-bold text-[14px] transition-all shadow-md shadow-brand-secondary/25 shrink-0"
         >
@@ -241,10 +282,10 @@ export default function InventarioMuestrasPage() {
       <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 flex flex-col gap-4 sticky top-20 z-10">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
-            <SearchBar 
-              value={busqueda} 
-              onChange={setBusqueda} 
-              placeholder="Buscar por código, lote o principio activo..." 
+            <SearchBar
+              value={busqueda}
+              onChange={setBusqueda}
+              placeholder="Buscar por código, lote o principio activo..."
             />
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -269,22 +310,24 @@ export default function InventarioMuestrasPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
               {muestrasPaginadas.map((muestra) => (
-                <MuestraCard 
-                  key={muestra.id} 
-                  muestra={muestra} 
-                  onClick={() => handleOpenModal(muestra)} 
+                <MuestraCard
+                  key={muestra.id}
+                  muestra={muestra}
+                  userRol={userRol}
+                  onClick={() => handleOpenModal(muestra)}
                   onEdit={() => handleOpenEditModal(muestra)}
+                  onAnular={() => handleOpenAnularModal(muestra)}
                 />
               ))}
             </div>
 
-            <Pagination 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
               onPageChange={(page) => {
                 setCurrentPage(page);
-                window.scrollTo({ top: 0, behavior: 'smooth' }); 
-              }} 
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             />
           </>
         )}
@@ -292,6 +335,15 @@ export default function InventarioMuestrasPage() {
 
       <TrazabilidadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} muestra={muestraSeleccionada} />
       <EditarMuestraModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} muestra={muestraSeleccionada} onSuccess={fetchMuestras} />
+      
+      {/* MODAL DE ANULACIÓN */}
+      <AnularMuestraModal 
+        isOpen={isAnularModalOpen} 
+        onClose={() => setIsAnularModalOpen(false)} 
+        muestra={muestraSeleccionada} 
+        onSuccess={fetchMuestras} 
+      />
+      
     </div>
   );
 }

@@ -23,9 +23,15 @@ const formatearFecha = (fecha: string) => {
 
 interface MuestraDescarteCardProps {
   muestra: any;
+  userRol: string; // <-- Nuevo: Recibe el rol del usuario
+  onAnular: () => void; // <-- Nuevo: Función para disparar el modal de anulación
 }
 
-export default function MuestraDescarteCard({ muestra }: MuestraDescarteCardProps) {
+export default function MuestraDescarteCard({ muestra, userRol, onAnular }: MuestraDescarteCardProps) {
+  
+  // Validación de seguridad visual
+  const esAdmin = userRol === "Administrador";
+
   return (
     <div className="bg-white border-2 border-rose-100 rounded-[2.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-rose-500/10 transition-all duration-500 flex flex-col h-full group relative overflow-hidden">
       
@@ -33,7 +39,24 @@ export default function MuestraDescarteCard({ muestra }: MuestraDescarteCardProp
       <div className="absolute top-0 left-0 w-2 h-full bg-rose-500" />
       <div className="absolute -right-10 -top-10 w-32 h-32 bg-rose-50 rounded-full opacity-50 transition-transform group-hover:scale-150 duration-700" />
 
-      <div className="flex items-start justify-between gap-4 mb-5 relative z-10">
+      {/* BOTÓN DE ANULAR CON TOOLTIP PERSONALIZADO (Solo Administrador) */}
+      {esAdmin && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAnular(); }}
+          className="absolute top-4 right-4 p-2.5 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all shadow-sm opacity-60 hover:opacity-100 group/btn z-20"
+        >
+          <AlertOctagon size={16} strokeWidth={2.5} />
+          
+          {/* Tooltip CSS Custom - Aparece a la izquierda del botón */}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-3 py-1.5 bg-slate-800 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all duration-200 whitespace-nowrap shadow-xl flex items-center pointer-events-none">
+            Anular Registro por Error
+            {/* Flecha del tooltip */}
+            <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-800 rotate-45 rounded-sm"></div>
+          </div>
+        </button>
+      )}
+
+      <div className="flex items-start justify-between gap-4 mb-5 relative z-10 pr-10">
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-red-50 text-rose-600 flex items-center justify-center shrink-0 shadow-inner group-hover:animate-pulse">
             <AlertOctagon size={28} />
