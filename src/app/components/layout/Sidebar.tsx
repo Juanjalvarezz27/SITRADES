@@ -27,7 +27,10 @@ import {
   Archive,
   Trash,
   Settings,
-  UserCog
+  UserCog,
+  BarChart3,   // <-- NUEVO ÍCONO
+  FileText,    // <-- NUEVO ÍCONO
+  Biohazard    // <-- NUEVO ÍCONO
 } from "lucide-react";
 
 import ConfirmModal from "../ui/ConfirmModal";
@@ -38,6 +41,13 @@ const MENU_ITEMS = [
     name: "Inicio",
     icon: Home,
     rolesPermitidos: ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
+    exact: true,
+  },
+  {
+    path: "/home/estadisticas",
+    name: "Estadísticas",
+    icon: BarChart3,
+    rolesPermitidos: ["Administrador", "Seguridad Industrial"],
     exact: true,
   },
   {
@@ -61,6 +71,11 @@ const MENU_ITEMS = [
         path: "/home/muestras/descarte",
         name: "Cola de Descarte",
         icon: Trash,
+      },
+      {
+        path: "/home/muestras/recoleccion",
+        name: "Bolsas Rojas",
+        icon: Biohazard,
       },
       {
         path: "/home/muestras/inactivo",
@@ -118,6 +133,13 @@ const MENU_ITEMS = [
     ]
   },
   {
+    path: "/home/reportes",
+    name: "Centro de Reportes",
+    icon: FileText,
+    rolesPermitidos: ["Administrador", "Seguridad Industrial"],
+    exact: true,
+  },
+  {
     path: "/home/configuracion",
     name: "Configuración",
     icon: Settings,
@@ -160,7 +182,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
 
   return (
     <>
-      {/* HEADER MÓVIL - z-30 */}
+      {/* HEADER MÓVIL */}
       <div className="md:hidden w-full flex items-center justify-between bg-white border-b border-slate-100 p-4 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <Image 
@@ -180,7 +202,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         </button>
       </div>
 
-      {/* OVERLAY MÓVIL - z-40 */}
+      {/* OVERLAY MÓVIL */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
@@ -188,20 +210,24 @@ export default function Sidebar({ userRol }: { userRol: string }) {
         />
       )}
 
-      {/* SIDEBAR PRINCIPAL - z-50 */}
+      {/* SIDEBAR PRINCIPAL */}
       <aside
         className={`fixed md:sticky top-0 left-0 h-screen bg-white border-r border-slate-100 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-[4px_0_24px_rgb(0,0,0,0.02)]
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         ${isCollapsed ? "md:w-[88px]" : "md:w-[260px] w-[280px]"}
         `}
       >
-        {/* BOTÓN COLAPSAR FLOTANTE (MÁS GRANDE) */}
+        {/* BOTÓN COLAPSAR FLOTANTE CON TOOLTIP */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden md:flex absolute -right-4 top-8 bg-white border border-slate-200 text-slate-500 hover:text-brand-primary hover:border-brand-primary/30 p-2 rounded-full shadow-md transition-all z-50 hover:scale-110"
-          title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+          className="hidden md:flex absolute -right-4 top-8 bg-white border border-slate-200 text-slate-500 hover:text-brand-primary hover:border-brand-primary/30 p-2 rounded-full shadow-md transition-all z-50 hover:scale-110 group"
         >
           {isCollapsed ? <ChevronRight size={18} strokeWidth={3} /> : <ChevronLeft size={18} strokeWidth={3} />}
+          
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-800 text-white text-[11px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] shadow-lg pointer-events-none">
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 rounded-sm"></div>
+            {isCollapsed ? "Expandir menú" : "Colapsar menú"}
+          </div>
         </button>
 
         <div className="p-5 border-b border-slate-50 flex items-center justify-between relative">
@@ -227,19 +253,24 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           </button>
         </div>
 
-        {/* REDUJE EL PADDING TOP DE pt-5 A pt-2 */}
-        <nav className="flex-1 px-4 pt-2 pb-6 space-y-2 overflow-y-auto custom-scrollbar">
+        {/* NAVEGACIÓN */}
+        <nav className={`flex-1 px-4 pt-2 pb-6 space-y-2 ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto custom-scrollbar'}`}>
           
           <Link
             href="/manual"
             target="_blank"
-            title={isCollapsed ? "Manual de Usuario" : ""}
-            className={`w-full flex items-center gap-3 px-3.5 py-3 mb-4 bg-slate-50/80 border border-slate-100 hover:bg-brand-primary/10 hover:border-brand-primary/20 text-slate-600 hover:text-brand-primary font-semibold text-[14px] rounded-2xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
+            className={`w-full flex items-center gap-3 px-3.5 py-3 mb-4 bg-slate-50/80 border border-slate-100 hover:bg-brand-primary/10 hover:border-brand-primary/20 text-slate-600 hover:text-brand-primary font-semibold text-[14px] rounded-2xl transition-all group relative overflow-visible ${isCollapsed ? "justify-center" : "justify-start"}`}
           >
             <BookOpen size={20} className="shrink-0 transition-transform group-hover:scale-110" />
             <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
               Manual de Usuario
             </span>
+            {isCollapsed && (
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3.5 py-2 bg-slate-800 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] shadow-xl flex items-center pointer-events-none">
+                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-800 rotate-45 rounded-sm"></div>
+                Manual de Usuario
+              </div>
+            )}
           </Link>
 
           <p className={`px-2 text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-3 transition-all duration-300 ${isCollapsed ? "text-center opacity-0" : "opacity-100"}`}>
@@ -255,7 +286,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
             const Icon = item.icon;
 
             return (
-              <div key={item.name} className="flex flex-col gap-1">
+              <div key={item.name} className="flex flex-col gap-1 relative">
                 {item.subItems ? (
                   <button
                     onClick={() => toggleSubMenu(item.name)}
@@ -274,12 +305,18 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                       </span>
                     </div>
                     <ChevronDown size={16} className={`transition-transform duration-300 ${isCollapsed ? "hidden" : "block"} ${isMenuOpen ? "rotate-180" : "rotate-0"} ${isActive ? "text-white" : "text-slate-400"}`} />
+
+                    {isCollapsed && (
+                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3.5 py-2 bg-slate-800 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] shadow-xl flex items-center pointer-events-none">
+                        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-800 rotate-45 rounded-sm"></div>
+                        {item.name}
+                      </div>
+                    )}
                   </button>
                 ) : (
                   <Link
                     href={item.path}
                     onClick={() => setIsMobileOpen(false)}
-                    title={isCollapsed ? item.name : ""}
                     className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl text-[14px] font-semibold transition-all group relative ${
                       isActive
                         ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
@@ -290,6 +327,13 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                     <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
                       {item.name}
                     </span>
+
+                    {isCollapsed && (
+                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3.5 py-2 bg-slate-800 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] shadow-xl flex items-center pointer-events-none">
+                        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-800 rotate-45 rounded-sm"></div>
+                        {item.name}
+                      </div>
+                    )}
                   </Link>
                 )}
 
@@ -326,16 +370,23 @@ export default function Sidebar({ userRol }: { userRol: string }) {
           })}
         </nav>
 
+        {/* LOGOUT */}
         <div className="p-4 border-t border-slate-50 bg-white">
           <button
             onClick={() => setIsLogoutModalOpen(true)}
-            title={isCollapsed ? "Cerrar Sesión" : ""}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-700 font-semibold text-[13px] rounded-xl transition-all group overflow-hidden ${isCollapsed ? "justify-center" : "justify-start"}`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-700 font-semibold text-[13px] rounded-xl transition-all group relative overflow-visible ${isCollapsed ? "justify-center" : "justify-start"}`}
           >
             <LogOut size={18} className="shrink-0 transition-transform group-hover:-translate-x-1" />
             <span className={`whitespace-nowrap transition-all duration-300 ${isCollapsed ? "hidden opacity-0 w-0" : "block opacity-100 w-auto"}`}>
               Cerrar Sesión
             </span>
+
+            {isCollapsed && (
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3.5 py-2 bg-red-600 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] shadow-xl flex items-center pointer-events-none">
+                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-red-600 rotate-45 rounded-sm"></div>
+                Cerrar Sesión
+              </div>
+            )}
           </button>
         </div>
       </aside>
