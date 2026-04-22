@@ -21,7 +21,8 @@ export async function GET(request: Request) {
         fecha_fin_retencion: { gt: hoy },
         estado: { 
           nombre: { 
-            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)"] 
+            // Ocultamos también las que ya están en bolsa roja
+            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)", "Esperando Recolección (Bolsa Roja)"] 
           } 
         }
       };
@@ -30,7 +31,8 @@ export async function GET(request: Request) {
         fecha_fin_retencion: { lte: hoy },
         estado: { 
           nombre: { 
-            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)"] 
+            //  Ocultamos las que Seguridad Industrial ya tiene pendientes
+            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)", "Esperando Recolección (Bolsa Roja)"] 
           } 
         }
       };
@@ -56,6 +58,11 @@ export async function GET(request: Request) {
         unidad_medida: true,
         usuarioRegistrador: {
           select: { nombre: true, rol: true }
+        },
+        // Los historiales cuelgan de la Muestra, no del Reporte
+        historiales: {
+          include: { usuario: { select: { nombre: true } } },
+          orderBy: { fecha_cambio: 'desc' }
         },
         reporte_descarte: {
           include: {

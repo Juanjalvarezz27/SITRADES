@@ -2,10 +2,10 @@
 
 import { useRef, useState } from "react";
 import { 
-  X, FileSignature, Thermometer, Calendar, User, ShieldCheck, Download, Loader2, ExternalLink 
+  X, FileSignature, Thermometer, Calendar, User, ShieldCheck, Download, Loader2, ExternalLink, CheckCircle2 
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { QRCodeCanvas } from "qrcode.react"; // <-- Importamos el generador QR
+import { QRCodeCanvas } from "qrcode.react";
 
 import DescartePDFTemplate from "./DescartePDFTemplate";
 
@@ -15,15 +15,14 @@ interface CertificadoDescarteModalProps {
   muestra: any;
 }
 
-const formatearFechaHora = (fecha: string) => {
-  if (!fecha) return "N/A";
+const formatearFechaHora = (fecha: string | null | undefined) => {
+  if (!fecha) return "Pendiente";
   return new Date(fecha).toLocaleString("es-VE", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC"
   });
 };
 
@@ -38,29 +37,18 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const element = pdfRef.current;
-
       const opt = {
         margin: 0,
         filename: `ACTA_DESCARTE_${muestra.codigo_interno}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          scrollY: 0
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'letter',
-          orientation: 'portrait'
-        }
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
       } as const;
 
       await html2pdf().set(opt).from(element).save();
       setIsExporting(false);
     } catch (err: any) {
       setIsExporting(false);
-      console.error("Error al generar PDF:", err);
       toast.error("Error técnico al generar el documento.");
     }
   };
@@ -71,18 +59,22 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   const metodoNombre = reporte?.metodo_disposicion?.nombre || "Método no especificado";
   const observaciones = reporte?.observaciones || "Sin observaciones adicionales.";
   const fechaDescarte = reporte?.fecha_descarte;
-  const responsable = reporte?.ejecutor?.nombre || "Usuario no registrado";
+  const responsableAnalista = reporte?.ejecutor?.nombre || "Usuario no registrado";
 
-  // Generamos la URL dinámica apuntando a la vista pública de consulta
+  // Buscamos el evento de Seguridad Industrial en el historial
+  const eventoRecoleccion = muestra.historiales?.find(
+    (h: any) => h.motivo && h.motivo.includes("Seguridad Industrial")
+  );
+  
+  const responsableSeguridad = eventoRecoleccion?.usuario?.nombre || "En tránsito / Pendiente";
+  const fechaRecoleccion = eventoRecoleccion?.fecha_cambio;
+
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const qrPayload = baseUrl ? `${baseUrl}/consulta/${muestra.id}` : "";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div
-        className="absolute inset-0 bg-slate-900/70 transition-opacity"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-slate-900/70 transition-opacity" onClick={onClose} />
 
       <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-[0.98] duration-200 flex flex-col max-h-[90vh]">
 
@@ -97,10 +89,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
               <p className="text-slate-500 font-medium text-xs mt-0.5">Certificación de Destrucción e Inactivación</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
-          >
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -108,33 +97,44 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
         {/* CUERPO DEL MODAL */}
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
 
+          <div className="bg-emerald-50 border-2 border-emerald-100 p-5 rounded-[1.5rem] flex items-center justify-between shadow-sm relative overflow-hidden">
+             <div className="absolute -right-4 -bottom-4 text-emerald-100/50 -rotate-12">
+                <ShieldCheck size={100} />
+             </div>
+             <div className="flex items-center gap-4 relative z-10">
+                <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <CheckCircle2 size={28} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase text-emerald-600 tracking-[0.15em] mb-0.5">Certificación de Cierre</p>
+                  <p className="text-xl font-black text-emerald-900 leading-none">DESCARTADO / DESTRUIDO</p>
+                </div>
+             </div>
+             <div className="text-right relative z-10 hidden sm:block">
+                <p className="font-mono font-bold text-emerald-800 text-[12px] bg-white/50 px-3 py-1 rounded-lg border border-emerald-100">
+                  {muestra.codigo_interno}
+                </p>
+             </div>
+          </div>
+
           {/* Identificación con QR */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                <ShieldCheck size={14} className="text-slate-400" />
-                Identificación del Residuo
+                <ShieldCheck size={14} /> Identificación del Residuo
               </h3>
-              
-              {/* GENERADOR DE CÓDIGO QR EN EL MODAL */}
               {qrPayload && (
                 <div className="flex flex-col items-center gap-1.5 -mt-3">
-                  <div className="bg-white p-1.5 rounded-lg shadow-sm border border-slate-100" title="Escanea para consultar">
+                  <div className="bg-white p-1.5 rounded-lg shadow-sm border border-slate-100">
                     <QRCodeCanvas value={qrPayload} size={50} level="M" />
                   </div>
-                  <a 
-                    href={qrPayload} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 hover:bg-brand-primary hover:text-white px-2 py-1 rounded transition-colors"
-                  >
+                  <a href={qrPayload} target="_blank" className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 hover:bg-brand-primary hover:text-white px-2 py-1 rounded transition-colors">
                     <ExternalLink size={10} /> Visitar
                   </a>
                 </div>
               )}
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 -mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Principio Activo</span>
                 <span className="font-black text-slate-700 text-[14px] leading-tight">{muestra.principio_activo}</span>
@@ -149,55 +149,57 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
           {/* Protocolo */}
           <div>
             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-              <Thermometer size={14} className="text-slate-400" />
-              Protocolo Aplicado
+              <Thermometer size={14} /> Protocolo Aplicado
             </h3>
-            <div className="space-y-4">
-              <div className="bg-white border-2 border-brand-primary/20 p-4 rounded-2xl flex items-start gap-4">
-                <div className="p-2 bg-brand-primary/10 text-brand-primary rounded-xl shrink-0 mt-0.5">
+            <div className="bg-white border-2 border-brand-primary/20 p-4 rounded-2xl flex items-start gap-4 mb-4">
+               <div className="p-2 bg-brand-primary/10 text-brand-primary rounded-xl shrink-0 mt-0.5">
                   <Thermometer size={18} />
-                </div>
-                <div>
+               </div>
+               <div>
                   <span className="block text-slate-800 font-black text-[14px]">{metodoNombre}</span>
-                  <span className="block text-slate-500 font-medium text-[12px] mt-0.5">Método de disposición final ejecutado.</span>
-                </div>
-              </div>
-
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <span className="block text-slate-500 font-bold text-[11px] uppercase tracking-wide mb-2">Observaciones / N° Acta</span>
-                <p className="text-[13px] text-slate-700 font-medium italic leading-relaxed">
-                  "{observaciones}"
-                </p>
-              </div>
+                  <span className="block text-slate-500 font-medium text-[12px] mt-0.5">Método de inactivación definitiva.</span>
+               </div>
+            </div>
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+               <span className="block text-slate-500 font-bold text-[11px] uppercase tracking-wide mb-2">Observaciones de Auditoría</span>
+               <p className="text-[13px] text-slate-700 font-medium italic leading-relaxed">"{observaciones}"</p>
             </div>
           </div>
 
-          {/* Firmas */}
+          {/* Cadena de Custodia Legal */}
           <div>
             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-              <User size={14} className="text-slate-400" />
-              Auditoría y Cierre
+              <ShieldCheck size={14} /> Cadena de Custodia Legal
             </h3>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 flex items-center gap-3 bg-white border-2 border-slate-100 p-4 rounded-2xl">
-                <div className="p-2 bg-slate-50 text-slate-500 rounded-xl shrink-0">
-                  <User size={18} />
+            <div className="flex flex-col gap-3">
+              {/* Analista */}
+              <div className="flex items-center justify-between p-4 bg-white border-2 border-slate-100 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-rose-50 text-rose-600 rounded-xl shrink-0"><User size={18} /></div>
+                  <div>
+                    <span className="block text-slate-400 font-bold text-[10px] uppercase">1. Segregación y Sellado</span>
+                    <span className="block font-black text-slate-700 text-[13px]">{responsableAnalista}</span>
+                  </div>
                 </div>
-                <div className="overflow-hidden">
-                  <span className="block text-slate-400 font-bold text-[10px] uppercase">Ejecutado por</span>
-                  <span className="block text-slate-700 font-black text-[13px] truncate" title={responsable}>
-                    {responsable}
-                  </span>
+                <div className="text-right shrink-0 ml-2">
+                  <span className="block text-slate-400 font-bold text-[10px] uppercase">Fecha</span>
+                  <span className="block font-black text-slate-700 text-[12px]">{formatearFechaHora(fechaDescarte)}</span>
                 </div>
               </div>
 
-              <div className="flex-1 flex items-center gap-3 bg-white border-2 border-slate-100 p-4 rounded-2xl">
-                <div className="p-2 bg-slate-50 text-slate-500 rounded-xl shrink-0">
-                  <Calendar size={18} />
+              {/* Seguridad Industrial */}
+              <div className="flex items-center justify-between p-4 bg-white border-2 border-indigo-50 rounded-2xl relative overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl shrink-0"><ShieldCheck size={18} /></div>
+                  <div>
+                    <span className="block text-indigo-400 font-bold text-[10px] uppercase">2. Traslado y Disposición Final</span>
+                    <span className={`block font-black text-[13px] ${!fechaRecoleccion ? 'text-indigo-400 italic' : 'text-indigo-900'}`}>{responsableSeguridad}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="block text-slate-400 font-bold text-[10px] uppercase">Fecha de Destrucción</span>
-                  <span className="block text-slate-700 font-black text-[13px]">{formatearFechaHora(fechaDescarte)}</span>
+                <div className="text-right shrink-0 ml-2">
+                  <span className="block text-indigo-400 font-bold text-[10px] uppercase">Fecha</span>
+                  <span className={`block font-black text-[12px] ${!fechaRecoleccion ? 'text-indigo-400 italic' : 'text-indigo-900'}`}>{formatearFechaHora(fechaRecoleccion)}</span>
                 </div>
               </div>
             </div>
@@ -206,26 +208,17 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
 
         {/* FOOTER */}
         <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-          <button
-            onClick={exportarPDF}
-            disabled={isExporting}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-primary hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-primary/20 text-[13px] active:scale-95 disabled:opacity-70"
-          >
+          <button onClick={exportarPDF} disabled={isExporting} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-primary hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-md shadow-brand-primary/20 text-[13px] active:scale-95 disabled:opacity-70">
             {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
             {isExporting ? "Generando PDF..." : "Descargar Acta PDF"}
           </button>
-
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition-all shadow-sm text-[13px] active:scale-95"
-          >
+          <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition-all shadow-sm text-[13px] active:scale-95">
             Cerrar Certificado
           </button>
         </div>
 
-        {/* TEMPLATE OCULTO PARA PDF PASANDO EL QR PAYLOAD */}
+        {/* TEMPLATE PDF OCULTO */}
         <DescartePDFTemplate ref={pdfRef} muestra={muestra} qrUrl={qrPayload} />
-
       </div>
     </div>
   );

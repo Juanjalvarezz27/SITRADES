@@ -15,7 +15,7 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Pagination from "../../../components/ui/Pagination";
 import FilterSelect from "../../../components/ui/FilterSelect";
 import MuestraDescarteCard from "../../../components/muestras/MuestraDescarteCard";
-import AnularMuestraModal from "../../../components/muestras/AnularMuestraModal"; // <-- NUEVO IMPORT
+import AnularMuestraModal from "../../../components/muestras/AnularMuestraModal"; 
 
 const quitarAcentos = (str: string) => {
   if (!str) return "";

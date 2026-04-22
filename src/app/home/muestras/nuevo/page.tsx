@@ -376,7 +376,7 @@ export default function RegistroMuestraPage() {
             className="w-full sm:w-auto bg-gradient-to-r from-brand-primary to-brand-secondary text-white px-8 py-4 rounded-2xl font-bold text-[18px] transition-all shadow-lg shadow-brand-secondary/30 flex items-center justify-center gap-3"
           >
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
-            <span>{isSubmitting ? "Registrando..." : "Guardar Muestra"}</span>
+            <span>{isSubmitting ? "Registrando..." : "Registrar Muestra"}</span>
           </button>
         </div>
       </form>

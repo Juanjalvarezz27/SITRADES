@@ -7,6 +7,7 @@ export async function seedEstados(prisma: PrismaClient) {
     { nombre: 'Recibida (Pendiente de Análisis)' },
     { nombre: 'Vencida (En Custodia Legal)' },
     { nombre: 'Retención Cumplida (Descartable)' },
+    { nombre: 'Esperando Recolección (Bolsa Roja)' },
     { nombre: 'Destruida / Segregada' },
     { nombre: 'Anulada (Error de Registro)' },
   ];

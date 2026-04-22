@@ -28,9 +28,9 @@ import {
   Trash,
   Settings,
   UserCog,
-  BarChart3,   // <-- NUEVO ÍCONO
-  FileText,    // <-- NUEVO ÍCONO
-  Biohazard    // <-- NUEVO ÍCONO
+  BarChart3,
+  FileText,
+  Biohazard
 } from "lucide-react";
 
 import ConfirmModal from "../ui/ConfirmModal";
@@ -74,7 +74,7 @@ const MENU_ITEMS = [
       },
       {
         path: "/home/muestras/recoleccion",
-        name: "Bolsas Rojas",
+        name: "Recolección",
         icon: Biohazard,
       },
       {
@@ -83,12 +83,6 @@ const MENU_ITEMS = [
         icon: Archive,
       }
     ]
-  },
-  {
-    path: "/home/alertas",
-    name: "Panel de Alertas",
-    icon: AlertTriangle,
-    rolesPermitidos: ["Administrador", "Seguridad Industrial"],
   },
   {
     path: "/home/personal",
@@ -340,7 +334,7 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                 {item.subItems && (
                   <div
                     className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col gap-1 ${
-                      isMenuOpen && !isCollapsed ? "max-h-[200px] opacity-100 mt-1" : "max-h-0 opacity-0"
+                      isMenuOpen && !isCollapsed ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"
                     }`}
                   >
                     {item.subItems.map((subItem) => {
