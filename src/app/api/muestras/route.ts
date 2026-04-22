@@ -100,37 +100,36 @@ export async function POST(request: Request) {
     body = await request.json();
     const areaId = Number(body.area_id);
 
-    // 1. VALIDACIÓN DE INFRAESTRUCTURA ACTIVA (Bloqueo por Herencia)
+    // 1. VALIDACIÓN DE INFRAESTRUCTURA ACTIVA
     const areaValidacion = await prisma.area.findUnique({
       where: { id: areaId },
-      include: {
-        direccion: {
-          include: { piso: true }
-        }
-      }
+      include: { direccion: { include: { piso: true } } }
     });
 
-    if (!areaValidacion) {
-      return NextResponse.json({ error: "El área seleccionada no existe." }, { status: 404 });
-    }
+    if (!areaValidacion) return NextResponse.json({ error: "El área seleccionada no existe." }, { status: 404 });
 
-    // Si el área, su dirección o su piso están inhabilitados, bloqueamos
     if (
       areaValidacion.activo === false ||
       areaValidacion.direccion.activo === false ||
       areaValidacion.direccion.piso.activo === false
     ) {
       return NextResponse.json({
-        error: "No se puede registrar la muestra: La ubicación (Piso, Dirección o Área) se encuentra inhabilitada actualmente."
+        error: "No se puede registrar la muestra: La ubicación se encuentra inhabilitada actualmente."
       }, { status: 403 });
     }
 
-    const estadoInicial = await prisma.estadoMuestra.findFirst({
-      where: { nombre: "Recibida (Pendiente de Análisis)" }
-    });
+    // OBTENER TODOS LOS ESTADOS NECESARIOS PARA EL FLUJO
+    const [estadoRecibida, estadoVencida, estadoRetencion] = await Promise.all([
+      prisma.estadoMuestra.findFirst({ where: { nombre: "Recibida (Pendiente de Análisis)" } }),
+      prisma.estadoMuestra.findFirst({ where: { nombre: "Vencida (En Custodia Legal)" } }),
+      prisma.estadoMuestra.findFirst({ where: { nombre: "Retención Cumplida (Descartable)" } })
+    ]);
 
-    if (!estadoInicial) throw new Error("No existe el estado inicial en la BD.");
+    if (!estadoRecibida || !estadoVencida || !estadoRetencion) {
+      throw new Error("Faltan estados base en la BD. Ejecute el seed.");
+    }
 
+    // PASO 1: CREACIÓN INICIAL (Siempre nace como "Recibida")
     const nuevaMuestra = await prisma.muestraFarmaceutica.create({
       data: {
         codigo_interno: body.codigo_interno,
@@ -146,7 +145,7 @@ export async function POST(request: Request) {
         fecha_fin_retencion: new Date(body.fecha_fin_retencion),
         area_id: areaId,
         ubicacion_detalle: body.ubicacion_detalle,
-        estado_id: estadoInicial.id,
+        estado_id: estadoRecibida.id,
         registrado_por: token.id as string,
       },
     });
@@ -154,19 +153,58 @@ export async function POST(request: Request) {
     await prisma.historialTrazabilidad.create({
       data: {
         muestra_id: nuevaMuestra.id,
-        estado_anterior_id: estadoInicial.id,
-        estado_nuevo_id: estadoInicial.id,
+        estado_anterior_id: estadoRecibida.id,
+        estado_nuevo_id: estadoRecibida.id,
         motivo: "Ingreso inicial de la muestra al sistema y asignación a área de almacenamiento.",
         cambiado_por: token.id as string,
       }
     });
+
+    const hoy = new Date();
+    let estadoActualId = estadoRecibida.id;
+
+    // PASO 2: ¿La fecha de caducidad ya pasó?
+    if (new Date(body.fecha_caducidad) <= hoy) {
+      await prisma.muestraFarmaceutica.update({
+        where: { id: nuevaMuestra.id },
+        data: { estado_id: estadoVencida.id }
+      });
+
+      await prisma.historialTrazabilidad.create({
+        data: {
+          muestra_id: nuevaMuestra.id,
+          estado_anterior_id: estadoActualId,
+          estado_nuevo_id: estadoVencida.id,
+          motivo: "Actualización automática del sistema: La fecha de caducidad del producto ha expirado. Pasa a custodia.",
+          cambiado_por: token.id as string,
+        }
+      });
+      estadoActualId = estadoVencida.id; // Actualizamos el puntero para el siguiente paso
+    }
+
+    // PASO 3: ¿El tiempo de retención ya se cumplió?
+    if (new Date(body.fecha_fin_retencion) <= hoy) {
+      await prisma.muestraFarmaceutica.update({
+        where: { id: nuevaMuestra.id },
+        data: { estado_id: estadoRetencion.id }
+      });
+
+      await prisma.historialTrazabilidad.create({
+        data: {
+          muestra_id: nuevaMuestra.id,
+          estado_anterior_id: estadoActualId,
+          estado_nuevo_id: estadoRetencion.id,
+          motivo: "Actualización automática del sistema: El periodo de retención legal ha concluido. Muestra apta para protocolo de descarte.",
+          cambiado_por: token.id as string,
+        }
+      });
+    }
 
     return NextResponse.json(nuevaMuestra, { status: 201 });
 
   } catch (error: any) {
     console.error("Error al registrar muestra:", error);
 
-    // MANEJO DE ERRORES DE PRISMA (Duplicidad de Código Interno)
     if (error.code === 'P2002') {
       const target = error.meta?.target;
       if (target && target.includes('codigo_interno')) {

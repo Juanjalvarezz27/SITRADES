@@ -7,7 +7,7 @@ const frontendPermissions: Record<string, string[]> = {
   "/home/infraestructura": ["Administrador"],
   "/home/personal": ["Administrador"],
   "/home/alertas": ["Administrador", "Seguridad Industrial"],
-  "/home/muestras": ["Administrador", "Analista de Laboratorio"],
+  "/home/muestras": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
   "/home": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
 };
 
@@ -17,7 +17,7 @@ const apiPermissions: Record<string, string[]> = {
   "/api/areas": ["Administrador"],
   "/api/pisos": ["Administrador"],
   "/api/direcciones": ["Administrador"],
-  "/api/muestras": ["Administrador", "Analista de Laboratorio"],
+  "/api/muestras": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
 };
 
 // 3. Rutas públicas exactas

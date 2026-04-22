@@ -54,7 +54,7 @@ const MENU_ITEMS = [
     path: "/home/muestras",
     name: "Gestión de Muestras",
     icon: TestTube,
-    rolesPermitidos: ["Administrador", "Analista de Laboratorio"],
+    rolesPermitidos: ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
     subItems: [
       {
         path: "/home/muestras/nuevo",
