@@ -9,7 +9,6 @@ import {
   Home,
   Users,
   TestTube,
-  AlertTriangle,
   LogOut,
   Menu,
   X,
@@ -47,7 +46,7 @@ const MENU_ITEMS = [
     path: "/home/estadisticas",
     name: "Estadísticas",
     icon: BarChart3,
-    rolesPermitidos: ["Administrador", "Seguridad Industrial"],
+    rolesPermitidos: ["Administrador"], 
     exact: true,
   },
   {
@@ -60,27 +59,32 @@ const MENU_ITEMS = [
         path: "/home/muestras/nuevo",
         name: "Registrar Entrada",
         icon: PackagePlus,
+        rolesPermitidos: ["Administrador", "Analista de Laboratorio"],
       },
       {
         path: "/home/muestras",
         name: "Inventario Activo",
         icon: Package,
         exact: true,
+        rolesPermitidos: ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
       },
       {
         path: "/home/muestras/descarte",
         name: "Cola de Descarte",
         icon: Trash,
+        rolesPermitidos: ["Administrador", "Analista de Laboratorio"],
       },
       {
         path: "/home/muestras/recoleccion",
         name: "Recolección",
         icon: Biohazard,
+        rolesPermitidos: ["Administrador", "Seguridad Industrial"],
       },
       {
         path: "/home/muestras/inactivo",
         name: "Archivo Histórico",
         icon: Archive,
+        rolesPermitidos: ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
       }
     ]
   },
@@ -95,11 +99,13 @@ const MENU_ITEMS = [
         name: "Directorio",
         icon: UsersRound,
         exact: true,
+        rolesPermitidos: ["Administrador"],
       },
       {
         path: "/home/personal/nuevo",
         name: "Registrar Personal",
         icon: UserPlus,
+        rolesPermitidos: ["Administrador"],
       }
     ]
   },
@@ -113,16 +119,19 @@ const MENU_ITEMS = [
         path: "/home/infraestructura/pisos",
         name: "Gestión de Pisos",
         icon: Layers,
+        rolesPermitidos: ["Administrador"],
       },
       {
         path: "/home/infraestructura/direcciones",
         name: "Direcciones",
         icon: Building2,
+        rolesPermitidos: ["Administrador"],
       },
       {
         path: "/home/infraestructura/areas",
         name: "Áreas de Trabajo",
         icon: MapPin,
+        rolesPermitidos: ["Administrador"],
       }
     ]
   },
@@ -130,7 +139,7 @@ const MENU_ITEMS = [
     path: "/home/reportes",
     name: "Centro de Reportes",
     icon: FileText,
-    rolesPermitidos: ["Administrador", "Seguridad Industrial"],
+    rolesPermitidos: ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
     exact: true,
   },
   {
@@ -170,9 +179,17 @@ export default function Sidebar({ userRol }: { userRol: string }) {
     setOpenMenus(prev => (prev[menuName] ? {} : { [menuName]: true }));
   };
 
-  const menuFiltrado = MENU_ITEMS.filter((item) =>
-    item.rolesPermitidos.includes(userRol)
-  );
+  // Ahora también filtra los subItems según el rol del usuario
+  const menuFiltrado = MENU_ITEMS.filter((item) => item.rolesPermitidos.includes(userRol))
+    .map((item) => {
+      if (item.subItems) {
+        return {
+          ...item,
+          subItems: item.subItems.filter(sub => !sub.rolesPermitidos || sub.rolesPermitidos.includes(userRol))
+        };
+      }
+      return item;
+    });
 
   return (
     <>
@@ -288,8 +305,8 @@ export default function Sidebar({ userRol }: { userRol: string }) {
                       isActive
                         ? "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-md shadow-brand-secondary/20"
                         : isMenuOpen
-                          ? "text-slate-800"
-                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                        ? "text-slate-800"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                     } ${isCollapsed ? "justify-center" : "justify-start"}`}
                   >
                     <div className="flex items-center gap-3">
