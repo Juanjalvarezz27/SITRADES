@@ -150,7 +150,7 @@ export default function InventarioInactivoPage() {
       </div>
 
       {/* FILTROS */}
-      <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/20 mb-10 sticky top-24 z-20 space-y-6">
+      <div className="bg-white/80  border border-slate-200 p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/20 mb-10 sticky top-24 z-20 space-y-6">
         <SearchBar 
           value={busqueda} 
           onChange={setBusqueda} 

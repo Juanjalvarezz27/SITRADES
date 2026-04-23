@@ -127,7 +127,7 @@ export default function ColaDescartePage() {
       </div>
 
       {/* SEARCHBAR & FILTERS STICKY */}
-      <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-5 rounded-[2.5rem] shadow-xl shadow-slate-200/20 mb-10 sticky top-24 z-20">
+      <div className="bg-white/80  border border-slate-200 p-5 rounded-[2.5rem] shadow-xl shadow-slate-200/20 mb-10 sticky top-24 z-20">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <SearchBar 
