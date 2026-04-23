@@ -6,9 +6,8 @@ import {
   Eye, 
   Trash2, 
   FileSignature, 
-  ClipboardCheck, 
   CalendarDays,
-  AlertOctagon // <-- Importamos el ícono para la anulación
+  AlertOctagon 
 } from "lucide-react";
 
 interface MuestraInactivaCardProps {
@@ -42,7 +41,8 @@ export default function MuestraInactivaCard({
       {/* Barra lateral de color dinámico */}
       <div className={`absolute top-0 left-0 w-2 h-full opacity-20 ${esAnulada ? 'bg-red-500' : 'bg-blue-500'}`} />
 
-      <div className="flex items-start justify-between gap-4 mb-5 relative z-10">
+      {/* CABECERA - AHORA MUESTRA EL CÓDIGO INTERNO */}
+      <div className="flex items-start justify-between gap-4 mb-5 relative z-10 pr-4">
         <div className="flex items-center gap-3">
           
           {/* Ícono principal dinámico */}
@@ -57,54 +57,58 @@ export default function MuestraInactivaCard({
               {esAnulada ? 'Anulada por Error' : 'Archivo Final'}
             </span>
             
-            <h3 className={`text-[17px] font-black text-slate-800 leading-tight line-clamp-2 transition-colors ${esAnulada ? 'group-hover:text-red-600' : 'group-hover:text-brand-primary'}`}>
-              {muestra.principio_activo}
+            <h3 className={`text-[18px] font-black text-slate-800 leading-tight line-clamp-2 transition-colors ${esAnulada ? 'group-hover:text-red-600' : 'group-hover:text-brand-primary'}`} title={muestra.codigo_interno}>
+              {muestra.codigo_interno}
             </h3>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 space-y-4 mb-6 relative z-10">
+      <div className="flex-1 space-y-3 mb-6 relative z-10">
+        
+        {/* PRINCIPIO ACTIVO A ANCHO COMPLETO */}
+        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+          <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Principio Activo</span>
+          <span className="font-black text-slate-700 text-[13px] truncate block" title={muestra.principio_activo}>
+            {muestra.principio_activo}
+          </span>
+        </div>
+
+        {/* LOTE Y REGISTRO SANITARIO */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-            <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Código</span>
-            <span className="font-black text-slate-700 text-[13px] truncate block">{muestra.codigo_interno}</span>
+            <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Lote</span>
+            <span className="font-black text-slate-700 text-[13px] truncate block" title={muestra.lote}>
+              {muestra.lote}
+            </span>
           </div>
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-            <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Lote</span>
-            <span className="font-black text-slate-700 text-[13px] truncate block">{muestra.lote}</span>
+            <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Reg. Sanitario</span>
+            <span className="font-black text-slate-700 text-[13px] truncate block" title={muestra.registro_sanitario}>
+              {muestra.registro_sanitario || "N/A"}
+            </span>
           </div>
         </div>
 
-        {/* DATOS TÉCNICOS */}
-        <div className="p-4 rounded-2xl border transition-all bg-slate-50/50 border-slate-100 flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white text-slate-400 rounded-xl border border-slate-100 shadow-sm">
-              <ClipboardCheck size={16} />
-            </div>
-            <div>
-              <span className="block text-slate-400 font-bold text-[9px] uppercase tracking-wide">Registro Sanitario</span>
-              <span className="block text-slate-700 font-black text-[12px]">{muestra.registro_sanitario || "N/A"}</span>
-            </div>
+        {/* FECHA DE INGRESO */}
+        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center gap-3">
+          <div className="p-2 bg-white text-slate-400 rounded-xl border border-slate-100 shadow-sm shrink-0">
+            <CalendarDays size={16} />
           </div>
-
-          <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-            <div className="p-2 bg-white text-slate-400 rounded-xl border border-slate-100 shadow-sm">
-              <CalendarDays size={16} />
-            </div>
-            <div>
-              <span className="block text-slate-400 font-bold text-[9px] uppercase tracking-wide">Fecha de Ingreso</span>
-              <span className="block text-slate-700 font-black text-[12px]">
-                {formatearFecha(muestra.fecha_ingreso || muestra.creado_en)}
-              </span>
-            </div>
+          <div>
+            <span className="block text-slate-400 font-bold text-[9px] uppercase tracking-wide">Fecha de Ingreso</span>
+            <span className="block text-slate-700 font-black text-[12px]">
+              {formatearFecha(muestra.fecha_ingreso || muestra.creado_en)}
+            </span>
           </div>
         </div>
 
-        <div className={`flex items-center gap-3 p-4 rounded-2xl border ${esAnulada ? 'bg-red-50/30 border-red-100/50' : 'bg-blue-50/30 border-blue-100/50'}`}>
-          <MapPin size={18} className={`shrink-0 ${esAnulada ? 'text-red-400' : 'text-blue-400'}`} />
+        {/* ÁREA ORIGINARIA */}
+        <div className={`flex items-start gap-3 p-3 rounded-2xl border ${esAnulada ? 'bg-red-50/30 border-red-100/50' : 'bg-blue-50/30 border-blue-100/50'}`}>
+          <MapPin size={18} className={`shrink-0 mt-0.5 ${esAnulada ? 'text-red-400' : 'text-blue-400'}`} />
           <div className="leading-tight text-[12px] text-slate-500 font-medium">
-            Originario de: <span className="text-slate-800 font-bold">{muestra.area?.nombre || "N/A"}</span>
+            <strong className="text-slate-800 block mb-0.5 font-bold">Originario de:</strong>
+            <span className="text-[12px] font-medium">{muestra.area?.nombre || "N/A"}</span>
           </div>
         </div>
       </div>

@@ -27,9 +27,8 @@ const formatearFecha = (fecha: string) => {
 export default function CentroRecoleccionPage() {
   const { data: session } = useSession();
   
-  // 🛡️ CONTROL DE ROLES
+  // CONTROL DE ROLES
   const nombreUsuario = session?.user?.name || "Personal Autorizado";
-  // NOTA: Asegúrate de que tu session guarde el nombre del rol en 'session.user.rol' o ajusta la ruta abajo.
   const rolUsuario = (session?.user as any)?.rol || ""; 
   const rolesPermitidos = ["Administrador", "Seguridad Industrial"];
   const tienePermiso = rolesPermitidos.includes(rolUsuario);
@@ -71,7 +70,7 @@ export default function CentroRecoleccionPage() {
   }, [fetchPendientes]);
 
   const toggleSeleccion = (id: string) => {
-    if (!tienePermiso) return; // Si no tiene permiso, ni siquiera puede seleccionar
+    if (!tienePermiso) return; 
     setSeleccionadas(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
@@ -174,7 +173,7 @@ export default function CentroRecoleccionPage() {
               <div 
                 key={bolsa.id}
                 onClick={() => toggleSeleccion(bolsa.id)}
-                className={`transition-all duration-200 border-2 rounded-[1.5rem] p-5 relative overflow-hidden ${
+                className={`transition-all duration-200 border-2 rounded-[1.5rem] p-5 flex flex-col relative overflow-hidden ${
                   tienePermiso ? "cursor-pointer" : "cursor-not-allowed opacity-80"
                 } ${
                   isSelected 
@@ -184,54 +183,70 @@ export default function CentroRecoleccionPage() {
               >
                 {/* Indicador de selección */}
                 {tienePermiso && (
-                  <div className={`absolute top-5 right-5 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
-                    isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 bg-slate-50"
+                  <div className={`absolute top-5 right-5 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors z-10 ${
+                    isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 bg-white"
                   }`}>
                     {isSelected && <CheckSquare size={14} />}
                   </div>
                 )}
 
-                {/* Cabecera de Tarjeta */}
+                {/* Cabecera - Ahora Muestra el Código Interno */}
                 <div className="pr-10 mb-4">
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className="bg-red-50 text-red-600 font-black text-[10px] px-2 py-0.5 rounded border border-red-100 uppercase flex items-center gap-1">
                       <AlertTriangle size={10} /> Riesgo Biológico
                     </span>
-                    <span className="text-slate-400 font-bold text-[10px]">{bolsa.codigo_interno}</span>
                   </div>
-                  <h3 className="font-black text-slate-800 text-[16px] leading-tight line-clamp-2">
-                    {bolsa.principio_activo}
+                  <h3 className="font-black text-slate-800 text-[18px] leading-tight line-clamp-2" title={bolsa.codigo_interno}>
+                    {bolsa.codigo_interno}
                   </h3>
                 </div>
 
                 {/* Data de la Bolsa */}
-                <div className="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100/50">
-                  <div className="flex items-start gap-2.5">
-                    <MapPin size={14} className="text-indigo-600 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Ubicación a despejar</p>
-                      <p className="text-[12px] font-bold text-slate-700">{bolsa.area?.nombre}</p>
+                <div className="flex-1 space-y-3 mb-4 relative z-10">
+                  {/* PRINCIPIO ACTIVO */}
+                  <div className="bg-white p-3 rounded-xl border border-slate-100/80 shadow-sm">
+                    <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Principio Activo</span>
+                    <span className="font-black text-slate-700 text-[13px] truncate block" title={bolsa.principio_activo}>
+                      {bolsa.principio_activo}
+                    </span>
+                  </div>
+
+                  {/* LOTE Y REGISTRO SANITARIO */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white p-3 rounded-xl border border-slate-100/80 shadow-sm">
+                      <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Contenido / Lote</span>
+                      <span className="font-black text-slate-700 text-[12px] truncate block" title={`Lote: ${bolsa.lote}`}>
+                        {bolsa.cantidad} {bolsa.unidad_medida?.nombre} • {bolsa.lote}
+                      </span>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-100/80 shadow-sm">
+                      <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Reg. Sanitario</span>
+                      <span className="font-black text-slate-700 text-[12px] truncate block" title={bolsa.registro_sanitario}>
+                        {bolsa.registro_sanitario || "N/A"}
+                      </span>
                     </div>
                   </div>
-                  
-                  <div className="flex items-start gap-2.5 border-t border-slate-200/50 pt-2">
-                    <Package size={14} className="text-slate-400 mt-0.5 shrink-0" />
+
+                  {/* UBICACIÓN */}
+                  <div className="flex items-start gap-2.5 bg-white p-3 rounded-xl border border-slate-100/80 shadow-sm">
+                    <MapPin size={16} className="text-indigo-600 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Contenido</p>
-                      <p className="text-[12px] font-medium text-slate-600">{bolsa.cantidad} {bolsa.unidad_medida?.nombre} (Lote: {bolsa.lote})</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Ubicación a despejar</p>
+                      <p className="text-[12px] font-bold text-slate-700">{bolsa.area?.nombre}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Pie de Tarjeta */}
-                <div className="flex justify-between items-center mt-4 text-[11px]">
+                <div className="flex justify-between items-center pt-3 border-t border-slate-100 text-[11px] mt-auto">
                   <p className="flex items-center gap-1 text-slate-500 font-medium">
                     <Clock size={12} className="text-slate-400" />
                     Hace: {formatearFecha(bolsa.actualizado_en)}
                   </p>
                   <p className="flex items-center gap-1 text-slate-500">
                     <User size={12} className="text-slate-400" />
-                    Analista: <strong className="text-slate-700">{bolsa.usuarioRegistrador?.nombre}</strong>
+                    <span className="hidden sm:inline">Analista:</span> <strong className="text-slate-700 truncate max-w-[80px]">{bolsa.usuarioRegistrador?.nombre}</strong>
                   </p>
                 </div>
               </div>

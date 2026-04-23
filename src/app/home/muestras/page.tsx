@@ -56,19 +56,18 @@ function MuestraCard({
       {esAdmin && (
         <button
           onClick={(e) => { e.stopPropagation(); onAnular(); }}
-          className="absolute top-4 right-4 p-2.5 bg-red-400 hover:bg-red-600 text-white  rounded-xl transition-all shadow-sm hover:opacity-100 group/btn z-10"
+          className="absolute top-4 right-4 p-2.5 bg-red-400 hover:bg-red-600 text-white rounded-xl transition-all shadow-sm hover:opacity-100 group/btn z-10"
         >
           <AlertOctagon size={16} strokeWidth={2.5} />
           
-          {/* Tooltip CSS Custom - Aparece a la izquierda del botón */}
           <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-3 py-1.5 bg-slate-800 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all duration-200 whitespace-nowrap shadow-xl flex items-center pointer-events-none">
             Anular Registro por Error
-            {/* Flecha del tooltip */}
             <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-800 rotate-45 rounded-sm"></div>
           </div>
         </button>
       )}
 
+      {/* CABECERA DE LA TARJETA - AHORA MUESTRA EL CÓDIGO INTERNO */}
       <div className="flex items-start justify-between gap-4 mb-5 pr-10">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand-primary group-hover:bg-brand-primary/5 transition-all shrink-0">
@@ -78,25 +77,40 @@ function MuestraCard({
             <span className={`inline-flex px-2.5 py-1 border rounded-lg text-[9px] font-black uppercase tracking-widest mb-1.5 ${estadoLegal.color}`}>
               {estadoLegal.texto}
             </span>
-            <h3 className="text-[16px] font-black text-slate-800 leading-tight group-hover:text-brand-primary transition-colors line-clamp-2" title={muestra.principio_activo}>
-              {muestra.principio_activo}
+            <h3 className="text-[18px] font-black text-slate-800 leading-tight group-hover:text-brand-primary transition-colors line-clamp-2" title={muestra.codigo_interno}>
+              {muestra.codigo_interno}
             </h3>
           </div>
         </div>
       </div>
 
       <div className="flex-1 space-y-3 mb-6">
+        
+        {/* PRINCIPIO ACTIVO A ANCHO COMPLETO */}
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Principio Activo</span>
+          <span className="font-black text-slate-700 text-[13px] truncate block" title={muestra.principio_activo}>
+            {muestra.principio_activo}
+          </span>
+        </div>
+
+        {/* LOTE Y REGISTRO SANITARIO */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Código</span>
-            <span className="font-black text-slate-700 text-[13px] truncate block">{muestra.codigo_interno}</span>
+            <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Lote</span>
+            <span className="font-black text-slate-700 text-[13px] truncate block" title={muestra.lote}>
+              {muestra.lote}
+            </span>
           </div>
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Lote</span>
-            <span className="font-black text-slate-700 text-[13px] truncate block">{muestra.lote}</span>
+            <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Reg. Sanitario</span>
+            <span className="font-black text-slate-700 text-[13px] truncate block" title={muestra.registro_sanitario}>
+              {muestra.registro_sanitario || "N/A"}
+            </span>
           </div>
         </div>
 
+        {/* FECHAS */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
             <div className="flex items-center gap-1.5 mb-1">
@@ -114,6 +128,7 @@ function MuestraCard({
           </div>
         </div>
 
+        {/* UBICACIÓN */}
         <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
           <MapPin size={18} className="text-slate-400 shrink-0 mt-0.5" />
           <div className="leading-snug text-[13px] text-slate-600">
@@ -130,6 +145,7 @@ function MuestraCard({
         </div>
       </div>
 
+      {/* BOTONES DE ACCIÓN */}
       <div className="mt-auto pt-2 grid grid-cols-2 gap-3 border-t border-slate-100">
         <button
           onClick={onClick}
@@ -279,7 +295,7 @@ export default function InventarioMuestrasPage() {
         </Link>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-md border border-slate-100 p-4 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 flex flex-col gap-4 sticky top-20 z-10">
+      <div className="bg-white border border-slate-200 p-4 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 flex flex-col gap-4 sticky top-20 z-10">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <SearchBar
@@ -335,14 +351,7 @@ export default function InventarioMuestrasPage() {
 
       <TrazabilidadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} muestra={muestraSeleccionada} />
       <EditarMuestraModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} muestra={muestraSeleccionada} onSuccess={fetchMuestras} />
-      
-      {/* MODAL DE ANULACIÓN */}
-      <AnularMuestraModal 
-        isOpen={isAnularModalOpen} 
-        onClose={() => setIsAnularModalOpen(false)} 
-        muestra={muestraSeleccionada} 
-        onSuccess={fetchMuestras} 
-      />
+      <AnularMuestraModal isOpen={isAnularModalOpen} onClose={() => setIsAnularModalOpen(false)} muestra={muestraSeleccionada} onSuccess={fetchMuestras} />
       
     </div>
   );
