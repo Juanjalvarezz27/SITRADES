@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 
-// Ajusta esta ruta si es necesario
 import EditProfileModal from "../../components/ui/EditProfileModal"; 
 
 const formatearFecha = (fecha: string) => {

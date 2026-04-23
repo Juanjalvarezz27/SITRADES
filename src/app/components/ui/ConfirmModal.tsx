@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, AlertTriangle } from "lucide-react";
 
 interface ConfirmModalProps {
@@ -23,11 +25,19 @@ export default function ConfirmModal({
   cancelText = "Cancelar",
   isDanger = false,
 }: ConfirmModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Si no está abierto o no se ha montado en el cliente, no renderizamos nada
+  if (!isOpen || !mounted) return null;
+
+  // Guardamos todo el diseño del modal en una constante
+  const modalContent = (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      {/* Fondo oscuro optimizado (sin blur para evitar lag) */}
+      {/* Fondo oscuro optimizado */}
       <div 
         className="absolute inset-0 bg-slate-900/60 transition-opacity" 
         onClick={onClose} 
@@ -82,4 +92,6 @@ export default function ConfirmModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

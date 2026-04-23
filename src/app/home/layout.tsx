@@ -15,7 +15,6 @@ export default async function HomeLayout({
   }
 
   return (
-    // ¡AQUÍ ESTÁ LA MAGIA RESPONSIVE! (flex-col md:flex-row)
     <div className="flex flex-col md:flex-row min-h-screen bg-brand-bg">
       <Sidebar userRol={session.user.rol} />
       

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Save, Loader2, Lock, User, Mail, UserCog, Shield } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
@@ -18,13 +19,19 @@ interface EditProfileModalProps {
 export default function EditProfileModal({ isOpen, onClose, userData, onSuccess }: EditProfileModalProps) {
   const { update } = useSession();
   const [saving, setSaving] = useState(false);
-  
+  const [mounted, setMounted] = useState(false);
+
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
     password: "",
     confirmPassword: ""
   });
+
+  // Asegura que el portal solo se renderice en el cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,7 +44,8 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
     }
   }, [isOpen, userData]);
 
-  if (!isOpen) return null;
+  // Retorna null si no está abierto o si no se ha montado en el cliente
+  if (!isOpen || !mounted) return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -86,13 +94,13 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
     }
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 transition-opacity" onClick={!saving ? onClose : undefined} />
-      
+
       {/* AUMENTAMOS EL ANCHO A max-w-3xl PARA QUE QUEPAN LAS DOS COLUMNAS */}
       <div className="relative z-10 bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        
+
         {/* Cabecera */}
         <div className="p-6 sm:p-8 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-4">
@@ -104,8 +112,8 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
               <p className="text-slate-500 font-medium text-xs sm:text-sm">Actualiza tu información personal y credenciales de seguridad</p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             disabled={saving}
             className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-full transition-colors disabled:opacity-50"
           >
@@ -115,10 +123,10 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
 
         {/* Cuerpo del Formulario en Grid */}
         <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar">
-          
+
           {/* md:grid-cols-2 HACE LA MAGIA: 1 columna en móvil, 2 en PC */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
+
             {/* Columna Izquierda: Datos Personales */}
             <div className="space-y-5 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
               <div className="flex items-center gap-2 mb-4 border-b border-slate-200 pb-3">
@@ -186,8 +194,8 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
                     onChange={handleChange}
                     placeholder="Repite tu nueva contraseña"
                     className={`w-full px-4 py-3 bg-white border-2 rounded-xl outline-none font-medium text-slate-800 transition-colors shadow-sm ${
-                      formData.confirmPassword && formData.password !== formData.confirmPassword 
-                        ? "border-red-400 focus:border-red-500 bg-red-50/50" 
+                      formData.confirmPassword && formData.password !== formData.confirmPassword
+                        ? "border-red-400 focus:border-red-500 bg-red-50/50"
                         : "border-slate-200 focus:border-brand-primary"
                     }`}
                   />
@@ -200,14 +208,14 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
 
         {/* Botones de Acción */}
         <div className="p-6 sm:p-8 border-t border-slate-100 bg-white flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
-          <button 
+          <button
             onClick={onClose}
             disabled={saving}
             className="w-full sm:w-auto py-3 px-6 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold rounded-xl transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
-          <button 
+          <button
             onClick={handleGuardar}
             disabled={saving}
             className="w-full sm:w-auto py-3 px-8 flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold rounded-xl transition-all shadow-md shadow-brand-primary/20 disabled:opacity-70"
@@ -220,4 +228,6 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
