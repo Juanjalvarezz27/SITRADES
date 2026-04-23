@@ -46,31 +46,35 @@ const DescartePDFTemplate = forwardRef<HTMLDivElement, DescartePDFTemplateProps>
         fechaEmision={formatearFechaHora(fechaRecoleccion || fechaDescarte)}
       >
         <div className="space-y-6">
-          
-          {/* BANNER DE ESTADO FINAL - SELLO DE AGUA VISUAL EN EL PDF */}
-          <div className="border-2 border-emerald-500 p-4 rounded-2xl bg-emerald-50/30 flex justify-between items-center break-inside-avoid">
-            <div>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Estado Final del Residuo</p>
-              <h2 className="text-xl font-black text-emerald-800">DESCARTADO / DESTRUIDO</h2>
-            </div>
-            <div className="text-right border-l-2 border-emerald-200 pl-4">
-              <p className="text-[10px] font-bold text-emerald-600 uppercase">Certificación N°</p>
-              <p className="font-mono font-bold text-emerald-900">{muestra.codigo_interno}</p>
-            </div>
-          </div>
 
-          {/* 1. IDENTIFICACIÓN CON QR */}
+          {/* 1. IDENTIFICACIÓN Y ESTADO OFICIAL */}
           <div className="border border-slate-200 p-5 rounded-2xl bg-white break-inside-avoid">
-            <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-2">
-              <h3 className="font-bold text-slate-800 text-[13px] uppercase">
-                1. Información Técnica del Residuo
-              </h3>
+            <h3 className="font-bold text-slate-800 text-[13px] uppercase mb-4 border-b border-slate-100 pb-2">
+              1. Información Técnica y Estado Oficial
+            </h3>
+            
+            <div className="flex items-center justify-between gap-4 mb-6">
+              {/* BADGE DE ESTADO COMPACTO */}
+              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center gap-4 flex-1">
+                <div>
+                  <p className="text-[8px] font-black uppercase text-emerald-600 tracking-widest mb-0.5">Certificación de Cierre</p>
+                  <p className="text-[15px] font-black text-emerald-950 leading-none">DESCARTADO / DESTRUIDO</p>
+                </div>
+                <div className="ml-auto text-right border-l border-emerald-200 pl-4">
+                  <p className="text-[8px] font-bold text-emerald-600 uppercase mb-1">ID Auditoría</p>
+                  <p className="font-mono font-bold text-emerald-800 text-[11px]">{muestra.codigo_interno}</p>
+                </div>
+              </div>
+
+              {/* QR CODE */}
               {qrUrl && (
-                <div className="bg-white p-1 border border-slate-100 rounded">
-                  <QRCodeCanvas value={qrUrl} size={60} level="M" />
+                <div className="bg-white p-1.5 border border-slate-200 rounded-lg shrink-0 text-center">
+                  <QRCodeCanvas value={qrUrl} size={50} level="M" />
+                  <p className="text-[7px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Escanear</p>
                 </div>
               )}
             </div>
+
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-[12px]">
               <p><strong className="text-slate-400 uppercase text-[9px] block">Principio Activo</strong> {muestra.principio_activo}</p>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Lote</strong> {muestra.lote}</p>

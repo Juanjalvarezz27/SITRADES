@@ -97,43 +97,43 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
         {/* CUERPO DEL MODAL */}
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
 
-          <div className="bg-emerald-50 border-2 border-emerald-100 p-5 rounded-[1.5rem] flex items-center justify-between shadow-sm relative overflow-hidden">
-             <div className="absolute -right-4 -bottom-4 text-emerald-100/50 -rotate-12">
-                <ShieldCheck size={100} />
-             </div>
-             <div className="flex items-center gap-4 relative z-10">
-                <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                  <CheckCircle2 size={28} />
+          {/* Identificación, Estado y QR Integrados */}
+          <div>
+            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+              <ShieldCheck size={14} /> Identificación y Estado Oficial
+            </h3>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+              
+              {/* BADGE DE ESTADO COMPACTO */}
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-4 flex-1 w-full shadow-sm">
+                <div className="w-11 h-11 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-sm shadow-emerald-500/20 shrink-0">
+                  <CheckCircle2 size={24} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase text-emerald-600 tracking-[0.15em] mb-0.5">Certificación de Cierre</p>
-                  <p className="text-xl font-black text-emerald-900 leading-none">DESCARTADO / DESTRUIDO</p>
+                  <p className="text-[9px] font-black uppercase text-emerald-600 tracking-widest mb-0.5">Certificación de Cierre</p>
+                  <p className="text-[16px] sm:text-lg font-black text-emerald-950 leading-none">DESCARTADO / DESTRUIDO</p>
                 </div>
-             </div>
-             <div className="text-right relative z-10 hidden sm:block">
-                <p className="font-mono font-bold text-emerald-800 text-[12px] bg-white/50 px-3 py-1 rounded-lg border border-emerald-100">
-                  {muestra.codigo_interno}
-                </p>
-             </div>
-          </div>
+                <div className="ml-auto text-right hidden sm:block border-l border-emerald-200 pl-4">
+                  <p className="text-[9px] font-bold text-emerald-600 uppercase mb-1">ID Auditoría</p>
+                  <p className="font-mono font-bold text-emerald-800 text-xs">{muestra.codigo_interno}</p>
+                </div>
+              </div>
 
-          {/* Identificación con QR */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                <ShieldCheck size={14} /> Identificación del Residuo
-              </h3>
+              {/* QR CODE */}
               {qrPayload && (
-                <div className="flex flex-col items-center gap-1.5 -mt-3">
-                  <div className="bg-white p-1.5 rounded-lg shadow-sm border border-slate-100">
+                <div className="flex flex-col items-center gap-1.5 shrink-0 w-full sm:w-auto">
+                  <div className="bg-white p-1.5 rounded-xl shadow-sm border border-slate-100 flex justify-center">
                     <QRCodeCanvas value={qrPayload} size={50} level="M" />
                   </div>
-                  <a href={qrPayload} target="_blank" className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 hover:bg-brand-primary hover:text-white px-2 py-1 rounded transition-colors">
+                  <a href={qrPayload} target="_blank" className="flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 hover:bg-brand-primary hover:text-white px-3 py-1.5 rounded-lg transition-colors w-full">
                     <ExternalLink size={10} /> Visitar
                   </a>
                 </div>
               )}
             </div>
+
+            {/* Tarjetas de Datos de la Muestra */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Principio Activo</span>
