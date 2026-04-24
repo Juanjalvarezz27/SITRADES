@@ -18,7 +18,13 @@ import {
   Check,
   Plus,
   Save,
-  X
+  X,
+  CheckSquare,
+  Syringe,
+  Pill,
+  Droplets,
+  Biohazard,
+  Scale
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -75,7 +81,6 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
         />
       </button>
 
-      {/* Ícono de termómetro fijo en la izquierda */}
       <div
         className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors z-10 pointer-events-none ${
           isOpen ? "text-rose-600" : "text-rose-500"
@@ -178,12 +183,18 @@ export default function DescarteWizardPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // El Wizard ahora tiene 4 pasos
   const [pasoActual, setPasoActual] = useState(1);
 
+  // Estados Paso 2
   const [check1, setCheck1] = useState(false);
   const [check2, setCheck2] = useState(false);
   const [check3, setCheck3] = useState(false);
 
+  // Estados Paso 3 (Asistente Físico)
+  const [tipoFisico, setTipoFisico] = useState<string>("");
+
+  // Estados Paso 4 (Firma)
   const [metodosOpciones, setMetodosOpciones] = useState<{ value: string; label: string }[]>([]);
   const [metodoId, setMetodoId] = useState("");
   const [observaciones, setObservaciones] = useState("");
@@ -248,7 +259,6 @@ export default function DescarteWizardPage() {
 
       if (!res.ok) throw new Error(responseData.error || "Error al procesar el descarte");
 
-      //  Redirigimos a la cola de descarte o inicio, ya que no va directo al histórico
       toast.success("Descarte registrado. La bolsa ha sido notificada a Seguridad Industrial.");
       router.push("/home/muestras/recoleccion");
     } catch (error: any) {
@@ -268,14 +278,68 @@ export default function DescarteWizardPage() {
 
   const paso2Completado = check1 && check2 && check3;
 
+  // Lógica de la Smart Card para el Paso 3
+  const getInstruccionFisica = () => {
+    switch (tipoFisico) {
+      case "inyectable":
+        return {
+          color: "border-red-500", bg: "bg-red-50", text: "text-red-700", icon: Syringe, badgeBg: "bg-red-500",
+          titulo: "PELIGRO FÍSICO Y PUNZOCORTANTE",
+          instruccion: "Desechar obligatoriamente en Envase Rígido (Guardián).",
+          pasos: [
+            "NO reencapuchar, doblar ni quebrar las agujas bajo ninguna circunstancia.",
+            "Desechar la jeringa completa directamente en el contenedor rojo de plástico rígido (anticorte).",
+            "Cerrar definitivamente el guardián cuando alcance 3/4 partes de su capacidad."
+          ]
+        };
+      case "solido":
+        return {
+          color: "border-amber-500", bg: "bg-amber-50", text: "text-amber-800", icon: Pill, badgeBg: "bg-amber-500",
+          titulo: "RIESGO QUÍMICO SÓLIDO",
+          instruccion: "Triturar forma farmacéutica antes de segregar.",
+          pasos: [
+            "Destruir la integridad física de las pastillas/comprimidos (trituración mecánica) para evitar la falsificación o reventa ilícita.",
+            "Retirar del blíster o empaque primario antes de la destrucción.",
+            "Depositar los restos en bolsa roja de riesgo biológico/químico."
+          ]
+        };
+      case "liquido":
+        return {
+          color: "border-blue-500", bg: "bg-blue-50", text: "text-blue-800", icon: Droplets, badgeBg: "bg-blue-500",
+          titulo: "RIESGO AMBIENTAL Y DERRAME",
+          instruccion: "Neutralizar o absorber antes de sellar en bolsa.",
+          pasos: [
+            "Jamás desechar líquidos farmacéuticos directamente por el desagüe (Ley Penal del Ambiente).",
+            "Añadir material absorbente (arena, aserrín o polímero) dentro del envase original hasta solidificar.",
+            "Una vez inmovilizado el líquido, cerrar herméticamente y depositar en bolsa roja."
+          ]
+        };
+      case "biologico":
+        return {
+          color: "border-purple-600", bg: "bg-purple-50", text: "text-purple-800", icon: Biohazard, badgeBg: "bg-purple-600",
+          titulo: "ALTO RIESGO INFECCIOSO",
+          instruccion: "Inactivación obligatoria previa a la segregación.",
+          pasos: [
+            "Someter la muestra a esterilización térmica (Autoclave) o tratamiento químico con Hipoclorito de Sodio al 5%.",
+            "Mantener el tiempo de contacto mínimo requerido (30-60 minutos) según protocolo interno.",
+            "Posterior a la inactivación, sellar el recipiente primario y depositar en bolsa roja etiquetada."
+          ]
+        };
+      default: return null;
+    }
+  };
+
+  const smartCard = getInstruccionFisica();
+
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1000px] mx-auto animate-in fade-in duration-500">
+      
       {/* HEADER DEL WIZARD */}
       <div className="mb-8 md:mb-10 text-center space-y-3">
-        <div className="inline-flex items-center justify-center p-4 bg-rose-100 text-rose-600 rounded-full mb-2">
+        <div className="inline-flex items-center justify-center p-4 bg-rose-100 text-rose-600 rounded-full mb-2 shadow-inner">
           <Trash2 size={32} />
         </div>
-        <h1 className="font-title font-black text-2xl md:text-3xl text-slate-800">
+        <h1 className="font-title font-black text-2xl md:text-3xl text-slate-800 tracking-tight">
           Protocolo de Descarte y Segregación
         </h1>
         <p className="text-slate-500 font-medium text-sm md:text-base px-4">
@@ -283,22 +347,23 @@ export default function DescarteWizardPage() {
         </p>
       </div>
 
-      {/* BARRA DE PROGRESO RESPONSIVE */}
-      <div className="flex items-center justify-between relative mb-8 md:mb-12 max-w-2xl mx-auto px-2">
+      {/* BARRA DE PROGRESO DE 4 PASOS */}
+      <div className="flex items-center justify-between relative mb-8 md:mb-12 max-w-3xl mx-auto px-2">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 rounded-full -z-10" />
         <div
           className={`absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-rose-500 rounded-full -z-10 transition-all duration-500`}
-          style={{ width: pasoActual === 1 ? "0%" : pasoActual === 2 ? "50%" : "100%" }}
+          style={{ width: pasoActual === 1 ? "0%" : pasoActual === 2 ? "33%" : pasoActual === 3 ? "66%" : "100%" }}
         />
 
         {[
           { num: 1, icon: PackageX, label: "Verificación" },
-          { num: 2, icon: AlertOctagon, label: "Segregación" },
-          { num: 3, icon: FileSignature, label: "Cierre" }
+          { num: 2, icon: CheckSquare, label: "Checklist" },
+          { num: 3, icon: AlertOctagon, label: "Instrucción" },
+          { num: 4, icon: FileSignature, label: "Cierre" }
         ].map((step) => (
           <div key={step.num} className="flex flex-col items-center gap-2 bg-slate-50/80 px-1 md:px-2">
             <div
-              className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-colors border-4 ${
+              className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all border-4 ${
                 pasoActual >= step.num
                   ? "bg-rose-500 text-white border-rose-100 shadow-md"
                   : "bg-slate-100 text-slate-400 border-white"
@@ -319,8 +384,9 @@ export default function DescarteWizardPage() {
 
       {/* CONTENEDOR DEL WIZARD */}
       <div className="bg-white border border-slate-200 rounded-[2rem] shadow-xl shadow-slate-200/40 overflow-hidden">
+        
         {/* ================= PASO 1 ================= */}
-       {pasoActual === 1 && (
+        {pasoActual === 1 && (
           <div className="p-6 sm:p-8 md:p-10 animate-in slide-in-from-right-4">
             <h2 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2 mb-6 border-b pb-4">
               <span className="text-rose-500">1.</span> Verificación Física del Residuo
@@ -386,84 +452,42 @@ export default function DescarteWizardPage() {
               <span className="text-rose-500">2.</span> Lista de Verificación Legal
             </h2>
             <p className="text-xs md:text-sm text-slate-500 font-medium mb-8">
-              El analista debe confirmar el acondicionamiento físico de la muestra según su tipo (C, D o E).
+              Confirme el cumplimiento de los protocolos de bioseguridad para preparar el descarte físico.
             </p>
 
             <div className="space-y-4">
-              <label
-                className={`flex items-start gap-4 p-4 md:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                  check1 ? "bg-rose-50/50 border-rose-500" : "bg-white border-slate-200 hover:border-rose-200"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={check1}
-                  onChange={(e) => setCheck1(e.target.checked)}
-                  className="mt-1 w-5 h-5 accent-rose-600 shrink-0"
-                />
+              <label className={`flex items-start gap-4 p-4 md:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                check1 ? "bg-rose-50/50 border-rose-500" : "bg-white border-slate-200 hover:border-rose-200"
+              }`}>
+                <input type="checkbox" checked={check1} onChange={(e) => setCheck1(e.target.checked)} className="mt-1 w-5 h-5 accent-rose-600 shrink-0" />
                 <div>
-                  <span
-                    className={`block font-black text-[13px] md:text-[14px] ${
-                      check1 ? "text-rose-700" : "text-slate-700"
-                    }`}
-                  >
-                    Clasificación y Empaque Correcto
-                  </span>
+                  <span className={`block font-black text-[13px] md:text-[14px] ${check1 ? "text-rose-700" : "text-slate-700"}`}>Clasificación y Empaque Correcto</span>
                   <p className="text-[11px] md:text-[12px] text-slate-500 font-medium mt-1 leading-relaxed">
-                    La muestra fue segregada en envase resistente o bolsa de polietileno blanco opaco (Mín. 0.10mm) o PVC
-                    si requiere esterilización por calor.
+                    La muestra fue segregada en envase resistente o bolsa de polietileno blanco opaco (Mín. 0.10mm) o PVC si requiere esterilización por calor.
                   </p>
                 </div>
               </label>
 
-              <label
-                className={`flex items-start gap-4 p-4 md:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                  check2 ? "bg-rose-50/50 border-rose-500" : "bg-white border-slate-200 hover:border-rose-200"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={check2}
-                  onChange={(e) => setCheck2(e.target.checked)}
-                  className="mt-1 w-5 h-5 accent-rose-600 shrink-0"
-                />
+              <label className={`flex items-start gap-4 p-4 md:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                check2 ? "bg-rose-50/50 border-rose-500" : "bg-white border-slate-200 hover:border-rose-200"
+              }`}>
+                <input type="checkbox" checked={check2} onChange={(e) => setCheck2(e.target.checked)} className="mt-1 w-5 h-5 accent-rose-600 shrink-0" />
                 <div>
-                  <span
-                    className={`block font-black text-[13px] md:text-[14px] ${
-                      check2 ? "text-rose-700" : "text-slate-700"
-                    }`}
-                  >
-                    Etiquetado Visual de Seguridad
-                  </span>
+                  <span className={`block font-black text-[13px] md:text-[14px] ${check2 ? "text-rose-700" : "text-slate-700"}`}>Etiquetado Visual de Seguridad</span>
                   <p className="text-[11px] md:text-[12px] text-slate-500 font-medium mt-1 leading-relaxed">
-                    El recipiente cuenta con la identificación "DESECHOS PELIGROSOS" en letras rojas mayores a 5cm y el
-                    logotipo universal de Riesgo Biológico.
+                    El recipiente cuenta con la identificación "DESECHOS PELIGROSOS" en letras rojas mayores a 5cm y el logotipo universal de Riesgo Biológico.
                   </p>
                 </div>
               </label>
 
-              <label
-                className={`flex items-start gap-4 p-4 md:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                  check3 ? "bg-rose-50/50 border-rose-500" : "bg-white border-slate-200 hover:border-rose-200"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={check3}
-                  onChange={(e) => setCheck3(e.target.checked)}
-                  className="mt-1 w-5 h-5 accent-rose-600 shrink-0"
-                />
+              <label className={`flex items-start gap-4 p-4 md:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                check3 ? "bg-rose-50/50 border-rose-500" : "bg-white border-slate-200 hover:border-rose-200"
+              }`}>
+                <input type="checkbox" checked={check3} onChange={(e) => setCheck3(e.target.checked)} className="mt-1 w-5 h-5 accent-rose-600 shrink-0" />
                 <div>
-                  <span
-                    className={`block font-black text-[13px] md:text-[14px] ${
-                      check3 ? "text-rose-700" : "text-slate-700"
-                    }`}
-                  >
-                    Hermeticidad y Traslado Interno
-                  </span>
+                  <span className={`block font-black text-[13px] md:text-[14px] ${check3 ? "text-rose-700" : "text-slate-700"}`}>Hermeticidad y Traslado Interno</span>
                   <p className="text-[11px] md:text-[12px] text-slate-500 font-medium mt-1 leading-relaxed">
-                    El recipiente ha sido sellado herméticamente y está posicionado en el área transitoria para su
-                    recolección o tratamiento inmediato.
+                    El recipiente ha sido sellado herméticamente y está posicionado en el área transitoria para su recolección o tratamiento inmediato.
                   </p>
                 </div>
               </label>
@@ -481,17 +505,109 @@ export default function DescarteWizardPage() {
                 disabled={!paso2Completado}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-200 disabled:text-slate-400 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-md active:scale-95"
               >
-                Continuar al Cierre <ArrowRight size={18} />
+                Continuar a Instrucciones Físicas <ArrowRight size={18} />
               </button>
             </div>
           </div>
         )}
 
-        {/* ================= PASO 3 ================= */}
+        {/* ================= PASO 3 (NUEVO: ASISTENTE DE SEGREGACIÓN FÍSICA) ================= */}
         {pasoActual === 3 && (
           <div className="p-6 sm:p-8 md:p-10 animate-in slide-in-from-right-4">
             <h2 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2 mb-2">
-              <span className="text-rose-500">3.</span> Certificación Digital
+              <span className="text-rose-500">3.</span> Asistente de Segregación Físico
+            </h2>
+            <p className="text-xs md:text-sm text-slate-500 font-medium mb-8">
+              Seleccione la forma farmacéutica de la muestra para visualizar el protocolo exacto de manipulación en el laboratorio.
+            </p>
+
+            {/* Selectores de Tipo */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+              {[
+                { id: "inyectable", icon: Syringe, label: "Inyectable", color: "hover:border-red-400 hover:bg-red-50 text-red-600" },
+                { id: "solido", icon: Pill, label: "Sólido/Pastilla", color: "hover:border-amber-400 hover:bg-amber-50 text-amber-600" },
+                { id: "liquido", icon: Droplets, label: "Líquido", color: "hover:border-blue-400 hover:bg-blue-50 text-blue-600" },
+                { id: "biologico", icon: Biohazard, label: "Biológico", color: "hover:border-purple-400 hover:bg-purple-50 text-purple-600" }
+              ].map((opcion) => (
+                <button
+                  key={opcion.id}
+                  onClick={() => setTipoFisico(opcion.id)}
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                    tipoFisico === opcion.id 
+                      ? "border-rose-500 bg-rose-50 ring-2 ring-rose-500/20 shadow-sm text-rose-700" 
+                      : `border-slate-200 bg-white ${opcion.color} text-slate-600`
+                  }`}
+                >
+                  <opcion.icon size={28} />
+                  <span className="text-[11px] font-bold uppercase tracking-wide">{opcion.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* SMART CARD DINÁMICA */}
+            {smartCard ? (
+              <div className={`border-2 ${smartCard.color} ${smartCard.bg} rounded-[2rem] overflow-hidden shadow-inner animate-in zoom-in-95 duration-300`}>
+                <div className={`${smartCard.badgeBg} text-white p-4 flex items-center gap-3`}>
+                  <smartCard.icon size={28} strokeWidth={2.5} />
+                  <h3 className="font-black text-lg tracking-wider">{smartCard.titulo}</h3>
+                </div>
+                
+                <div className="p-6 md:p-8 space-y-6">
+                  <p className={`text-2xl md:text-3xl font-black ${smartCard.text} leading-tight`}>
+                    {smartCard.instruccion}
+                  </p>
+                  
+                  <div className="space-y-4 bg-white/60 p-5 rounded-2xl">
+                    {smartCard.pasos.map((paso, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-black text-xs text-white ${smartCard.badgeBg}`}>
+                          {index + 1}
+                        </div>
+                        <p className="text-sm font-medium text-slate-700 leading-relaxed mt-0.5">
+                          {paso}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/5 px-6 py-4 flex items-center gap-3 border-t border-slate-900/10">
+                  <Scale size={20} className="text-slate-500 shrink-0" />
+                  <p className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+                    Fundamento Legal: <span className="font-medium">Resolución N° 072 / Ecofarmacovigilancia</span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-slate-200 bg-slate-50 rounded-[2rem] p-10 text-center flex flex-col items-center justify-center gap-3 text-slate-400">
+                <Thermometer size={48} className="opacity-50" />
+                <p className="font-bold">Seleccione un tipo de muestra arriba para ver el protocolo.</p>
+              </div>
+            )}
+
+            <div className="mt-8 flex flex-col-reverse sm:flex-row justify-between gap-4">
+              <button
+                onClick={() => setPasoActual(2)}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-6 py-3.5 rounded-xl font-bold transition-colors"
+              >
+                <ArrowLeft size={18} /> Volver
+              </button>
+              <button
+                onClick={() => setPasoActual(4)}
+                disabled={!tipoFisico}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-200 disabled:text-slate-400 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-md active:scale-95"
+              >
+                Entendido, Continuar a Firma <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================= PASO 4 (FIRMA) ================= */}
+        {pasoActual === 4 && (
+          <div className="p-6 sm:p-8 md:p-10 animate-in slide-in-from-right-4">
+            <h2 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2 mb-2">
+              <span className="text-rose-500">4.</span> Certificación Digital
             </h2>
             <p className="text-xs md:text-sm text-slate-500 font-medium mb-8">
               Defina el método de tratamiento para garantizar la inocuidad de la muestra.
@@ -525,7 +641,6 @@ export default function DescarteWizardPage() {
                 />
               </div>
 
-              {/* Aviso Legal modificado para reflejar la entrega a Seguridad Industrial */}
               <div className="bg-amber-50 border border-amber-200 p-4 md:p-5 rounded-2xl flex gap-3 text-amber-800 items-start shadow-sm">
                 <Info size={24} className="shrink-0 mt-0.5" />
                 <p className="text-[11px] md:text-[12px] font-medium leading-relaxed">
@@ -539,11 +654,11 @@ export default function DescarteWizardPage() {
 
             <div className="mt-10 flex flex-col-reverse sm:flex-row justify-between gap-4">
               <button
-                onClick={() => setPasoActual(2)}
+                onClick={() => setPasoActual(3)}
                 disabled={isSubmitting}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-6 py-4 rounded-xl font-bold transition-colors"
               >
-                <ArrowLeft size={18} /> Atrás
+                <ArrowLeft size={18} /> Volver a Instrucciones
               </button>
 
               <button
