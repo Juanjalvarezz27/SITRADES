@@ -86,7 +86,8 @@ model MuestraFarmaceutica {
   unidad_medida_id    Int
   riesgo_bioseguridad String
   cantidad            Int
-  proposito_analisis  String
+  tipo_muestra        TipoMuestra             @default(CONTRAMUESTRA)
+  proposito_analisis  String?
   fecha_ingreso       DateTime                @default(now())
   fecha_caducidad     DateTime                @db.Date
   fecha_fin_retencion DateTime                @db.Date
@@ -138,5 +139,11 @@ model MetodoDisposicion {
   nombre     String            @unique
   activo     Boolean           @default(true)
   creado_en  DateTime          @default(now())
+ 
   reportes   ReporteDescarte[]
+}
+
+enum TipoMuestra {
+  ANALISIS      // Camino A: Flujo rápido tras informe
+  CONTRAMUESTRA // Camino B: Retención legal de 1 año + vencimiento
 }

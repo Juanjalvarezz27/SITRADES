@@ -7,7 +7,8 @@ import {
   Trash2, 
   AlertOctagon, 
   ArrowRight,
-  Clock
+  Clock,
+  Target 
 } from "lucide-react";
 
 // Funciones de utilidad internas
@@ -23,14 +24,17 @@ const formatearFecha = (fecha: string) => {
 
 interface MuestraDescarteCardProps {
   muestra: any;
-  userRol: string;
-  onAnular: () => void;
+  userRol: string; 
+  onAnular: () => void; 
 }
 
 export default function MuestraDescarteCard({ muestra, userRol, onAnular }: MuestraDescarteCardProps) {
   
   // Validación de seguridad visual
   const esAdmin = userRol === "Administrador";
+  
+  // Identificar si viene por el Camino A (Operativa) o B (Legal)
+  const esAnalisis = muestra.tipo_muestra === "ANALISIS";
 
   return (
     <div className="bg-white border-2 border-rose-100 rounded-[2.5rem] p-6 shadow-sm hover:shadow-xl hover:shadow-rose-500/10 transition-all duration-500 flex flex-col h-full group relative overflow-hidden">
@@ -54,7 +58,7 @@ export default function MuestraDescarteCard({ muestra, userRol, onAnular }: Mues
         </button>
       )}
 
-      {/* CABECERA - AHORA MUESTRA EL CÓDIGO INTERNO */}
+      {/* CABECERA */}
       <div className="flex items-start justify-between gap-4 mb-5 relative z-10 pr-10">
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-red-50 text-rose-600 flex items-center justify-center shrink-0 shadow-inner group-hover:animate-pulse">
@@ -63,7 +67,7 @@ export default function MuestraDescarteCard({ muestra, userRol, onAnular }: Mues
           <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-wider mb-1.5 bg-rose-50 text-rose-700 border-rose-200">
               <ShieldAlert size={12} strokeWidth={3} />
-              Retención Cumplida
+              {esAnalisis ? 'Análisis Finalizado' : 'Retención Cumplida'}
             </span>
             <h3 className="text-[18px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-rose-600 transition-colors" title={muestra.codigo_interno}>
               {muestra.codigo_interno}
@@ -90,7 +94,7 @@ export default function MuestraDescarteCard({ muestra, userRol, onAnular }: Mues
               {muestra.lote}
             </span>
           </div>
-          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
             <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Reg. Sanitario</span>
             <span className="font-black text-slate-700 text-[13px] truncate block" title={muestra.registro_sanitario}>
               {muestra.registro_sanitario || "N/A"}
@@ -98,16 +102,28 @@ export default function MuestraDescarteCard({ muestra, userRol, onAnular }: Mues
           </div>
         </div>
 
-        {/* ALERTA DE VENCIMIENTO */}
-        <div className="p-4 rounded-2xl border bg-rose-50/50 border-rose-200/60 flex items-center gap-3">
-          <div className="p-2 bg-rose-100 text-rose-600 rounded-xl shrink-0">
-            <Clock size={20} />
+        {/* LÓGICA DINÁMICA: AVISO DE CUSTODIA VS AVISO OPERATIVO */}
+        {esAnalisis ? (
+          <div className="p-4 rounded-2xl border bg-indigo-50/50 border-indigo-200/60 flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl shrink-0">
+              <Target size={20} />
+            </div>
+            <div>
+              <span className="block text-indigo-800 font-black text-[12px] uppercase tracking-wide">Muestra Operativa</span>
+              <span className="text-[11px] text-indigo-600/80 font-bold">Aprobada para destrucción física</span>
+            </div>
           </div>
-          <div>
-            <span className="block text-rose-800 font-black text-[12px] uppercase tracking-wide">Tiempo de Custodia Agotado</span>
-            <span className="text-[11px] text-rose-600/80 font-bold">Venció el {formatearFecha(muestra.fecha_fin_retencion)}</span>
+        ) : (
+          <div className="p-4 rounded-2xl border bg-rose-50/50 border-rose-200/60 flex items-center gap-3">
+            <div className="p-2 bg-rose-100 text-rose-600 rounded-xl shrink-0">
+              <Clock size={20} />
+            </div>
+            <div>
+              <span className="block text-rose-800 font-black text-[12px] uppercase tracking-wide">Tiempo de Custodia Agotado</span>
+              <span className="text-[11px] text-rose-600/80 font-bold">Venció el {formatearFecha(muestra.fecha_fin_retencion)}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* UBICACIÓN */}
         <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">

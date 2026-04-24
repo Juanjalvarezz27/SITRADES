@@ -1,25 +1,25 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { 
-  Archive, 
-  Loader2, 
-  History, 
-  SearchX, 
-  MapPin, 
-  Thermometer, 
-  ShieldAlert, 
+import {
+  Archive,
+  Loader2,
+  History,
+  SearchX,
+  MapPin,
+  Thermometer,
+  ShieldAlert,
   Calendar,
-  Trash2 
+  Trash2,
+  Target 
 } from "lucide-react";
 import { toast } from "react-toastify";
 
-// Ajusta estas rutas según tu estructura real
 import SearchBar from "../../../components/ui/SearchBar";
 import FilterSelect from "../../../components/ui/FilterSelect";
 import TrazabilidadModal from "../../../components/muestras/TrazabilidadModal";
 import Pagination from "../../../components/ui/Pagination";
-import CertificadoDescarteModal from "../../../components/muestras/CertificadoDescarteModal"; 
+import CertificadoDescarteModal from "../../../components/muestras/CertificadoDescarteModal";
 import MuestraInactivaCard from "../../../components/muestras/MuestraInactivaCard";
 
 const quitarAcentos = (str: string) => {
@@ -31,16 +31,17 @@ export default function InventarioInactivoPage() {
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [busqueda, setBusqueda] = useState("");
   const [filtroArea, setFiltroArea] = useState("TODOS");
   const [filtroMetodo, setFiltroMetodo] = useState("TODOS");
   const [filtroRiesgo, setFiltroRiesgo] = useState("TODOS");
+  const [filtroProposito, setFiltroProposito] = useState("TODOS"); 
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 20;
+  const ITEMS_PER_PAGE = 30;
 
   const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
   const [isExpedienteModalOpen, setIsExpedienteModalOpen] = useState(false);
@@ -51,7 +52,7 @@ export default function InventarioInactivoPage() {
     .filter(Boolean)
     .sort()
     .map(n => ({ value: n as string, label: n as string }));
-  
+
   const opcionesMetodos = Array.from(new Set(muestrasOriginales.map(m => m.reporte_descarte?.metodo_disposicion?.nombre)))
     .filter(Boolean)
     .sort()
@@ -62,10 +63,15 @@ export default function InventarioInactivoPage() {
     .sort()
     .map(r => ({ value: r as string, label: r as string }));
 
+  const OPCIONES_PROPOSITO = [
+    { value: "CONTRAMUESTRA", label: "Contramuestras Legales" },
+    { value: "ANALISIS", label: "Muestras Operativas" }
+  ];
+
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/muestras?fase=inactiva", { cache: 'no-store' }); 
+      const res = await fetch("/api/muestras?fase=inactiva", { cache: 'no-store' });
       if (!res.ok) throw new Error("Error al cargar");
       const data = await res.json();
       setMuestrasOriginales(data);
@@ -77,22 +83,21 @@ export default function InventarioInactivoPage() {
     }
   }, []);
 
-  useEffect(() => { 
-    fetchMuestras(); 
+  useEffect(() => {
+    fetchMuestras();
   }, [fetchMuestras]);
 
   useEffect(() => {
     const filtrados = muestrasOriginales.filter((muestra) => {
       const busquedaLimpia = quitarAcentos(busqueda);
-      const cumpleBusqueda = quitarAcentos(muestra.codigo_interno).includes(busquedaLimpia) || 
-                             quitarAcentos(muestra.lote).includes(busquedaLimpia) || 
-                             quitarAcentos(muestra.principio_activo).includes(busquedaLimpia);
-      
+      const cumpleBusqueda = quitarAcentos(muestra.codigo_interno).includes(busquedaLimpia) ||
+        quitarAcentos(muestra.lote).includes(busquedaLimpia) ||
+        quitarAcentos(muestra.principio_activo).includes(busquedaLimpia);
+
       const cumpleArea = filtroArea === "TODOS" || muestra.area?.nombre === filtroArea;
-      
       const cumpleMetodo = filtroMetodo === "TODOS" || muestra.reporte_descarte?.metodo_disposicion?.nombre === filtroMetodo;
-      
       const cumpleRiesgo = filtroRiesgo === "TODOS" || muestra.riesgo_bioseguridad === filtroRiesgo;
+      const cumpleProposito = filtroProposito === "TODOS" || muestra.tipo_muestra === filtroProposito; // <-- NUEVA LÓGICA
 
       let cumpleFechas = true;
       if (muestra.reporte_descarte?.fecha_descarte) {
@@ -107,21 +112,21 @@ export default function InventarioInactivoPage() {
           if (fechaMuestra > fin) cumpleFechas = false;
         }
       }
-      return cumpleBusqueda && cumpleArea && cumpleMetodo && cumpleRiesgo && cumpleFechas;
+      return cumpleBusqueda && cumpleArea && cumpleMetodo && cumpleRiesgo && cumpleProposito && cumpleFechas;
     });
 
     setMuestrasFiltradas(filtrados);
-    setCurrentPage(1); 
-  }, [busqueda, filtroArea, filtroMetodo, filtroRiesgo, fechaInicio, fechaFin, muestrasOriginales]);
+    setCurrentPage(1);
+  }, [busqueda, filtroArea, filtroMetodo, filtroRiesgo, filtroProposito, fechaInicio, fechaFin, muestrasOriginales]);
 
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
   const muestrasPaginadas = muestrasFiltradas.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const hayFiltrosActivos = fechaInicio || fechaFin || filtroArea !== "TODOS" || filtroMetodo !== "TODOS" || filtroRiesgo !== "TODOS" || busqueda;
+  const hayFiltrosActivos = fechaInicio || fechaFin || filtroArea !== "TODOS" || filtroMetodo !== "TODOS" || filtroRiesgo !== "TODOS" || filtroProposito !== "TODOS" || busqueda;
 
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1600px] mx-auto relative">
-      
+
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 mb-10">
         <div className="space-y-2 w-full md:w-auto text-center md:text-left">
@@ -137,7 +142,7 @@ export default function InventarioInactivoPage() {
             Gestión de auditoría para muestras que han completado su proceso de descarte institucional.
           </p>
         </div>
-        
+
         <div className="w-full sm:w-auto md:min-w-[180px] bg-white border border-slate-200 px-6 py-3.5 rounded-[2rem] shadow-sm flex items-center justify-center md:justify-end gap-4 transition-all">
           <div className="text-center md:text-right">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Expedientes</p>
@@ -150,19 +155,36 @@ export default function InventarioInactivoPage() {
       </div>
 
       {/* FILTROS */}
-      <div className="bg-white/80  border border-slate-200 p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/20 mb-10 sticky top-24 z-20 space-y-6">
-        <SearchBar 
-          value={busqueda} 
-          onChange={setBusqueda} 
-          placeholder="Filtrar expediente por código, lote o nombre del producto..." 
+      <div className="bg-white/80 backdrop-blur-md border border-slate-200 p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/20 mb-10 sticky top-24 z-40 space-y-6">
+        
+        {/* Nivel 1: Búsqueda */}
+        <SearchBar
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder="Filtrar expediente por código, lote o nombre del producto..."
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <FilterSelect value={filtroArea} onChange={setFiltroArea} options={opcionesAreas} defaultLabel="Todas las Áreas" icon={MapPin} />
-          <FilterSelect value={filtroRiesgo} onChange={setFiltroRiesgo} options={opcionesRiesgo} defaultLabel="Cualquier Riesgo" icon={ShieldAlert} />
-          <FilterSelect value={filtroMetodo} onChange={setFiltroMetodo} options={opcionesMetodos} defaultLabel="Todos los Métodos" icon={Thermometer} />
+        {/* Nivel 2: Selectores de Categoría */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Propósito Legal</label>
+            <FilterSelect value={filtroProposito} onChange={setFiltroProposito} options={OPCIONES_PROPOSITO} defaultLabel="Todos los Tipos" icon={Target} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Área Origen</label>
+            <FilterSelect value={filtroArea} onChange={setFiltroArea} options={opcionesAreas} defaultLabel="Todas las Áreas" icon={MapPin} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Nivel de Riesgo</label>
+            <FilterSelect value={filtroRiesgo} onChange={setFiltroRiesgo} options={opcionesRiesgo} defaultLabel="Cualquier Riesgo" icon={ShieldAlert} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Método Usado</label>
+            <FilterSelect value={filtroMetodo} onChange={setFiltroMetodo} options={opcionesMetodos} defaultLabel="Todos los Métodos" icon={Thermometer} />
+          </div>
         </div>
 
+        {/* Nivel 3: Fechas y Botón de Limpiar */}
         <div className="flex flex-col lg:flex-row items-center gap-4 pt-4 border-t border-slate-100">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-2/3">
             <div className="relative">
@@ -178,8 +200,8 @@ export default function InventarioInactivoPage() {
           </div>
 
           {hayFiltrosActivos && (
-            <button 
-              onClick={() => { setBusqueda(""); setFiltroArea("TODOS"); setFiltroMetodo("TODOS"); setFiltroRiesgo("TODOS"); setFechaInicio(""); setFechaFin(""); }}
+            <button
+              onClick={() => { setBusqueda(""); setFiltroArea("TODOS"); setFiltroMetodo("TODOS"); setFiltroRiesgo("TODOS"); setFiltroProposito("TODOS"); setFechaInicio(""); setFechaFin(""); }}
               className="w-full lg:w-auto px-6 py-3 text-[11px] font-black text-rose-500 uppercase hover:bg-rose-50 rounded-2xl transition-all flex items-center justify-center gap-2 shrink-0"
             >
               <Trash2 size={14} /> Limpiar Filtros
@@ -200,38 +222,38 @@ export default function InventarioInactivoPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
               {muestrasPaginadas.map((muestra) => (
-                <MuestraInactivaCard 
-                  key={muestra.id} 
-                  muestra={muestra} 
-                  onClickExpediente={() => { setMuestraSeleccionada(muestra); setIsExpedienteModalOpen(true); }} 
-                  onClickCertificado={() => { setMuestraSeleccionada(muestra); setIsCertificadoModalOpen(true); }} 
+                <MuestraInactivaCard
+                  key={muestra.id}
+                  muestra={muestra}
+                  onClickExpediente={() => { setMuestraSeleccionada(muestra); setIsExpedienteModalOpen(true); }}
+                  onClickCertificado={() => { setMuestraSeleccionada(muestra); setIsCertificadoModalOpen(true); }}
                 />
               ))}
             </div>
             <div className="mt-12">
-              <Pagination 
-                currentPage={currentPage} 
-                totalPages={totalPages} 
-                onPageChange={(page: number) => { 
-                  setCurrentPage(page); 
-                  window.scrollTo({ top: 0, behavior: 'smooth' }); 
-                }} 
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page: number) => {
+                  setCurrentPage(page);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               />
             </div>
           </>
         )}
       </div>
 
-      <TrazabilidadModal 
-        isOpen={isExpedienteModalOpen} 
-        onClose={() => setIsExpedienteModalOpen(false)} 
-        muestra={muestraSeleccionada} 
+      <TrazabilidadModal
+        isOpen={isExpedienteModalOpen}
+        onClose={() => setIsExpedienteModalOpen(false)}
+        muestra={muestraSeleccionada}
       />
-      
-      <CertificadoDescarteModal 
-        isOpen={isCertificadoModalOpen} 
-        onClose={() => setIsCertificadoModalOpen(false)} 
-        muestra={muestraSeleccionada} 
+
+      <CertificadoDescarteModal
+        isOpen={isCertificadoModalOpen}
+        onClose={() => setIsCertificadoModalOpen(false)}
+        muestra={muestraSeleccionada}
       />
     </div>
   );

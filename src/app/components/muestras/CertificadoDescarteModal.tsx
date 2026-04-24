@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { 
-  X, FileSignature, Thermometer, Calendar, User, ShieldCheck, Download, Loader2, ExternalLink, CheckCircle2 
+import {
+  X, FileSignature, Thermometer, Calendar, User, ShieldCheck, Download, Loader2, ExternalLink, CheckCircle2, Target
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { QRCodeCanvas } from "qrcode.react";
@@ -60,12 +60,13 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
   const observaciones = reporte?.observaciones || "Sin observaciones adicionales.";
   const fechaDescarte = reporte?.fecha_descarte;
   const responsableAnalista = reporte?.ejecutor?.nombre || "Usuario no registrado";
+  const esAnalisis = muestra.tipo_muestra === "ANALISIS";
 
   // Buscamos el evento de Seguridad Industrial en el historial
   const eventoRecoleccion = muestra.historiales?.find(
     (h: any) => h.motivo && h.motivo.includes("Seguridad Industrial")
   );
-  
+
   const responsableSeguridad = eventoRecoleccion?.usuario?.nombre || "En tránsito / Pendiente";
   const fechaRecoleccion = eventoRecoleccion?.fecha_cambio;
 
@@ -102,9 +103,9 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
               <ShieldCheck size={14} /> Identificación y Estado Oficial
             </h3>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-              
+
               {/* BADGE DE ESTADO COMPACTO */}
               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-4 flex-1 w-full shadow-sm">
                 <div className="w-11 h-11 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-sm shadow-emerald-500/20 shrink-0">
@@ -135,6 +136,14 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
 
             {/* Tarjetas de Datos de la Muestra */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 col-span-1 sm:col-span-2">
+                <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Clasificación Legal</span>
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-black uppercase tracking-wider ${esAnalisis ? 'bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm' : 'bg-brand-primary/10 text-brand-primary border-brand-primary/20 shadow-sm'}`}>
+                  <Target size={14} strokeWidth={2.5} />
+                  {esAnalisis ? 'Muestra Operativa (Análisis)' : 'Contramuestra Legal'}
+                </div>
+              </div>
+
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <span className="block text-slate-400 font-bold text-[10px] uppercase mb-1">Principio Activo</span>
                 <span className="font-black text-slate-700 text-[14px] leading-tight">{muestra.principio_activo}</span>
@@ -152,17 +161,17 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
               <Thermometer size={14} /> Protocolo Aplicado
             </h3>
             <div className="bg-white border-2 border-brand-primary/20 p-4 rounded-2xl flex items-start gap-4 mb-4">
-               <div className="p-2 bg-brand-primary/10 text-brand-primary rounded-xl shrink-0 mt-0.5">
-                  <Thermometer size={18} />
-               </div>
-               <div>
-                  <span className="block text-slate-800 font-black text-[14px]">{metodoNombre}</span>
-                  <span className="block text-slate-500 font-medium text-[12px] mt-0.5">Método de inactivación definitiva.</span>
-               </div>
+              <div className="p-2 bg-brand-primary/10 text-brand-primary rounded-xl shrink-0 mt-0.5">
+                <Thermometer size={18} />
+              </div>
+              <div>
+                <span className="block text-slate-800 font-black text-[14px]">{metodoNombre}</span>
+                <span className="block text-slate-500 font-medium text-[12px] mt-0.5">Método de inactivación definitiva.</span>
+              </div>
             </div>
             <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-               <span className="block text-slate-500 font-bold text-[11px] uppercase tracking-wide mb-2">Observaciones de Auditoría</span>
-               <p className="text-[13px] text-slate-700 font-medium italic leading-relaxed">"{observaciones}"</p>
+              <span className="block text-slate-500 font-bold text-[11px] uppercase tracking-wide mb-2">Observaciones de Auditoría</span>
+              <p className="text-[13px] text-slate-700 font-medium italic leading-relaxed">"{observaciones}"</p>
             </div>
           </div>
 

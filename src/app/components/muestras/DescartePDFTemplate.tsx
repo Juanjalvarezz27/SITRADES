@@ -30,6 +30,9 @@ const DescartePDFTemplate = forwardRef<HTMLDivElement, DescartePDFTemplateProps>
     const observaciones = reporte?.observaciones || "Sin observaciones adicionales.";
     const fechaDescarte = reporte?.fecha_descarte;
     const responsableAnalista = reporte?.ejecutor?.nombre || "Usuario no registrado";
+    
+    // Identificar si es operativa o contramuestra
+    const esAnalisis = muestra.tipo_muestra === "ANALISIS";
 
     // Extraer datos de Seguridad Industrial desde el historial
     const eventoRecoleccion = muestra.historiales?.find(
@@ -76,6 +79,13 @@ const DescartePDFTemplate = forwardRef<HTMLDivElement, DescartePDFTemplateProps>
             </div>
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-[12px]">
+              {/* NUEVO: Clasificación Legal a ancho completo */}
+              <p className="col-span-2">
+                <strong className="text-slate-400 uppercase text-[9px] block">Clasificación Legal</strong> 
+                <span className={`font-black ${esAnalisis ? 'text-indigo-700' : 'text-brand-primary'}`}>
+                  {esAnalisis ? 'MUESTRA OPERATIVA (ANÁLISIS)' : 'CONTRAMUESTRA LEGAL (RETENCIÓN)'}
+                </span>
+              </p>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Principio Activo</strong> {muestra.principio_activo}</p>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Lote</strong> {muestra.lote}</p>
               <p><strong className="text-slate-400 uppercase text-[9px] block">Código Interno</strong> {muestra.codigo_interno}</p>

@@ -5,6 +5,7 @@ export async function seedEstados(prisma: PrismaClient) {
 
   const estados = [
     { nombre: 'Recibida (Pendiente de Análisis)' },
+    { nombre: 'En Análisis'},
     { nombre: 'Vencida (En Custodia Legal)' },
     { nombre: 'Retención Cumplida (Descartable)' },
     { nombre: 'Esperando Recolección (Bolsa Roja)' },

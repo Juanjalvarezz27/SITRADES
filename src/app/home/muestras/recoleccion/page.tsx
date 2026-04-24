@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   Loader2,
   CheckCircle2,
-  Lock
+  Lock,
+  Target // <-- Agregado para el nuevo badge
 } from "lucide-react";
 import { toast } from "react-toastify";
 import ModalCertificacionTraslado from "../../../components/recoleccion/ModalCertificacionTraslado";
@@ -168,6 +169,7 @@ export default function CentroRecoleccionPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {bolsas.map((bolsa) => {
             const isSelected = seleccionadas.includes(bolsa.id);
+            const esAnalisis = bolsa.tipo_muestra === "ANALISIS";
             
             return (
               <div 
@@ -190,11 +192,18 @@ export default function CentroRecoleccionPage() {
                   </div>
                 )}
 
-                {/* Cabecera - Ahora Muestra el Código Interno */}
+                {/* Cabecera */}
                 <div className="pr-10 mb-4">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="bg-red-50 text-red-600 font-black text-[10px] px-2 py-0.5 rounded border border-red-100 uppercase flex items-center gap-1">
                       <AlertTriangle size={10} /> Riesgo Biológico
+                    </span>
+                    
+                    {/* Badge de Propósito */}
+                    <span className={`font-black text-[10px] px-2 py-0.5 rounded border uppercase flex items-center gap-1 ${
+                      esAnalisis ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-brand-primary/10 text-brand-primary border-brand-primary/20'
+                    }`}>
+                      <Target size={10} /> {esAnalisis ? 'Análisis' : 'Contramuestra'}
                     </span>
                   </div>
                   <h3 className="font-black text-slate-800 text-[18px] leading-tight line-clamp-2" title={bolsa.codigo_interno}>

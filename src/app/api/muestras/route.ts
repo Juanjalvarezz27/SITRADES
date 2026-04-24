@@ -7,7 +7,7 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-// 1. GET: Obtener muestras separadas por Fases (Activa, Descarte, Inactiva)
+// 1. GET: Obtener muestras separadas por Fases
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -18,35 +18,47 @@ export async function GET(request: Request) {
 
     if (fase === "activa") {
       whereClause = {
-        fecha_fin_retencion: { gt: hoy },
-        estado: { 
-          nombre: { 
-            // Ocultamos también las que ya están en bolsa roja
-            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)", "Esperando Recolección (Bolsa Roja)"] 
-          } 
-        }
+        estado: {
+          nombre: {
+            notIn: [
+              "Destruida / Segregada", 
+              "Anulada (Error de Registro)", 
+              "Esperando Recolección (Bolsa Roja)",
+              "Retención Cumplida (Descartable)" // Ocultamos si ya pasó a descarte
+            ]
+          }
+        },
+        OR: [
+          // Camino B: Contramuestras que aún no vencen su retención
+          { tipo_muestra: "CONTRAMUESTRA", fecha_fin_retencion: { gt: hoy } },
+          // Camino A: Muestras Operativas que siguen en análisis
+          { tipo_muestra: "ANALISIS" } 
+        ]
       };
     } else if (fase === "descarte") {
       whereClause = {
-        fecha_fin_retencion: { lte: hoy },
-        estado: { 
-          nombre: { 
-            //  Ocultamos las que Seguridad Industrial ya tiene pendientes
-            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)", "Esperando Recolección (Bolsa Roja)"] 
-          } 
-        }
+        estado: {
+          nombre: {
+            notIn: ["Destruida / Segregada", "Anulada (Error de Registro)", "Esperando Recolección (Bolsa Roja)"]
+          }
+        },
+        OR: [
+          // Camino B: Contramuestras que ya cumplieron el tiempo legal
+          { tipo_muestra: "CONTRAMUESTRA", fecha_fin_retencion: { lte: hoy } },
+          // Camino A: Operativas que fueron soltadas manualmente por el analista (pasaron a este estado)
+          { tipo_muestra: "ANALISIS", estado: { nombre: "Retención Cumplida (Descartable)" } }
+        ]
       };
     } else if (fase === "inactiva") {
       whereClause = {
-        estado: { 
-          nombre: { 
-            in: ["Destruida / Segregada", "Anulada (Error de Registro)"] 
-          } 
+        estado: {
+          nombre: {
+            in: ["Destruida / Segregada", "Anulada (Error de Registro)"]
+          }
         }
       };
     }
 
-    // Actualizamos el Include para traer la información completa
     const muestras = await prisma.muestraFarmaceutica.findMany({
       where: whereClause,
       include: {
@@ -59,16 +71,13 @@ export async function GET(request: Request) {
         usuarioRegistrador: {
           select: { nombre: true, rol: true }
         },
-        // Los historiales cuelgan de la Muestra, no del Reporte
         historiales: {
           include: { usuario: { select: { nombre: true } } },
           orderBy: { fecha_cambio: 'desc' }
         },
         reporte_descarte: {
           include: {
-            ejecutor: {
-              select: { nombre: true }
-            },
+            ejecutor: { select: { nombre: true } },
             metodo_disposicion: true
           }
         }
@@ -99,6 +108,7 @@ export async function POST(request: Request) {
 
     body = await request.json();
     const areaId = Number(body.area_id);
+    const tipoMuestra = body.tipo_muestra || "CONTRAMUESTRA";
 
     // 1. VALIDACIÓN DE INFRAESTRUCTURA ACTIVA
     const areaValidacion = await prisma.area.findUnique({
@@ -119,17 +129,21 @@ export async function POST(request: Request) {
     }
 
     // OBTENER TODOS LOS ESTADOS NECESARIOS PARA EL FLUJO
-    const [estadoRecibida, estadoVencida, estadoRetencion] = await Promise.all([
+    const [estadoRecibida, estadoEnAnalisis, estadoVencida, estadoRetencion] = await Promise.all([
       prisma.estadoMuestra.findFirst({ where: { nombre: "Recibida (Pendiente de Análisis)" } }),
+      prisma.estadoMuestra.findFirst({ where: { nombre: "En Análisis" } }), // <-- Nuevo Estado para Camino A
       prisma.estadoMuestra.findFirst({ where: { nombre: "Vencida (En Custodia Legal)" } }),
       prisma.estadoMuestra.findFirst({ where: { nombre: "Retención Cumplida (Descartable)" } })
     ]);
 
-    if (!estadoRecibida || !estadoVencida || !estadoRetencion) {
-      throw new Error("Faltan estados base en la BD. Ejecute el seed.");
+    if (!estadoRecibida || !estadoEnAnalisis || !estadoVencida || !estadoRetencion) {
+      throw new Error("Faltan estados base en la BD. Asegúrese de tener los estados 'Recibida (Pendiente de Análisis)' y 'En Análisis'.");
     }
 
-    // PASO 1: CREACIÓN INICIAL (Siempre nace como "Recibida")
+    // Determinamos el estado inicial según el propósito (Camino A vs Camino B)
+    const estadoInicial = tipoMuestra === "ANALISIS" ? estadoEnAnalisis : estadoRecibida;
+
+    // PASO 1: CREACIÓN INICIAL
     const nuevaMuestra = await prisma.muestraFarmaceutica.create({
       data: {
         codigo_interno: body.codigo_interno,
@@ -140,12 +154,13 @@ export async function POST(request: Request) {
         unidad_medida_id: Number(body.unidad_medida_id),
         riesgo_bioseguridad: body.riesgo_bioseguridad,
         cantidad: Number(body.cantidad),
+        tipo_muestra: tipoMuestra as any,
         proposito_analisis: body.proposito_analisis,
         fecha_caducidad: new Date(body.fecha_caducidad),
         fecha_fin_retencion: new Date(body.fecha_fin_retencion),
         area_id: areaId,
         ubicacion_detalle: body.ubicacion_detalle,
-        estado_id: estadoRecibida.id,
+        estado_id: estadoInicial.id,
         registrado_por: token.id as string,
       },
     });
@@ -153,51 +168,55 @@ export async function POST(request: Request) {
     await prisma.historialTrazabilidad.create({
       data: {
         muestra_id: nuevaMuestra.id,
-        estado_anterior_id: estadoRecibida.id,
-        estado_nuevo_id: estadoRecibida.id,
-        motivo: "Ingreso inicial de la muestra al sistema y asignación a área de almacenamiento.",
+        estado_anterior_id: estadoInicial.id,
+        estado_nuevo_id: estadoInicial.id,
+        motivo: tipoMuestra === "ANALISIS" 
+          ? "Ingreso de Muestra Operativa directamente a estado de Análisis." 
+          : "Ingreso inicial de Contramuestra al sistema y asignación a área de almacenamiento.",
         cambiado_por: token.id as string,
       }
     });
 
     const hoy = new Date();
-    let estadoActualId = estadoRecibida.id;
+    let estadoActualId = estadoInicial.id;
 
-    // PASO 2: ¿La fecha de caducidad ya pasó?
-    if (new Date(body.fecha_caducidad) <= hoy) {
-      await prisma.muestraFarmaceutica.update({
-        where: { id: nuevaMuestra.id },
-        data: { estado_id: estadoVencida.id }
-      });
+    // PASO 2: LOGICA DE AUTOMATIZACIÓN (SÓLO PARA CONTRAMUESTRAS)
+    // Las operativas (ANALISIS) se saltan todo esto porque no tienen retención y su estado depende del usuario.
+    if (tipoMuestra === "CONTRAMUESTRA") {
+      if (new Date(body.fecha_caducidad) <= hoy) {
+        await prisma.muestraFarmaceutica.update({
+          where: { id: nuevaMuestra.id },
+          data: { estado_id: estadoVencida.id }
+        });
 
-      await prisma.historialTrazabilidad.create({
-        data: {
-          muestra_id: nuevaMuestra.id,
-          estado_anterior_id: estadoActualId,
-          estado_nuevo_id: estadoVencida.id,
-          motivo: "Actualización automática del sistema: La fecha de caducidad del producto ha expirado. Pasa a custodia.",
-          cambiado_por: token.id as string,
-        }
-      });
-      estadoActualId = estadoVencida.id; // Actualizamos el puntero para el siguiente paso
-    }
+        await prisma.historialTrazabilidad.create({
+          data: {
+            muestra_id: nuevaMuestra.id,
+            estado_anterior_id: estadoActualId,
+            estado_nuevo_id: estadoVencida.id,
+            motivo: "Actualización automática: La fecha de caducidad del producto ha expirado. Pasa a custodia.",
+            cambiado_por: token.id as string,
+          }
+        });
+        estadoActualId = estadoVencida.id; 
+      }
 
-    // PASO 3: ¿El tiempo de retención ya se cumplió?
-    if (new Date(body.fecha_fin_retencion) <= hoy) {
-      await prisma.muestraFarmaceutica.update({
-        where: { id: nuevaMuestra.id },
-        data: { estado_id: estadoRetencion.id }
-      });
+      if (new Date(body.fecha_fin_retencion) <= hoy) {
+        await prisma.muestraFarmaceutica.update({
+          where: { id: nuevaMuestra.id },
+          data: { estado_id: estadoRetencion.id }
+        });
 
-      await prisma.historialTrazabilidad.create({
-        data: {
-          muestra_id: nuevaMuestra.id,
-          estado_anterior_id: estadoActualId,
-          estado_nuevo_id: estadoRetencion.id,
-          motivo: "Actualización automática del sistema: El periodo de retención legal ha concluido. Muestra apta para protocolo de descarte.",
-          cambiado_por: token.id as string,
-        }
-      });
+        await prisma.historialTrazabilidad.create({
+          data: {
+            muestra_id: nuevaMuestra.id,
+            estado_anterior_id: estadoActualId,
+            estado_nuevo_id: estadoRetencion.id,
+            motivo: "Actualización automática: El periodo de retención legal ha concluido. Apta para descarte.",
+            cambiado_por: token.id as string,
+          }
+        });
+      }
     }
 
     return NextResponse.json(nuevaMuestra, { status: 201 });

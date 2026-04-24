@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
   PackagePlus, Package, Calendar, MapPin,
-  ShieldAlert, Eye, FlaskConical, Edit3, AlertOctagon
+  ShieldAlert, Eye, FlaskConical, Edit3, AlertOctagon, Target, CheckCircle2
 } from "lucide-react";
 import { toast } from "react-toastify";
 import SearchBar from "../../components/ui/SearchBar";
@@ -14,6 +14,7 @@ import TrazabilidadModal from "../../components/muestras/TrazabilidadModal";
 import Pagination from "../../components/ui/Pagination";
 import EditarMuestraModal from "../../components/muestras/EditarMuestraModal";
 import AnularMuestraModal from "../../components/muestras/AnularMuestraModal";
+import LiberarMuestraModal from "../../components/muestras/LiberarMuestraModal"; 
 
 const quitarAcentos = (str: string) => {
   if (!str) return "";
@@ -26,28 +27,34 @@ const formatearFecha = (fecha: string) => {
 };
 
 // --- TARJETA DE MUESTRA ---
-function MuestraCard({ 
-  muestra, 
-  onClick, 
-  onEdit, 
-  onAnular, 
-  userRol 
-}: { 
-  muestra: any, 
-  onClick: () => void, 
-  onEdit: () => void, 
+function MuestraCard({
+  muestra,
+  onClick,
+  onEdit,
+  onAnular,
+  onLiberar,
+  userRol
+}: {
+  muestra: any,
+  onClick: () => void,
+  onEdit: () => void,
   onAnular: () => void,
-  userRol: string 
+  onLiberar: () => void,
+  userRol: string
 }) {
   const hoy = new Date();
   const fechaCaducidad = new Date(muestra.fecha_caducidad);
+  
+  const esAnalisis = muestra.tipo_muestra === "ANALISIS";
+  const esAdmin = userRol === "Administrador";
 
+  // Lógica del Badge Legal
   let estadoLegal = { texto: "Vigente", color: "bg-emerald-50 text-emerald-600 border-emerald-200" };
-  if (hoy >= fechaCaducidad) {
+  if (esAnalisis) {
+    estadoLegal = { texto: "En Análisis", color: "bg-indigo-50 text-indigo-600 border-indigo-200" };
+  } else if (hoy >= fechaCaducidad) {
     estadoLegal = { texto: "Vencida (En Custodia)", color: "bg-amber-50 text-amber-600 border-amber-200" };
   }
-
-  const esAdmin = userRol === "Administrador";
 
   return (
     <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm hover:shadow-xl hover:shadow-brand-primary/5 transition-all duration-300 flex flex-col h-full group relative overflow-hidden">
@@ -59,7 +66,7 @@ function MuestraCard({
           className="absolute top-4 right-4 p-2.5 bg-red-400 hover:bg-red-600 text-white rounded-xl transition-all shadow-sm hover:opacity-100 group/btn z-10"
         >
           <AlertOctagon size={16} strokeWidth={2.5} />
-          
+
           <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-3 py-1.5 bg-slate-800 text-white text-[12px] font-bold rounded-xl opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all duration-200 whitespace-nowrap shadow-xl flex items-center pointer-events-none">
             Anular Registro por Error
             <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-800 rotate-45 rounded-sm"></div>
@@ -67,11 +74,11 @@ function MuestraCard({
         </button>
       )}
 
-      {/* CABECERA DE LA TARJETA - AHORA MUESTRA EL CÓDIGO INTERNO */}
+      {/* CABECERA DE LA TARJETA */}
       <div className="flex items-start justify-between gap-4 mb-5 pr-10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-brand-primary group-hover:bg-brand-primary/5 transition-all shrink-0">
-            <FlaskConical size={24} />
+          <div className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all shrink-0 ${esAnalisis ? 'bg-indigo-50 border-indigo-100 text-indigo-500 group-hover:bg-indigo-100' : 'bg-slate-50 border-slate-100 text-slate-400 group-hover:text-brand-primary group-hover:bg-brand-primary/5'}`}>
+            {esAnalisis ? <Target size={24} /> : <FlaskConical size={24} />}
           </div>
           <div>
             <span className={`inline-flex px-2.5 py-1 border rounded-lg text-[9px] font-black uppercase tracking-widest mb-1.5 ${estadoLegal.color}`}>
@@ -85,7 +92,7 @@ function MuestraCard({
       </div>
 
       <div className="flex-1 space-y-3 mb-6">
-        
+
         {/* PRINCIPIO ACTIVO A ANCHO COMPLETO */}
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
           <span className="block text-slate-400 font-bold text-[10px] uppercase tracking-wide mb-1">Principio Activo</span>
@@ -110,23 +117,38 @@ function MuestraCard({
           </div>
         </div>
 
-        {/* FECHAS */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Calendar size={14} className="text-slate-400" />
-              <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wide">Vence</span>
+        {/* LÓGICA DINÁMICA: TIEMPOS LEGALES VS ACELERADOR OPERATIVO */}
+        {esAnalisis ? (
+          <div className="bg-indigo-50/50 border border-indigo-100 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <span className="block text-indigo-400 font-bold text-[10px] uppercase tracking-wide mb-0.5">Muestra Operativa</span>
+              <span className="font-bold text-indigo-800 text-[12px] leading-tight block">Lista para liberar cuando finalice el informe.</span>
             </div>
-            <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_caducidad)}</span>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onLiberar(); }} 
+              className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold rounded-xl transition-all shadow-sm shadow-indigo-600/20 flex items-center justify-center gap-2 shrink-0 active:scale-95"
+            >
+              <CheckCircle2 size={16} /> Aprobar y Liberar
+            </button>
           </div>
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <div className="flex items-center gap-1.5 mb-1">
-              <ShieldAlert size={14} className="text-slate-400" />
-              <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wide">Retención</span>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Calendar size={14} className="text-slate-400" />
+                <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wide">Vence</span>
+              </div>
+              <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_caducidad)}</span>
             </div>
-            <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_fin_retencion)}</span>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-1.5 mb-1">
+                <ShieldAlert size={14} className="text-slate-400" />
+                <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wide">Retención</span>
+              </div>
+              <span className="font-bold text-slate-700 text-[13px] block">{formatearFecha(muestra.fecha_fin_retencion)}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* UBICACIÓN */}
         <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
@@ -166,7 +188,7 @@ function MuestraCard({
 
 // --- COMPONENTE PRINCIPAL ---
 export default function InventarioMuestrasPage() {
-  const { data: session } = useSession(); 
+  const { data: session } = useSession();
   const userRol = (session?.user as any)?.rol || "";
 
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
@@ -177,6 +199,7 @@ export default function InventarioMuestrasPage() {
   const [filtroPiso, setFiltroPiso] = useState("TODOS");
   const [filtroDireccion, setFiltroDireccion] = useState("TODOS");
   const [filtroEstadoLegal, setFiltroEstadoLegal] = useState("TODOS");
+  const [filtroProposito, setFiltroProposito] = useState("TODOS"); 
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
@@ -184,7 +207,8 @@ export default function InventarioMuestrasPage() {
   const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAnularModalOpen, setIsAnularModalOpen] = useState(false); 
+  const [isAnularModalOpen, setIsAnularModalOpen] = useState(false);
+  const [isLiberarModalOpen, setIsLiberarModalOpen] = useState(false);
 
   const fetchMuestras = useCallback(async () => {
     setLoading(true);
@@ -221,6 +245,7 @@ export default function InventarioMuestrasPage() {
 
       const matchPiso = filtroPiso === "TODOS" || muestra.area?.direccion?.piso_id?.toString() === filtroPiso;
       const matchDireccion = filtroDireccion === "TODOS" || muestra.area?.direccion_id?.toString() === filtroDireccion;
+      const matchProposito = filtroProposito === "TODOS" || muestra.tipo_muestra === filtroProposito; 
 
       let matchEstadoLegal = true;
       if (filtroEstadoLegal !== "TODOS") {
@@ -229,12 +254,12 @@ export default function InventarioMuestrasPage() {
         if (filtroEstadoLegal === "VENCIDA_CUSTODIA") matchEstadoLegal = hoy >= fechaCad;
       }
 
-      return matchBusqueda && matchPiso && matchDireccion && matchEstadoLegal;
+      return matchBusqueda && matchPiso && matchDireccion && matchEstadoLegal && matchProposito;
     });
 
     setMuestrasFiltradas(filtrados);
     setCurrentPage(1);
-  }, [busqueda, filtroPiso, filtroDireccion, filtroEstadoLegal, muestrasOriginales]);
+  }, [busqueda, filtroPiso, filtroDireccion, filtroEstadoLegal, filtroProposito, muestrasOriginales]);
 
   const totalPages = Math.ceil(muestrasFiltradas.length / ITEMS_PER_PAGE);
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
@@ -255,6 +280,11 @@ export default function InventarioMuestrasPage() {
     { value: "VENCIDA_CUSTODIA", label: "Vencidas (En Custodia)" }
   ];
 
+  const OPCIONES_PROPOSITO = [
+    { value: "CONTRAMUESTRA", label: "Contramuestras (Retención Legal)" },
+    { value: "ANALISIS", label: "Muestras Operativas (Análisis)" }
+  ];
+
   const handleOpenModal = (muestra: any) => {
     setMuestraSeleccionada(muestra);
     setIsModalOpen(true);
@@ -268,6 +298,11 @@ export default function InventarioMuestrasPage() {
   const handleOpenAnularModal = (muestra: any) => {
     setMuestraSeleccionada(muestra);
     setIsAnularModalOpen(true);
+  };
+
+  const handleLiberarMuestra = (muestra: any) => {
+    setMuestraSeleccionada(muestra);
+    setIsLiberarModalOpen(true);
   };
 
   return (
@@ -295,23 +330,50 @@ export default function InventarioMuestrasPage() {
         </Link>
       </div>
 
-      <div className="bg-white border border-slate-200 p-4 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 flex flex-col gap-4 sticky top-20 z-10">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <SearchBar
-              value={busqueda}
-              onChange={setBusqueda}
-              placeholder="Buscar por código, lote o principio activo..."
-            />
+      {/* CONTENEDOR DE FILTROS REESTRUCTURADO EN DOS NIVELES */}
+      <div className="bg-white border border-slate-200 p-6 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 sticky top-20 z-40 space-y-6">
+        
+        {/* Nivel 1: Búsqueda Principal */}
+        <div className="w-full">
+          <SearchBar
+            value={busqueda}
+            onChange={setBusqueda}
+            placeholder="Buscar por código interno, lote o principio activo..."
+          />
+        </div>
+
+        {/* Nivel 2: Selectores de Categoría */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Propósito</label>
+            <FilterSelect options={OPCIONES_PROPOSITO} value={filtroProposito} onChange={setFiltroProposito} defaultLabel="Todos los Tipos" icon={Target} />
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
+          
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Estado Legal</label>
             <FilterSelect options={OPCIONES_ESTADO_LEGAL} value={filtroEstadoLegal} onChange={setFiltroEstadoLegal} defaultLabel="Todos los Estados" icon={ShieldAlert} />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Ubicación (Piso)</label>
             <FilterSelect options={opcionesPisos} value={filtroPiso} onChange={setFiltroPiso} defaultLabel="Todos los Pisos" />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Dirección/Unidad</label>
             <FilterSelect options={opcionesDirecciones} value={filtroDireccion} onChange={setFiltroDireccion} defaultLabel="Todas las Direcciones" disabled={filtroPiso === "TODOS" && opcionesDirecciones.length === 0} />
           </div>
         </div>
-        <div className="text-[13px] font-semibold text-slate-500 w-full text-right px-2 border-t border-slate-100 pt-3">
-          Mostrando <span className="text-brand-secondary font-bold">{loading ? "..." : muestrasFiltradas.length}</span> registros activos
+
+        {/* Contador de registros inferior */}
+        <div className="flex items-center justify-between px-2 pt-4 border-t border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-brand-secondary animate-pulse" />
+            <span className="text-[12px] font-bold text-slate-400 uppercase tracking-tight">Monitoreo en tiempo real</span>
+          </div>
+          <div className="text-[13px] font-semibold text-slate-500">
+            Mostrando <span className="text-brand-secondary font-black text-base">{loading ? "..." : muestrasFiltradas.length}</span> registros activos
+          </div>
         </div>
       </div>
 
@@ -333,6 +395,7 @@ export default function InventarioMuestrasPage() {
                   onClick={() => handleOpenModal(muestra)}
                   onEdit={() => handleOpenEditModal(muestra)}
                   onAnular={() => handleOpenAnularModal(muestra)}
+                  onLiberar={() => handleLiberarMuestra(muestra)} 
                 />
               ))}
             </div>
@@ -349,10 +412,14 @@ export default function InventarioMuestrasPage() {
         )}
       </div>
 
+      {/* RENDERIZADO DE MODALES */}
       <TrazabilidadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} muestra={muestraSeleccionada} />
       <EditarMuestraModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} muestra={muestraSeleccionada} onSuccess={fetchMuestras} />
       <AnularMuestraModal isOpen={isAnularModalOpen} onClose={() => setIsAnularModalOpen(false)} muestra={muestraSeleccionada} onSuccess={fetchMuestras} />
       
+      {/* NUEVO MODAL DE LIBERACIÓN */}
+      <LiberarMuestraModal isOpen={isLiberarModalOpen} onClose={() => setIsLiberarModalOpen(false)} muestra={muestraSeleccionada} onSuccess={fetchMuestras} />
+
     </div>
   );
 }

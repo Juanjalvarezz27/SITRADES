@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   X, Activity, User, Calendar, FileText,
-  ShieldAlert, ArrowRight, MapPin, Package, Clock, Info, ChevronDown, Download, ExternalLink
+  ShieldAlert, ArrowRight, MapPin, Package, Clock, Info, ChevronDown, Download, ExternalLink, Target
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { QRCodeCanvas } from "qrcode.react";
@@ -104,6 +104,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
   const hoy = new Date();
   const fechaRetencion = new Date(muestra.fecha_fin_retencion);
   const esDescartable = hoy >= fechaRetencion;
+  const esAnalisis = muestra.tipo_muestra === "ANALISIS";
 
   // Generamos la URL dinámica apuntando a la vista pública de consulta
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -160,7 +161,13 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Principio Activo</span>
-                    <p className="font-bold text-slate-700 text-[14px] leading-tight">{muestra.principio_activo}</p>
+                    <p className="font-bold text-slate-700 text-[14px] leading-tight mb-2">{muestra.principio_activo}</p>
+                    
+                    {/* ETIQUETA DE PROPÓSITO DE LA MUESTRA */}
+                    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded border text-[10px] font-black uppercase tracking-wider ${esAnalisis ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-brand-primary/10 text-brand-primary border-brand-primary/20'}`}>
+                      <Target size={12} strokeWidth={3} />
+                      {esAnalisis ? 'Muestra Operativa (Análisis)' : 'Contramuestra Legal'}
+                    </div>
                   </div>
                   <div>
                     <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Reg. Sanitario</span>
@@ -212,20 +219,29 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
                 <div className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2">
                   <Clock size={18} className="text-blue-500" /> Tiempos Legales (Res. N° 072)
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Ingreso</span>
-                    <p className="font-bold text-slate-700 text-[11px]">{formatearFecha(muestra.creado_en)}</p>
+                
+                {/* Lógica dinámica de visualización de tiempos */}
+                {esAnalisis ? (
+                  <div className="bg-white p-4 rounded-xl border border-indigo-100 text-center shadow-sm">
+                    <p className="text-[12px] font-bold text-indigo-600 uppercase tracking-widest mb-1">Muestra Operativa</p>
+                    <p className="text-[13px] text-slate-600 font-medium">Los tiempos de retención legal (1 año) no aplican para este registro. Se liberará tras finalizar el informe.</p>
                   </div>
-                  <div className="bg-white p-2.5 rounded-xl border border-amber-100 shadow-sm">
-                    <span className="text-[10px] font-bold text-amber-600 uppercase block mb-1">Caducidad</span>
-                    <p className="font-bold text-amber-900 text-[11px]">{formatearFecha(muestra.fecha_caducidad)}</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Ingreso</span>
+                      <p className="font-bold text-slate-700 text-[11px]">{formatearFecha(muestra.creado_en)}</p>
+                    </div>
+                    <div className="bg-white p-2.5 rounded-xl border border-amber-100 shadow-sm">
+                      <span className="text-[10px] font-bold text-amber-600 uppercase block mb-1">Caducidad</span>
+                      <p className="font-bold text-amber-900 text-[11px]">{formatearFecha(muestra.fecha_caducidad)}</p>
+                    </div>
+                    <div className={`p-2.5 rounded-xl border shadow-sm ${esDescartable ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+                      <span className={`text-[10px] font-bold uppercase block mb-1 ${esDescartable ? 'text-red-600' : 'text-blue-600'}`}>Fin Retención</span>
+                      <p className={`font-bold text-[11px] ${esDescartable ? 'text-red-700' : 'text-blue-900'}`}>{formatearFecha(muestra.fecha_fin_retencion)}</p>
+                    </div>
                   </div>
-                  <div className={`p-2.5 rounded-xl border shadow-sm ${esDescartable ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-                    <span className={`text-[10px] font-bold uppercase block mb-1 ${esDescartable ? 'text-red-600' : 'text-blue-600'}`}>Fin Retención</span>
-                    <p className={`font-bold text-[11px] ${esDescartable ? 'text-red-700' : 'text-blue-900'}`}>{formatearFecha(muestra.fecha_fin_retencion)}</p>
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col">

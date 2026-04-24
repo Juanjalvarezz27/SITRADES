@@ -23,12 +23,14 @@ const formatearFecha = (fecha: string) => {
 interface MuestraPDFTemplateProps {
   muestra: any;
   historial: any[];
-  qrUrl?: string; // Recibimos la URL del QR generada en el modal principal
+  qrUrl?: string; 
 }
 
 const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
   ({ muestra, historial, qrUrl }, ref) => {
     if (!muestra) return null;
+
+    const esAnalisis = muestra.tipo_muestra === "ANALISIS";
 
     return (
       <PlantillaPDF
@@ -60,10 +62,16 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
               <p><strong className="text-slate-500 uppercase text-[9px] block">Reg. Sanitario</strong> {muestra.registro_sanitario}</p>
 
               <p><strong className="text-slate-500 uppercase text-[9px] block">Cantidad Total</strong> {muestra.cantidad} {muestra.unidad_medida?.nombre || ""}</p>
-
               <p><strong className="text-slate-500 uppercase text-[9px] block">Tipo de Empaque</strong> {muestra.tipo_empaque?.nombre || "N/A"}</p>
 
-              <p className="col-span-2"><strong className="text-slate-500 uppercase text-[9px] block">Propósito del Análisis</strong> {muestra.proposito_analisis}</p>
+              {/* NUEVO: Clasificación Legal */}
+              <p><strong className="text-slate-500 uppercase text-[9px] block">Clasificación Legal</strong> 
+                <span className={esAnalisis ? "text-indigo-700 font-bold" : "text-brand-primary font-bold"}>
+                  {esAnalisis ? 'Muestra Operativa (Análisis)' : 'Contramuestra Legal'}
+                </span>
+              </p>
+
+              <p className="col-span-2 mt-1"><strong className="text-slate-500 uppercase text-[9px] block">Propósito del Análisis</strong> {muestra.proposito_analisis}</p>
             </div>
           </div>
 
@@ -78,20 +86,28 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
               <p className="col-span-2"><strong className="text-slate-500 uppercase text-[9px] block">Registrado Por</strong> {muestra.usuarioRegistrador?.nombre || "Sistema"} ({formatearFechaHora(muestra.creado_en)})</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-white border border-slate-200 p-2.5 rounded-xl">
-                <span className="block text-[9px] font-bold text-slate-500 uppercase">Ingreso</span>
-                <span className="font-bold text-[12px] text-slate-800">{formatearFecha(muestra.creado_en)}</span>
+            {/* NUEVO: Lógica condicional de tiempos igual a la del modal */}
+            {esAnalisis ? (
+              <div className="bg-white border border-indigo-100 p-3 rounded-xl text-center">
+                <span className="block text-[10px] font-bold text-indigo-600 uppercase mb-1">Muestra Operativa</span>
+                <span className="font-medium text-[11px] text-slate-600">Los tiempos de retención legal (1 año) no aplican para este registro.</span>
               </div>
-              <div className="bg-white border border-amber-200 p-2.5 rounded-xl">
-                <span className="block text-[9px] font-bold text-amber-600 uppercase">Caducidad</span>
-                <span className="font-bold text-[12px] text-amber-900">{formatearFecha(muestra.fecha_caducidad)}</span>
+            ) : (
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-white border border-slate-200 p-2.5 rounded-xl">
+                  <span className="block text-[9px] font-bold text-slate-500 uppercase">Ingreso</span>
+                  <span className="font-bold text-[12px] text-slate-800">{formatearFecha(muestra.creado_en)}</span>
+                </div>
+                <div className="bg-white border border-amber-200 p-2.5 rounded-xl">
+                  <span className="block text-[9px] font-bold text-amber-600 uppercase">Caducidad</span>
+                  <span className="font-bold text-[12px] text-amber-900">{formatearFecha(muestra.fecha_caducidad)}</span>
+                </div>
+                <div className="bg-white border border-red-200 p-2.5 rounded-xl">
+                  <span className="block text-[9px] font-bold text-red-600 uppercase">Fin Retención</span>
+                  <span className="font-bold text-[12px] text-red-900">{formatearFecha(muestra.fecha_fin_retencion)}</span>
+                </div>
               </div>
-              <div className="bg-white border border-red-200 p-2.5 rounded-xl">
-                <span className="block text-[9px] font-bold text-red-600 uppercase">Fin Retención</span>
-                <span className="font-bold text-[12px] text-red-900">{formatearFecha(muestra.fecha_fin_retencion)}</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* BLOQUE 3: HISTORIAL */}

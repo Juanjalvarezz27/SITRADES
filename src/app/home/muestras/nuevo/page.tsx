@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Save, Package, ShieldAlert,
-  CalendarClock, MapPin, Loader2, Info, ChevronDown, Check, Plus, X, Layers
+  CalendarClock, MapPin, Loader2, Info, ChevronDown, Check, Plus, X, Layers, Target
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -142,11 +142,8 @@ export default function RegistroMuestraPage() {
   const [empaques, setEmpaques] = useState<{value: string, label: string}[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
 
-  const currentYear = new Date().getFullYear();
-  const MIN_DATE = `${currentYear - 15}-01-01`;
-  const MAX_DATE = `${currentYear + 15}-12-31`;
-
   const [formData, setFormData] = useState({
+    tipo_muestra: "CONTRAMUESTRA", // Valor por defecto
     codigo_interno: "",
     lote: "",
     registro_sanitario: "",
@@ -174,16 +171,15 @@ export default function RegistroMuestraPage() {
         const dataUnidades = await resUnidades.json();
         const dataEmpaques = await resEmpaques.json();
 
-        // FILTRO DE HERENCIA: Solo mostramos áreas si ellas y sus padres están activos
-        const areasFiltradas = dataAreas.filter((a: any) => 
-          a.activo !== false && 
-          a.direccion?.activo !== false && 
+        const areasFiltradas = dataAreas.filter((a: any) =>
+          a.activo !== false &&
+          a.direccion?.activo !== false &&
           a.direccion?.piso?.activo !== false
         );
 
-        setAreasOpciones(areasFiltradas.map((a: any) => ({ 
-          value: a.id.toString(), 
-          label: `${a.nombre} — ${a.direccion?.nombre} (${a.direccion?.piso?.nombre})` 
+        setAreasOpciones(areasFiltradas.map((a: any) => ({
+          value: a.id.toString(),
+          label: `${a.nombre} — ${a.direccion?.nombre} (${a.direccion?.piso?.nombre})`
         })));
 
         setUnidades(dataUnidades.map((u: any) => ({ value: u.id.toString(), label: u.nombre })));
@@ -239,11 +235,17 @@ export default function RegistroMuestraPage() {
     setIsSubmitting(true);
     const toastId = toast.loading("Registrando muestra...");
 
+    // Si es Operativa (ANALISIS), la fecha de retención no importa. Mandamos la de caducidad para llenar la BD.
+    const payload = {
+      ...formData,
+      fecha_fin_retencion: formData.tipo_muestra === "ANALISIS" ? formData.fecha_caducidad : fechaFinRetencion
+    };
+
     try {
       const res = await fetch("/api/muestras", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, fecha_fin_retencion: fechaFinRetencion }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -259,7 +261,7 @@ export default function RegistroMuestraPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-10 w-full max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       <div className="flex flex-col gap-2 mb-8">
         <Link href="/home/muestras" className="inline-flex items-center gap-2 text-slate-500 hover:text-brand-primary transition-colors text-[14px] font-semibold w-fit mb-2">
           <ArrowLeft size={16} /> Volver al inventario
@@ -269,6 +271,45 @@ export default function RegistroMuestraPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* SELECTOR DE PROPÓSITO (Camino A vs Camino B) */}
+        <div className="bg-white border border-slate-100 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600"><Target size={20} /></div>
+            <h2 className="text-[18px] font-bold text-slate-800">Propósito de la Muestra</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Camino A */}
+            <label className={`cursor-pointer p-5 rounded-2xl border-2 transition-all ${formData.tipo_muestra === 'ANALISIS' ? 'border-brand-primary bg-brand-primary/5 shadow-sm' : 'border-slate-200 hover:border-brand-primary/30'}`}>
+              <input type="radio" name="tipo_muestra" value="ANALISIS" checked={formData.tipo_muestra === 'ANALISIS'} onChange={handleChange} className="hidden" />
+              <div className="flex items-center gap-4">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${formData.tipo_muestra === 'ANALISIS' ? 'border-brand-primary' : 'border-slate-300'}`}>
+                  {formData.tipo_muestra === 'ANALISIS' && <div className="w-3 h-3 bg-brand-primary rounded-full" />}
+                </div>
+                <div>
+                  <span className={`block font-black text-[15px] ${formData.tipo_muestra === 'ANALISIS' ? 'text-brand-primary' : 'text-slate-700'}`}>Muestra Operativa (Análisis)</span>
+                  <span className="text-[12px] text-slate-500 font-medium leading-tight block mt-1">Se analiza y se descarta manualmente al aprobar el informe.</span>
+                </div>
+              </div>
+            </label>
+
+            {/* Camino B */}
+            <label className={`cursor-pointer p-5 rounded-2xl border-2 transition-all ${formData.tipo_muestra === 'CONTRAMUESTRA' ? 'border-brand-primary bg-brand-primary/5 shadow-sm' : 'border-slate-200 hover:border-brand-primary/30'}`}>
+              <input type="radio" name="tipo_muestra" value="CONTRAMUESTRA" checked={formData.tipo_muestra === 'CONTRAMUESTRA'} onChange={handleChange} className="hidden" />
+              <div className="flex items-center gap-4">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${formData.tipo_muestra === 'CONTRAMUESTRA' ? 'border-brand-primary' : 'border-slate-300'}`}>
+                  {formData.tipo_muestra === 'CONTRAMUESTRA' && <div className="w-3 h-3 bg-brand-primary rounded-full" />}
+                </div>
+                <div>
+                  <span className={`block font-black text-[15px] ${formData.tipo_muestra === 'CONTRAMUESTRA' ? 'text-brand-primary' : 'text-slate-700'}`}>Contramuestra Legal</span>
+                  <span className="text-[12px] text-slate-500 font-medium leading-tight block mt-1">Se resguarda por ley. El sistema alertará 1 año tras su vencimiento.</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Identificación */}
           <div className="bg-white border border-slate-100 rounded-[2rem] p-6 sm:p-8 shadow-sm">
@@ -339,10 +380,19 @@ export default function RegistroMuestraPage() {
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Fecha Caducidad <span className="text-red-500">*</span></label>
                 <input required type="date" name="fecha_caducidad" value={formData.fecha_caducidad} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary" />
               </div>
-              <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
-                <label className="block text-[13px] font-bold text-blue-800 mb-1.5">Fin Retención Legal (Automático)</label>
-                <input type="date" readOnly value={fechaFinRetencion} className="w-full px-4 py-3 bg-white/60 border border-blue-200 rounded-xl text-[14px] font-bold text-blue-900 cursor-not-allowed outline-none" />
-              </div>
+              
+              {/* Lógica Visual de Tiempos Legales */}
+              {formData.tipo_muestra === "CONTRAMUESTRA" ? (
+                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                  <label className="block text-[13px] font-bold text-blue-800 mb-1.5">Fin Retención Legal (Automático)</label>
+                  <input type="date" readOnly value={fechaFinRetencion} className="w-full px-4 py-3 bg-white/60 border border-blue-200 rounded-xl text-[14px] font-bold text-blue-900 cursor-not-allowed outline-none" />
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <label className="block text-[13px] font-bold text-slate-500 mb-1.5">Retención Legal</label>
+                  <p className="text-[13px] font-medium text-slate-400 italic">No aplica. Se enviará a descarte al culminar el análisis.</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -362,7 +412,7 @@ export default function RegistroMuestraPage() {
                 <input name="ubicacion_detalle" value={formData.ubicacion_detalle} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary" />
               </div>
               <div>
-                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Propósito <span className="text-red-500">*</span></label>
+                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Observaciones Adicionales</label>
                 <textarea required name="proposito_analisis" value={formData.proposito_analisis} onChange={handleChange} rows={2} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary resize-none" />
               </div>
             </div>
