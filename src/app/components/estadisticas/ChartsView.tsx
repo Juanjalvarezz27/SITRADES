@@ -96,7 +96,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
         <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[450px]">
           <h3 className="font-black text-slate-800 text-[16px] uppercase tracking-wider mb-6">Distribución de Estados</h3>
           <div className="flex-1 w-full min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
               <PieChart>
                 <Pie data={dataEstados} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={8} dataKey="valor" stroke="none">
                   {dataEstados.map((_, i) => <Cell key={i} fill={COLORS_ESTADOS[i % COLORS_ESTADOS.length]} />)}
@@ -112,7 +112,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
         <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[450px]">
           <h3 className="font-black text-slate-800 text-[16px] uppercase tracking-wider mb-6">Nivel de Riesgo Biológico</h3>
           <div className="flex-1 w-full min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
               <PieChart>
                 <Pie data={dataRiesgos} cx="50%" cy="50%" innerRadius={0} outerRadius={120} dataKey="valor" stroke="#fff" strokeWidth={4}>
                   {dataRiesgos.map((_, i) => <Cell key={i} fill={COLORS_RIESGOS[i % COLORS_RIESGOS.length]} />)}
@@ -137,7 +137,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
             {/* Altura dinámica: 50px por cada barra */}
             <div style={{ height: `${Math.max(dataAreas.length * 50, 300)}px` }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={dataAreas} layout="vertical" margin={{ left: -10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                   <XAxis type="number" hide />
@@ -160,7 +160,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
           </div>
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
             <div style={{ height: `${Math.max(dataPersonal.length * 50, 300)}px` }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={dataPersonal} layout="vertical" margin={{ left: -10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                   <XAxis type="number" hide />
@@ -183,7 +183,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
           </div>
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
             <div style={{ height: `${Math.max(dataEmpaques.length * 50, 300)}px` }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={dataEmpaques} layout="vertical" margin={{ left: -10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                   <XAxis type="number" hide />
