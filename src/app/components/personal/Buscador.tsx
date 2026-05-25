@@ -32,7 +32,7 @@ const quitarAcentos = (str: string) => {
 function CustomSelect({ 
   options, value, onChange, placeholder, icon: Icon, disabled = false 
 }: { 
-  options: {value: string, label: string}[], value: string, onChange: (v: string) => void, placeholder: string, icon: any, disabled?: boolean
+  options: {value: string, label: string}[], value: string, onChange: (v: string) => void, placeholder: string, icon: any  , disabled?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

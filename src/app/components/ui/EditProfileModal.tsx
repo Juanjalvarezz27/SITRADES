@@ -87,8 +87,8 @@ export default function EditProfileModal({ isOpen, onClose, userData, onSuccess 
       await update({ name: formData.nombre, email: formData.email });
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Error desconocido");
     } finally {
       setSaving(false);
     }

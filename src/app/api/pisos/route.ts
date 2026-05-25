@@ -49,8 +49,8 @@ export async function POST(request: Request) {
 
     // Limpiamos las direcciones vacías que el usuario pudo dejar en el formulario
     const direccionesValidas = direcciones
-      .filter((d: any) => d.nombre && d.nombre.trim() !== "")
-      .map((d: any) => ({ nombre: d.nombre.trim() }));
+      .filter((d: { nombre?: string }) => d.nombre && d.nombre.trim() !== "")
+      .map((d: { nombre: string }) => ({ nombre: d.nombre.trim() }));
 
     // Prisma permite crear el padre (Piso) y sus hijos (Direcciones) en 1 sola consulta
     const nuevoPiso = await prisma.piso.create({

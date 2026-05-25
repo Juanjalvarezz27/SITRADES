@@ -51,7 +51,7 @@ export async function PATCH(request: Request) {
     }
 
     // Preparamos la data a actualizar
-    const dataToUpdate: any = { nombre, email };
+    const dataToUpdate: Record<string, unknown> = { nombre, email };
 
     // Si el usuario envió una contraseña, la encriptamos antes de guardarla
     if (password && password.trim() !== "") {
@@ -67,8 +67,8 @@ export async function PATCH(request: Request) {
     const { password_hash, ...datosSeguros } = actualizado;
     return NextResponse.json(datosSeguros);
 
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error: unknown) {
+    if ((error as any  ).code === 'P2002') {
       return NextResponse.json({ error: "Este correo electrónico ya está registrado por otro usuario." }, { status: 400 });
     }
     return NextResponse.json({ error: "Error al actualizar el perfil" }, { status: 500 });

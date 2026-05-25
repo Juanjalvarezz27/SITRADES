@@ -31,8 +31,8 @@ export async function POST(request: Request) {
       data: { nombre: body.nombre }
     });
     return NextResponse.json(nuevo, { status: 201 });
-  } catch (error: any) {
-    if (error.code === 'P2002') return NextResponse.json({ error: "Este método ya existe" }, { status: 400 });
+  } catch (error: unknown) {
+    if ((error as any  ).code === 'P2002') return NextResponse.json({ error: "Este método ya existe" }, { status: 400 });
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

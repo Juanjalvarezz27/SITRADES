@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const direccion = searchParams.get("direccion") || "";
     const area = searchParams.get("area") || "";
 
-    const whereConditions: any = {
+    const whereConditions: Record<string, unknown> = {
       OR: [
         { nombre: { contains: query, mode: "insensitive" } },
         { email: { contains: query, mode: "insensitive" } },

@@ -6,7 +6,7 @@ import {
   MapPin, Building2, Layers, ChevronDown, Check, Eye, EyeOff 
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { UsuarioAPI, Rol, PisoData, SelectOption } from "@/types";
+import { UsuarioAPI, Rol, PisoAPI, SelectOption } from "@/types";
 
 interface CustomSelectProps {
   name: string;
@@ -124,7 +124,7 @@ export default function EditarUsuarioModal({
   onUserUpdated,
 }: EditarUsuarioModalProps) {
   const [roles, setRoles] = useState<Rol[]>([]);
-  const [ubicaciones, setUbicaciones] = useState<PisoData[]>([]);
+  const [ubicaciones, setUbicaciones] = useState<PisoAPI[]>([]);
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -228,9 +228,9 @@ export default function EditarUsuarioModal({
       });
       onUserUpdated();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.update(toastId, {
-        render: err.message,
+        render: err instanceof Error ? err.message : "Error desconocido",
         type: "error",
         isLoading: false,
         autoClose: 4000,

@@ -6,11 +6,11 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
 
-    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getToken({ req: request as any  , secret: process.env.NEXTAUTH_SECRET });
     if (!token || !token.id) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const body = await request.json();
@@ -76,10 +76,10 @@ await prisma.$transaction([
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("ERROR FATAL EN PRISMA (DESCARTE):", error);
     return NextResponse.json({
-      error: error.message || "Error interno al procesar el descarte"
+      error: error instanceof Error ? error.message : "Error interno al procesar el descarte"
     }, { status: 500 });
   }
 }

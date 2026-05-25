@@ -10,7 +10,7 @@ export async function PUT(
 ) {
   try {
     const token = await getToken({ 
-      req: request as any, 
+      req: request as any  , 
       secret: process.env.NEXTAUTH_SECRET 
     });
 
@@ -54,7 +54,7 @@ export async function PUT(
 
     return NextResponse.json(muestraActualizada, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error al actualizar muestra:", error);
     return NextResponse.json({ error: "Error interno al actualizar" }, { status: 500 });
   }

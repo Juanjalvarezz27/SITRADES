@@ -47,7 +47,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
 
       await html2pdf().set(opt).from(element).save();
       setIsExporting(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsExporting(false);
       toast.error("Error técnico al generar el documento.");
     }
@@ -64,7 +64,7 @@ export default function CertificadoDescarteModal({ isOpen, onClose, muestra }: C
 
   // Buscamos el evento de Seguridad Industrial en el historial
   const eventoRecoleccion = muestra.historiales?.find(
-    (h: any) => h.motivo && h.motivo.includes("Seguridad Industrial")
+    (h: any  ) => h.motivo && h.motivo.includes("Seguridad Industrial")
   );
 
   const responsableSeguridad = eventoRecoleccion?.usuario?.nombre || "En tránsito / Pendiente";

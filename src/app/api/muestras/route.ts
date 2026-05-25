@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const fase = searchParams.get("fase") || "activa";
     const hoy = new Date();
 
-    let whereClause: any = {};
+    let whereClause: Record<string, unknown> = {};
 
     if (fase === "activa") {
       whereClause = {
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
 
   try {
     const token = await getToken({
-      req: request as any,
+      req: request as any  ,
       secret: process.env.NEXTAUTH_SECRET
     });
 
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
         unidad_medida_id: Number(body.unidad_medida_id),
         riesgo_bioseguridad: body.riesgo_bioseguridad,
         cantidad: Number(body.cantidad),
-        tipo_muestra: tipoMuestra as any,
+        tipo_muestra: tipoMuestra as any  ,
         proposito_analisis: body.proposito_analisis,
         fecha_caducidad: new Date(body.fecha_caducidad),
         fecha_fin_retencion: new Date(body.fecha_fin_retencion),
@@ -221,11 +221,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(nuevaMuestra, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error al registrar muestra:", error);
 
-    if (error.code === 'P2002') {
-      const target = error.meta?.target;
+    if ((error as any  ).code === 'P2002') {
+      const target = (error as any).meta?.target;
       if (target && target.includes('codigo_interno')) {
         return NextResponse.json(
           { error: `El Código Interno "${body?.codigo_interno || 'ingresado'}" ya existe en el sistema. Verifique y use uno distinto.` },

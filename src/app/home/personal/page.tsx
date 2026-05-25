@@ -138,8 +138,8 @@ export default function DirectorioPersonalPage() {
       setIsDeleteModalOpen(false);
       fetchUsuarios();
 
-    } catch (err: any) {
-      toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 });
+    } catch (err: unknown) {
+      toast.update(toastId, { render: err instanceof Error ? err.message : "Error desconocido", type: "error", isLoading: false, autoClose: 4000 });
     } finally {
       setIsDeleting(false);
     }

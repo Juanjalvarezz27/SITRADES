@@ -19,7 +19,7 @@ export default function ConfigTable({ data, endpoint, onRefresh, isSoftDelete }:
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToToggle, setItemToToggle] = useState<any>(null);
 
-  const handleOpenAction = (item: any) => {
+  const handleOpenAction = (item: any  ) => {
     setItemToToggle(item);
     setIsModalOpen(true);
   };

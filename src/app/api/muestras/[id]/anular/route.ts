@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getToken({ req: request as any  , secret: process.env.NEXTAUTH_SECRET });
     
     // 1. Doble validación de seguridad (Token y Rol)
     if (!token || !token.id || token.rol !== "Administrador") {
@@ -53,7 +53,7 @@ export async function POST(
 
     return NextResponse.json(muestraAnulada, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error al anular muestra:", error);
     return NextResponse.json({ error: "Error interno al procesar la anulación" }, { status: 500 });
   }

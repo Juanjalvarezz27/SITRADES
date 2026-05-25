@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-export async function PATCH(request: Request, context: any) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
     const id = params?.id;
@@ -13,7 +13,7 @@ export async function PATCH(request: Request, context: any) {
       return NextResponse.json({ error: "ID de usuario no proporcionado" }, { status: 400 });
     }
 
-    const dataToUpdate: any = {};
+    const dataToUpdate: Record<string, unknown> = {};
     if (activo !== undefined) dataToUpdate.activo = activo;
     if (nombre !== undefined) dataToUpdate.nombre = nombre.trim();
 
@@ -37,7 +37,7 @@ export async function PATCH(request: Request, context: any) {
   }
 }
 
-export async function PUT(request: Request, context: any) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
     const id = params?.id;
@@ -46,7 +46,7 @@ export async function PUT(request: Request, context: any) {
 
     if (!id) return NextResponse.json({ error: "ID no proporcionado" }, { status: 400 });
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       nombre,
       email,
       rol_id: parseInt(rol_id),

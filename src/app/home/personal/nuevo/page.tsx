@@ -15,7 +15,7 @@ interface PisoData { id: number; nombre: string; direcciones: DireccionData[]; }
 function CustomSelectForm({ 
   name, options, value, onChange, placeholder, icon: Icon, disabled = false, required = false
 }: { 
-  name: string, options: {value: string, label: string}[], value: string, onChange: (name: string, value: string) => void, placeholder: string, icon: any, disabled?: boolean, required?: boolean
+  name: string, options: {value: string, label: string}[], value: string, onChange: (name: string, value: string) => void, placeholder: string, icon: any  , disabled?: boolean, required?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -146,8 +146,8 @@ export default function NuevoPersonalPage() {
       router.push("/home/personal");
       router.refresh();
 
-    } catch (err: any) {
-      toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 });
+    } catch (err: unknown) {
+      toast.update(toastId, { render: err instanceof Error ? err.message : "Error desconocido", type: "error", isLoading: false, autoClose: 4000 });
     } finally {
       setLoading(false);
     }

@@ -24,7 +24,7 @@ const quitarAcentos = (str: string) => {
 
 export default function ColaDescartePage() {
   const { data: session } = useSession(); // <-- SESIÓN PARA EL ROL
-  const userRol = (session?.user as any)?.rol || "";
+  const userRol = (session?.user as any  )?.rol || "";
 
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
@@ -41,7 +41,7 @@ export default function ColaDescartePage() {
   const [muestraSeleccionada, setMuestraSeleccionada] = useState<any | null>(null);
 
   const opcionesAreas = Array.from(
-    new Set(muestrasOriginales.map((m) => m.area?.nombre))
+    new Set(muestrasOriginales.map((m: any) => m.area?.nombre))
   )
     .filter(Boolean)
     .sort()

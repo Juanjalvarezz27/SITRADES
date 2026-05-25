@@ -34,7 +34,7 @@ export async function GET() {
 
     return NextResponse.json(pendientes);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error al obtener bolsas pendientes:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }

@@ -142,8 +142,8 @@ export default function AreaModal({ isOpen, onClose, areaToEdit, onSaved }: Area
       toast.update(toastId, { render: isEditing ? "¡Área actualizada!" : "¡Área registrada!", type: "success", isLoading: false, autoClose: 3000 });
       onSaved();
       onClose();
-    } catch (err: any) {
-      toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 });
+    } catch (err: unknown) {
+      toast.update(toastId, { render: err instanceof Error ? err.message : "Error desconocido", type: "error", isLoading: false, autoClose: 4000 });
     } finally {
       setLoading(false);
     }

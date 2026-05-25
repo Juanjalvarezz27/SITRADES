@@ -30,7 +30,7 @@ export default function CentroRecoleccionPage() {
   
   // CONTROL DE ROLES
   const nombreUsuario = session?.user?.name || "Personal Autorizado";
-  const rolUsuario = (session?.user as any)?.rol || ""; 
+  const rolUsuario = (session?.user as any  )?.rol || ""; 
   const rolesPermitidos = ["Administrador", "Seguridad Industrial"];
   const tienePermiso = rolesPermitidos.includes(rolUsuario);
 

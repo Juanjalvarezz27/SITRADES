@@ -59,8 +59,8 @@ export default function LiberarMuestraModal({ isOpen, onClose, muestra, onSucces
       toast.update(toastId, { render: "¡Muestra liberada y enviada a descarte!", type: "success", isLoading: false, autoClose: 3000 });
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.update(toastId, { render: error.message, type: "error", isLoading: false, autoClose: 4000 });
+    } catch (error: unknown) {
+      toast.update(toastId, { render: error instanceof Error ? error.message : "Error desconocido", type: "error", isLoading: false, autoClose: 4000 });
       setIsSubmitting(false);
     }
   };

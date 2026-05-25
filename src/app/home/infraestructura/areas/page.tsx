@@ -150,8 +150,8 @@ export default function GestionAreasPage() {
       toast.update(toastId, { render: "¡Estado actualizado!", type: "success", isLoading: false, autoClose: 3000 });
       setIsDeleteModalOpen(false); 
       fetchAreas();
-    } catch (err: any) { 
-      toast.update(toastId, { render: err.message, type: "error", isLoading: false, autoClose: 4000 }); 
+    } catch (err: unknown) { 
+      toast.update(toastId, { render: err instanceof Error ? err.message : "Error desconocido", type: "error", isLoading: false, autoClose: 4000 }); 
     } finally { 
       setIsDeleting(false); 
     }

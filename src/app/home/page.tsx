@@ -85,7 +85,7 @@ export default function DashboardPage() {
             <div className="p-2 bg-purple-100 text-purple-600 rounded-xl shrink-0"><Shield size={18} /></div>
             <div className="min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Nivel de Acceso</p>
-              <p className="text-[13px] font-black text-purple-700 truncate pr-2">{(session?.user as any)?.rol || "Cargando..."}</p>
+              <p className="text-[13px] font-black text-purple-700 truncate pr-2">{(session?.user as any  )?.rol || "Cargando..."}</p>
             </div>
           </div>
         </div>

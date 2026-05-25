@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function PUT(request: Request, context: any) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
     const id = parseInt(params?.id);
@@ -24,7 +24,7 @@ export async function PUT(request: Request, context: any) {
   }
 }
 
-export async function PATCH(request: Request, context: any) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
     const id = parseInt(params?.id);
@@ -33,7 +33,7 @@ export async function PATCH(request: Request, context: any) {
 
     if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
-    const dataToUpdate: any = {};
+    const dataToUpdate: Record<string, unknown> = {};
     if (activo !== undefined) dataToUpdate.activo = activo;
     if (nombre !== undefined) dataToUpdate.nombre = nombre.trim();
 

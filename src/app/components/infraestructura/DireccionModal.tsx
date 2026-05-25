@@ -84,7 +84,7 @@ export default function DireccionModal({ isOpen, onClose, direccionToEdit, onSav
       if (!res.ok) throw new Error("Error al guardar");
       toast.success("¡Operación exitosa!");
       onSaved(); onClose();
-    } catch (err: any) { toast.error(err.message); } finally { setLoading(false); }
+    } catch (err: unknown) { toast.error(err instanceof Error ? err.message : "Error desconocido"); } finally { setLoading(false); }
   };
 
   return (

@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const { nombre } = await request.json();
@@ -17,15 +17,15 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     await prisma.tipoEmpaque.delete({
       where: { id: Number(id) }
     });
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    if (error.code === 'P2003') {
+  } catch (error: unknown) {
+    if ((error as any  ).code === 'P2003') {
       return NextResponse.json({ error: "No se puede eliminar: este empaque esta en uso." }, { status: 400 });
     }
     return NextResponse.json({ error: "Error al eliminar" }, { status: 500 });

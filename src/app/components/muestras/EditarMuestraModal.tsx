@@ -5,7 +5,7 @@ import { X, Save, FlaskConical, Loader2, ChevronDown, Check, Plus, Info } from "
 import { toast } from "react-toastify";
 
 // --- COMPONENTE SELECT PREMIUM (DISEÑO PILL + ANCHO ADAPTATIVO) ---
-function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any) {
+function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -126,7 +126,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
 }
 
 // --- MODAL PRINCIPAL ---
-export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess }: any) {
+export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess }: any  ) {
   const [loading, setLoading] = useState(false);
   
   const [areas, setAreas] = useState<any[]>([]); 
@@ -287,7 +287,7 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
                   <CustomSelect 
                     name="unidad_medida_id" 
                     value={formData.unidad_medida_id} 
-                    options={unidades.map((u:any) => ({ value: u.id.toString(), label: u.nombre }))} 
+                    options={unidades.map((u) => ({ value: u.id.toString(), label: u.nombre }))} 
                     onChange={handleSelectChange} 
                     onAddNew={crearUnidadMedida} 
                   />
@@ -297,7 +297,7 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
                   <CustomSelect 
                     name="tipo_empaque_id" 
                     value={formData.tipo_empaque_id} 
-                    options={empaques.map((e:any) => ({ value: e.id.toString(), label: e.nombre }))} 
+                    options={empaques.map((e) => ({ value: e.id.toString(), label: e.nombre }))} 
                     onChange={handleSelectChange} 
                     onAddNew={crearTipoEmpaque} 
                   />
@@ -324,7 +324,7 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
                   <CustomSelect 
                     name="area_id" 
                     value={formData.area_id} 
-                    options={areas.map((a:any) => ({ value: a.id.toString(), label: a.nombre }))} 
+                    options={areas.map((a) => ({ value: a.id.toString(), label: a.nombre }))} 
                     onChange={handleSelectChange} 
                     placeholder="Seleccione un área..."
                   />

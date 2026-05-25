@@ -36,7 +36,7 @@ const DescartePDFTemplate = forwardRef<HTMLDivElement, DescartePDFTemplateProps>
 
     // Extraer datos de Seguridad Industrial desde el historial
     const eventoRecoleccion = muestra.historiales?.find(
-      (h: any) => h.motivo && h.motivo.includes("Seguridad Industrial")
+      (h: any  ) => h.motivo && h.motivo.includes("Seguridad Industrial")
     );
     const responsableSeguridad = eventoRecoleccion?.usuario?.nombre || "PENDIENTE DE TRASLADO";
     const fechaRecoleccion = eventoRecoleccion?.fecha_cambio;

@@ -189,7 +189,7 @@ function MuestraCard({
 // --- COMPONENTE PRINCIPAL ---
 export default function InventarioMuestrasPage() {
   const { data: session } = useSession();
-  const userRol = (session?.user as any)?.rol || "";
+  const userRol = (session?.user as any  )?.rol || "";
 
   const [muestrasOriginales, setMuestrasOriginales] = useState<any[]>([]);
   const [muestrasFiltradas, setMuestrasFiltradas] = useState<any[]>([]);
@@ -267,13 +267,13 @@ export default function InventarioMuestrasPage() {
   const muestrasPaginadas = muestrasFiltradas.slice(indexOfFirstItem, indexOfLastItem);
 
   const opcionesPisos = Array.from(new Map(muestrasOriginales.filter(m => m.area?.direccion?.piso).map(m => [m.area.direccion.piso.id, m.area.direccion.piso])).values())
-    .map((p: any) => ({ value: p.id.toString(), label: p.nombre }));
+    .map((p) => ({ value: p.id.toString(), label: p.nombre }));
 
   const opcionesDirecciones = Array.from(new Map(muestrasOriginales
     .filter(m => filtroPiso === "TODOS" || m.area?.direccion?.piso_id?.toString() === filtroPiso)
     .filter(m => m.area?.direccion)
     .map(m => [m.area.direccion.id, m.area.direccion])).values())
-    .map((d: any) => ({ value: d.id.toString(), label: d.nombre }));
+    .map((d) => ({ value: d.id.toString(), label: d.nombre }));
 
   const OPCIONES_ESTADO_LEGAL = [
     { value: "VIGENTE", label: "Vigentes (Útiles)" },

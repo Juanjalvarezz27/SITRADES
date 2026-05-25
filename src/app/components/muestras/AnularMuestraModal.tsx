@@ -39,8 +39,8 @@ export default function AnularMuestraModal({ isOpen, onClose, muestra, onSuccess
       setMotivo("");
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.update(toastId, { render: error.message, type: "error", isLoading: false, autoClose: 4000 });
+    } catch (error: unknown) {
+      toast.update(toastId, { render: error instanceof Error ? error.message : "Error desconocido", type: "error", isLoading: false, autoClose: 4000 });
       setIsSubmitting(false);
     }
   };

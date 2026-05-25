@@ -72,7 +72,7 @@ export async function seedEstructuraFisica(prisma: PrismaClient) {
 
       // 3. Recorrer e insertar sus Áreas exactas
       for (const areaNombre of dirData.areas) {
-        let area = await prisma.area.findFirst({
+        const area = await prisma.area.findFirst({
           where: { nombre: areaNombre, direccion_id: direccion.id },
         });
 

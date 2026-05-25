@@ -13,7 +13,7 @@ export async function PATCH(
 ) {
   try {
     const token = await getToken({
-      req: request as any,
+      req: request as any  ,
       secret: process.env.NEXTAUTH_SECRET
     });
 
@@ -85,7 +85,7 @@ export async function PATCH(
 
     return NextResponse.json({ message: "Muestra liberada con éxito", data: resultado }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error al liberar la muestra operativa:", error);
     return NextResponse.json({ error: "Error interno al procesar la liberación operativa." }, { status: 500 });
   }

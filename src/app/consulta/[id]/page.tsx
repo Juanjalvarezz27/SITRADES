@@ -32,8 +32,8 @@ export default function ConsultaMuestraPage() {
         const encontrada = await res.json();
         setMuestra(encontrada);
 
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {
         setLoading(false);
       }

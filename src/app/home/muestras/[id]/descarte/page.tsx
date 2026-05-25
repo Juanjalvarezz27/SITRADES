@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 
-function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any) {
+function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -261,8 +261,8 @@ export default function DescarteWizardPage() {
 
       toast.success("Descarte registrado. La bolsa ha sido notificada a Seguridad Industrial.");
       router.push("/home/muestras/recoleccion");
-    } catch (error: any) {
-      toast.error(error.message || "Error al ejecutar el protocolo.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Error al ejecutar el protocolo.");
       setIsSubmitting(false);
     }
   };

@@ -11,9 +11,9 @@ export async function GET() {
       orderBy: { nombre: "asc" }
     });
     return NextResponse.json(unidades);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error en GET unidades-medida:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Error desconocido" }, { status: 500 });
   }
 }
 
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
       data: { nombre }
     });
     return NextResponse.json(nueva);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error en POST unidades-medida:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Error desconocido" }, { status: 500 });
   }
 }

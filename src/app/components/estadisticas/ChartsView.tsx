@@ -18,7 +18,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
   
   // 1. DATA: Estados (SE QUEDA IGUAL)
   const dataEstados = useMemo(() => {
-    const conteo = muestras.reduce((acc: any, m: any) => {
+    const conteo = muestras.reduce((acc: any  , m: any  ) => {
       let label = m.estado?.nombre || "Desconocido";
       if (label.includes("Recibida")) label = "Activas";
       if (label.includes("Vencida")) label = "Vencidas";
@@ -33,7 +33,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
 
   // 2. DATA: Áreas (ESCALABLE)
   const dataAreas = useMemo(() => {
-    const conteo = muestras.reduce((acc: any, m: any) => {
+    const conteo = muestras.reduce((acc: any  , m: any  ) => {
       const nombre = m.area?.nombre || "Sin Área";
       acc[nombre] = (acc[nombre] || 0) + 1;
       return acc;
@@ -45,7 +45,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
 
   // 3. DATA: Personal (ESCALABLE)
   const dataPersonal = useMemo(() => {
-    const conteo = muestras.reduce((acc: any, m: any) => {
+    const conteo = muestras.reduce((acc: any  , m: any  ) => {
       const nombre = m.usuarioRegistrador?.nombre || "Desconocido";
       acc[nombre] = (acc[nombre] || 0) + 1;
       return acc;
@@ -57,7 +57,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
 
 // 4. DATA: Riesgo (SE QUEDA IGUAL)
   const dataRiesgos = useMemo(() => {
-    const conteo = muestras.reduce((acc: any, m: any) => {
+    const conteo = muestras.reduce((acc: any  , m: any  ) => {
       const nombre = m.riesgo_bioseguridad || "No evaluado";
       acc[nombre] = (acc[nombre] || 0) + 1;
       return acc;
@@ -67,7 +67,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
 
   // 5. DATA: Empaque (ESCALABLE)
   const dataEmpaques = useMemo(() => {
-    const conteo = muestras.reduce((acc: any, m: any) => {
+    const conteo = muestras.reduce((acc: any  , m: any  ) => {
       const nombre = m.tipo_empaque?.nombre || "No especificado";
       acc[nombre] = (acc[nombre] || 0) + 1;
       return acc;
@@ -75,7 +75,7 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
     return Object.keys(conteo).map(key => ({ name: key, cantidad: conteo[key] }));
   }, [muestras]);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: any  ) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-slate-700">

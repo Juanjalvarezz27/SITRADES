@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 
 // --- COMPONENTE SELECT PREMIUM ---
-function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any) {
+function CustomSelect({ name, value, options, onChange, placeholder = "Seleccionar", onAddNew }: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -253,8 +253,8 @@ export default function RegistroMuestraPage() {
 
       toast.update(toastId, { render: "¡Muestra registrada!", type: "success", isLoading: false, autoClose: 3000 });
       router.push("/home/muestras");
-    } catch (error: any) {
-      toast.update(toastId, { render: error.message, type: "error", isLoading: false, autoClose: 5000 });
+    } catch (error: unknown) {
+      toast.update(toastId, { render: error instanceof Error ? error.message : "Error desconocido", type: "error", isLoading: false, autoClose: 5000 });
       setIsSubmitting(false);
     }
   };

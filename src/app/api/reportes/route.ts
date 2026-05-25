@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   try {
-    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getToken({ req: request as any  , secret: process.env.NEXTAUTH_SECRET });
     
     // Solo Administradores y Seguridad Industrial deberían sacar reportes masivos
     if (!token || !token.id || (token.rol !== "Administrador" && token.rol !== "Seguridad Industrial")) {
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const fechaFin = searchParams.get("fechaFin");
 
     // Construir la consulta dinámica (Query Builder)
-    let whereClause: any = {};
+    let whereClause: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ = {};
 
     // 1. Filtro de Búsqueda de Texto (Código, Lote, Producto)
     if (busqueda) {

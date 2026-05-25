@@ -78,10 +78,10 @@ export default function CentroReportesPage() {
       
       if (opcionesAreas.length === 0) {
         const areas = Array.from(new Set(data.map((d: any) => d.area?.nombre))).filter(Boolean) as string[];
-        setOpcionesAreas(areas.map(a => ({ value: a, label: a })));
+        setOpcionesAreas(areas.map((a: any) => ({ value: a, label: a })));
 
         const usuarios = Array.from(new Set(data.map((d: any) => d.usuarioRegistrador?.nombre))).filter(Boolean) as string[];
-        setOpcionesUsuarios(usuarios.map(u => ({ value: u, label: u })));
+        setOpcionesUsuarios(usuarios.map((u: any) => ({ value: u, label: u })));
       }
 
     } catch (error) {
@@ -89,7 +89,7 @@ export default function CentroReportesPage() {
     } finally {
       setLoading(false);
     }
-  }, [busqueda, filtroArea, filtroUsuario, filtroEstado, fechaInicio, fechaFin]);
+  }, [busqueda, filtroArea, filtroUsuario, filtroEstado, fechaInicio, fechaFin, opcionesAreas.length]);
 
   useEffect(() => {
     fetchReportes();
@@ -101,7 +101,7 @@ export default function CentroReportesPage() {
     const toastId = toast.loading("Estructurando y generando Excel...");
     
     try {
-      const dataParaExcel = reportes.map((item) => ({
+      const dataParaExcel = reportes.map((item: any) => ({
         "Código Interno": item.codigo_interno,
         "Lote": item.lote,
         "Principio Activo": item.principio_activo,
@@ -303,7 +303,7 @@ export default function CentroReportesPage() {
                 No se encontraron registros con los filtros actuales.
               </div>
             ) : (
-              reportesPaginados.map((item) => {
+              reportesPaginados.map((item: any) => {
                 const colorEstado = getEstadoColor(item.estado?.nombre);
 
                 return (
