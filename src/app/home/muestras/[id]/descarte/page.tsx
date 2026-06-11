@@ -217,8 +217,8 @@ export default function DescarteWizardPage() {
           const dataMetodos = await resMetodos.json();
           setMetodosOpciones(dataMetodos.map((m: any) => ({ value: m.id.toString(), label: m.nombre })));
         }
-      } catch (error) {
-        toast.error("Error al cargar los datos necesarios.");
+      } catch (error: any) {
+        toast.error(error.message || "Error al cargar los datos necesarios.");
         router.push("/home/muestras/descarte");
       } finally {
         setLoading(false);
@@ -231,16 +231,18 @@ export default function DescarteWizardPage() {
     try {
       const res = await fetch("/api/metodos-disposicion", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre })
       });
-      const nuevo = await res.json();
-      const nuevaOpcion = { value: nuevo.id.toString(), label: nuevo.nombre };
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al añadir la nueva técnica");
+      const nuevaOpcion = { value: data.id.toString(), label: data.nombre };
 
       setMetodosOpciones((prev) => [...prev, nuevaOpcion].sort((a, b) => a.label.localeCompare(b.label)));
-      setMetodoId(nuevo.id.toString());
+      setMetodoId(data.id.toString());
       toast.success("Técnica añadida al catálogo exitosamente");
-    } catch {
-      toast.error("Error al añadir la nueva técnica");
+    } catch (error: any) {
+      toast.error(error.message || "Error al añadir la nueva técnica");
     }
   };
 
@@ -255,14 +257,14 @@ export default function DescarteWizardPage() {
         body: JSON.stringify({ metodo_disposicion_id: metodoId, observaciones })
       });
 
-      const responseData = await res.json();
+      const responseData = await res.json().catch(() => ({}));
 
       if (!res.ok) throw new Error(responseData.error || "Error al procesar el descarte");
 
       toast.success("Descarte registrado. La bolsa ha sido notificada a Seguridad Industrial.");
       router.push("/home/muestras/recoleccion");
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Error al ejecutar el protocolo.");
+    } catch (error: any) {
+      toast.error(error.message || "Error al ejecutar el protocolo.");
       setIsSubmitting(false);
     }
   };

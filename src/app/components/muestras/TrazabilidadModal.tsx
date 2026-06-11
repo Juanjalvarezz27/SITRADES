@@ -45,11 +45,11 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
         setLoading(true);
         try {
           const res = await fetch(`/api/muestras/${muestra.id}/trazabilidad`);
-          if (!res.ok) throw new Error("Error al cargar historial");
-          const data = await res.json();
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || "Error al cargar historial");
           setHistorial(data);
-        } catch (error) {
-          toast.error("No se pudo cargar la línea de tiempo.");
+        } catch (error: any) {
+          toast.error(error.message || "No se pudo cargar la línea de tiempo.");
         } finally {
           setLoading(false);
         }

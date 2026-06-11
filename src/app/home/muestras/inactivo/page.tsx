@@ -72,12 +72,12 @@ export default function InventarioInactivoPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/muestras?fase=inactiva", { cache: 'no-store' });
-      if (!res.ok) throw new Error("Error al cargar");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al conectar con el archivo histórico.");
       setMuestrasOriginales(data);
       setMuestrasFiltradas(data);
-    } catch (error) {
-      toast.error("Error al conectar con el archivo histórico.");
+    } catch (error: any) {
+      toast.error(error.message || "Error al conectar con el archivo histórico.");
     } finally {
       setLoading(false);
     }

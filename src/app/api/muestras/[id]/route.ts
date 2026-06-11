@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { getToken } from "next-auth/jwt";
-
-const prisma = new PrismaClient();
+import { parseFechaCaracas } from "@/lib/dateUtils";
 
 export async function PUT(
   request: Request,
@@ -34,8 +33,8 @@ export async function PUT(
         riesgo_bioseguridad: body.riesgo_bioseguridad,
         cantidad: Number(body.cantidad),
         proposito_analisis: body.proposito_analisis,
-        fecha_caducidad: new Date(body.fecha_caducidad),
-        fecha_fin_retencion: new Date(body.fecha_fin_retencion),
+        fecha_caducidad: parseFechaCaracas(body.fecha_caducidad),
+        fecha_fin_retencion: parseFechaCaracas(body.fecha_fin_retencion),
         area_id: Number(body.area_id),
         ubicacion_detalle: body.ubicacion_detalle,
       },

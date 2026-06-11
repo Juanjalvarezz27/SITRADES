@@ -51,12 +51,12 @@ export default function ColaDescartePage() {
     setLoading(true);
     try {
       const res = await fetch("/api/muestras?fase=descarte", { cache: 'no-store' });
-      if (!res.ok) throw new Error("Error al cargar");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al conectar con la cola de descarte.");
       setMuestrasOriginales(data);
       setMuestrasFiltradas(data);
-    } catch (error) {
-      toast.error("Error al conectar con la cola de descarte.");
+    } catch (error: any) {
+      toast.error(error.message || "Error al conectar con la cola de descarte.");
     } finally {
       setLoading(false);
     }

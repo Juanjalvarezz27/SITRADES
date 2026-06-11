@@ -81,7 +81,8 @@ export default function DireccionModal({ isOpen, onClose, direccionToEdit, onSav
       const url = isEditing ? `/api/direcciones/${direccionToEdit.id}` : "/api/direcciones";
       const method = isEditing ? "PUT" : "POST";
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre, piso_id: pisoId }) });
-      if (!res.ok) throw new Error("Error al guardar");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al guardar");
       toast.success("¡Operación exitosa!");
       onSaved(); onClose();
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : "Error desconocido"); } finally { setLoading(false); }

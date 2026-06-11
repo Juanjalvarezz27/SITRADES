@@ -21,10 +21,11 @@ export default function CatalogoTab({ endpoint, nombreCatalogo, isSoftDelete }: 
     setLoading(true);
     try {
       const res = await fetch(endpoint);
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Error al cargar " + nombreCatalogo);
       setData(Array.isArray(json) ? json : []);
-    } catch (error) {
-      toast.error("Error al cargar " + nombreCatalogo);
+    } catch (error: any) {
+      toast.error(error.message || "Error al cargar " + nombreCatalogo);
     } finally {
       setLoading(false);
     }
@@ -42,13 +43,14 @@ export default function CatalogoTab({ endpoint, nombreCatalogo, isSoftDelete }: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre: nuevoNombre })
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al guardar");
       toast.success("Registro creado");
       setNuevoNombre("");
       setIsAdding(false);
       fetchData();
-    } catch (error) {
-      toast.error("Error al guardar");
+    } catch (error: any) {
+      toast.error(error.message || "Error al guardar");
     }
   };
 

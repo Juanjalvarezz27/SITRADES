@@ -27,6 +27,9 @@ const apiPermissions: Record<string, string[]> = {
   "/api/pisos": ["Administrador"],
   "/api/direcciones": ["Administrador"],
   "/api/muestras": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
+  "/api/recoleccion": ["Administrador", "Seguridad Industrial"],
+  "/api/reportes": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
+  "/api/dashboard": ["Administrador", "Analista de Laboratorio", "Seguridad Industrial"],
 };
 
 // 3. Rutas públicas exactas
@@ -119,6 +122,9 @@ export const config = {
     "/api/areas/:path*",
     "/api/pisos/:path*",
     "/api/direcciones/:path*",
-    "/api/muestras/:path*"
+    "/api/muestras/:path*",
+    "/api/recoleccion/:path*",
+    "/api/reportes/:path*",
+    "/api/dashboard/:path*"
   ],
 };

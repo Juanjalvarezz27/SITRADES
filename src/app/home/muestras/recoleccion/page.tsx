@@ -46,8 +46,7 @@ export default function CentroRecoleccionPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/recoleccion/pendientes`);
-      const data = await res.json();
-
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Error al cargar bolsas");
 
       if (Array.isArray(data)) {
@@ -57,9 +56,9 @@ export default function CentroRecoleccionPage() {
       } else {
         setBolsas([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Error al conectar con el servidor.");
+      toast.error(error.message || "Error al conectar con el servidor.");
       setBolsas([]);
     } finally {
       setLoading(false);
@@ -91,15 +90,16 @@ export default function CentroRecoleccionPage() {
         })
       });
 
-      if (!res.ok) throw new Error("Error al confirmar");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al confirmar");
 
       toast.update(toastId, { render: "¡Recolección completada con éxito!", type: "success", isLoading: false, autoClose: 3000 });
       setIsModalOpen(false);
       setSeleccionadas([]);
       fetchPendientes(); 
       
-    } catch (error) {
-      toast.update(toastId, { render: "Error al procesar la solicitud.", type: "error", isLoading: false, autoClose: 3000 });
+    } catch (error: any) {
+      toast.update(toastId, { render: error.message || "Error al procesar la solicitud.", type: "error", isLoading: false, autoClose: 3000 });
     } finally {
       setIsSubmitting(false);
     }

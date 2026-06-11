@@ -214,12 +214,12 @@ export default function InventarioMuestrasPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/muestras?fase=activa", { cache: 'no-store' });
-      if (!res.ok) throw new Error("Error al cargar inventario");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al cargar inventario");
       setMuestrasOriginales(data);
       setMuestrasFiltradas(data);
-    } catch (error) {
-      toast.error("No se pudo cargar el inventario de muestras.");
+    } catch (error: any) {
+      toast.error(error.message || "No se pudo cargar el inventario de muestras.");
     } finally {
       setLoading(false);
     }

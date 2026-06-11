@@ -177,22 +177,30 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
 
   const crearUnidadMedida = async (nombre: string) => {
     try {
-      const res = await fetch("/api/unidades-medida", { method: "POST", body: JSON.stringify({ nombre }) });
-      const nueva = await res.json();
-      setUnidades(prev => [...prev, nueva].sort((a,b) => a.nombre.localeCompare(b.nombre)));
-      setFormData(prev => ({ ...prev, unidad_medida_id: nueva.id.toString() })); 
+      const res = await fetch("/api/unidades-medida", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudo añadir la unidad");
+      
+      setUnidades(prev => [...prev, data].sort((a,b) => a.nombre.localeCompare(b.nombre)));
+      setFormData(prev => ({ ...prev, unidad_medida_id: data.id.toString() })); 
       toast.success("Unidad añadida exitosamente");
-    } catch { toast.error("Error al añadir unidad"); }
+    } catch (error: any) { 
+      toast.error(error.message || "Error al añadir unidad"); 
+    }
   };
 
   const crearTipoEmpaque = async (nombre: string) => {
     try {
-      const res = await fetch("/api/tipos-empaque", { method: "POST", body: JSON.stringify({ nombre }) });
-      const nueva = await res.json();
-      setEmpaques(prev => [...prev, nueva].sort((a,b) => a.nombre.localeCompare(b.nombre)));
-      setFormData(prev => ({ ...prev, tipo_empaque_id: nueva.id.toString() })); 
+      const res = await fetch("/api/tipos-empaque", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudo añadir el empaque");
+
+      setEmpaques(prev => [...prev, data].sort((a,b) => a.nombre.localeCompare(b.nombre)));
+      setFormData(prev => ({ ...prev, tipo_empaque_id: data.id.toString() })); 
       toast.success("Empaque añadido exitosamente");
-    } catch { toast.error("Error al añadir empaque"); }
+    } catch (error: any) { 
+      toast.error(error.message || "Error al añadir empaque"); 
+    }
   };
 
   //  CÁLCULO AUTOMÁTICO DE LA FECHA DE RETENCIÓN (+1 AÑO) 
@@ -214,12 +222,14 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
         }),
       });
 
-      if (!res.ok) throw new Error("Error");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al actualizar la muestra");
+      
       toast.success("Expediente actualizado exitosamente");
       onSuccess(); 
       onClose(); 
-    } catch (error) { 
-      toast.error("Error al guardar cambios"); 
+    } catch (error: any) { 
+      toast.error(error.message || "Error al guardar cambios"); 
     } finally { 
       setLoading(false); 
     }

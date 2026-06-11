@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { getToken } from "next-auth/jwt";
 
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   try {
@@ -47,15 +45,21 @@ export async function GET(request: Request) {
       whereClause.usuarioRegistrador = { nombre: usuario };
     }
 
-    // 4. Filtro de Fechas (Rango de Creación / Ingreso)
+    // 4. Filtro de Fechas (Rango de Creación / Ingreso) — Venezuela UTC-4
+    // Inicio del día en Venezuela = 04:00 UTC del mismo día (UTC-4)
+    // Fin del día en Venezuela   = 03:59:59.999 UTC del día siguiente
     if (fechaInicio || fechaFin) {
       whereClause.creado_en = {};
-      if (fechaInicio) whereClause.creado_en.gte = new Date(`${fechaInicio}T00:00:00.000Z`);
-      if (fechaFin) whereClause.creado_en.lte = new Date(`${fechaFin}T23:59:59.999Z`);
+      if (fechaInicio) whereClause.creado_en.gte = new Date(`${fechaInicio}T04:00:00.000Z`);
+      if (fechaFin) {
+        const finDia = new Date(`${fechaFin}T04:00:00.000Z`);
+        finDia.setUTCDate(finDia.getUTCDate() + 1); // siguiente día a las 04:00 UTC
+        finDia.setUTCMilliseconds(-1); // = 03:59:59.999 UTC del día siguiente = 23:59:59 Venezuela
+        whereClause.creado_en.lte = finDia;
+      }
     }
 
     // 5. Filtro de Estado Legal
-    const hoy = new Date();
     if (estado === "ACTIVA") {
       whereClause.estado = { nombre: { notIn: ["Destruida / Segregada", "Anulada (Error de Registro)"] } };
     } else if (estado === "DESCARTADA") {

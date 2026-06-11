@@ -184,8 +184,8 @@ export default function RegistroMuestraPage() {
 
         setUnidades(dataUnidades.map((u: any) => ({ value: u.id.toString(), label: u.nombre })));
         setEmpaques(dataEmpaques.map((e: any) => ({ value: e.id.toString(), label: e.nombre })));
-      } catch (error) {
-        toast.error("Error al cargar los catálogos del sistema");
+      } catch (error: any) {
+        toast.error(error.message || "Error al cargar los catálogos del sistema");
       } finally {
         setLoadingInitial(false);
       }
@@ -204,22 +204,24 @@ export default function RegistroMuestraPage() {
 
   const crearUnidadMedida = async (nombre: string) => {
     try {
-      const res = await fetch("/api/unidades-medida", { method: "POST", body: JSON.stringify({ nombre }) });
-      const nueva = await res.json();
-      setUnidades(prev => [...prev, { value: nueva.id.toString(), label: nueva.nombre }].sort((a,b) => a.label.localeCompare(b.label)));
-      setFormData(prev => ({ ...prev, unidad_medida_id: nueva.id.toString() }));
+      const res = await fetch("/api/unidades-medida", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al añadir unidad");
+      setUnidades(prev => [...prev, { value: data.id.toString(), label: data.nombre }].sort((a,b) => a.label.localeCompare(b.label)));
+      setFormData(prev => ({ ...prev, unidad_medida_id: data.id.toString() }));
       toast.success("Unidad añadida");
-    } catch { toast.error("Error al añadir unidad"); }
+    } catch (error: any) { toast.error(error.message || "Error al añadir unidad"); }
   };
 
   const crearTipoEmpaque = async (nombre: string) => {
     try {
-      const res = await fetch("/api/tipos-empaque", { method: "POST", body: JSON.stringify({ nombre }) });
-      const nueva = await res.json();
-      setEmpaques(prev => [...prev, { value: nueva.id.toString(), label: nueva.nombre }].sort((a,b) => a.label.localeCompare(b.label)));
-      setFormData(prev => ({ ...prev, tipo_empaque_id: nueva.id.toString() }));
+      const res = await fetch("/api/tipos-empaque", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al añadir empaque");
+      setEmpaques(prev => [...prev, { value: data.id.toString(), label: data.nombre }].sort((a,b) => a.label.localeCompare(b.label)));
+      setFormData(prev => ({ ...prev, tipo_empaque_id: data.id.toString() }));
       toast.success("Empaque añadido");
-    } catch { toast.error("Error al añadir empaque"); }
+    } catch (error: any) { toast.error(error.message || "Error al añadir empaque"); }
   };
 
   const fechaFinRetencion = formData.fecha_caducidad

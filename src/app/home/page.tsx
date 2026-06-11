@@ -33,11 +33,11 @@ export default function DashboardPage() {
     const fetchDashboard = async () => {
       try {
         const res = await fetch("/api/dashboard", { cache: 'no-store' });
-        if (!res.ok) throw new Error("Error al cargar datos");
-        const json = await res.json();
-        setData(json);
-      } catch (error) {
-        toast.error("No se pudieron cargar las métricas del dashboard.");
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Error al cargar datos");
+        setData(data);
+      } catch (error: any) {
+        toast.error(error.message || "No se pudieron cargar las métricas del dashboard.");
       } finally {
         setLoading(false);
       }

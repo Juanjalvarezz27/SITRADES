@@ -36,18 +36,20 @@ export default function ConfigTable({ data, endpoint, onRefresh, isSoftDelete }:
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ activo: nuevoEstado })
         });
-        if (!res.ok) throw new Error();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Error al actualizar estado");
         toast.success(nuevoEstado ? "Activado con éxito" : "Inhabilitado con éxito");
       } else {
         // Lógica de DELETE físico para catálogos simples
         const res = await fetch(`${endpoint}/${itemToToggle.id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "No se puede eliminar porque está en uso");
         toast.success("Registro eliminado");
       }
       onRefresh();
       setIsModalOpen(false);
-    } catch (error) {
-      toast.error(isSoftDelete ? "Error al actualizar estado" : "No se puede eliminar porque está en uso");
+    } catch (error: any) {
+      toast.error(error.message || (isSoftDelete ? "Error al actualizar estado" : "No se puede eliminar"));
     }
   };
 
@@ -147,12 +149,13 @@ export default function ConfigTable({ data, endpoint, onRefresh, isSoftDelete }:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre: editNombre })
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al actualizar");
       toast.success("Actualizado");
       setEditingId(null);
       onRefresh();
-    } catch (error) {
-      toast.error("Error al actualizar");
+    } catch (error: any) {
+      toast.error(error.message || "Error al actualizar");
     }
   }
 }

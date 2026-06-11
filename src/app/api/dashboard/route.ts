@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getHoyCaracas, getFuturoCaracas } from "@/lib/dateUtils";
 
 export const dynamic = 'force-dynamic'; 
 
@@ -9,40 +10,58 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export async function GET() {
   try {
-    const hoy = new Date();
-    
-    // Calculamos la fecha de dentro de 30 días para la alerta de "Vencen Pronto"
-    const proximoMes = new Date();
-    proximoMes.setDate(hoy.getDate() + 30);
+    const hoy = getHoyCaracas();         // Medianoche del día actual en Venezuela (UTC-4)
+    const proximoMes = getFuturoCaracas(30); // 30 días en el futuro según Venezuela
 
-    // 1. Total de Muestras Activas (Aún no cumplen tiempo de retención)
+    // 1. Total de Muestras Activas (no destruidas, no anuladas, no en cola de descarte)
     const totalActivas = await prisma.muestraFarmaceutica.count({
       where: {
-        fecha_fin_retencion: { gt: hoy },
-        estado: { nombre: { not: "Destruida / Segregada" } }
+        estado: {
+          nombre: {
+            notIn: [
+              "Destruida / Segregada",
+              "Anulada (Error de Registro)",
+              "Retención Cumplida (Descartable)",
+              "Esperando Recolección (Bolsa Roja)"
+            ]
+          }
+        }
       }
     });
 
-    // 2. ALERTAS CRÍTICAS: Cola de Descarte (Retención cumplida, esperando destrucción)
+    // 2. ALERTAS CRÍTICAS: Cola de Descarte (estado real del sistema)
     const pendientesDescarte = await prisma.muestraFarmaceutica.count({
       where: {
-        fecha_fin_retencion: { lte: hoy },
-        estado: { nombre: { not: "Destruida / Segregada" } }
+        estado: {
+          nombre: {
+            in: ["Retención Cumplida (Descartable)", "Esperando Recolección (Bolsa Roja)"]
+          }
+        }
       }
     });
 
-    // 3. ALERTAS PREVENTIVAS: Vencen en menos de 30 días
+    // 3. ALERTAS PREVENTIVAS: Contramuestras que caducarán en menos de 30 días (aún activas)
     const vencenPronto = await prisma.muestraFarmaceutica.count({
       where: {
+        tipo_muestra: "CONTRAMUESTRA",
         fecha_caducidad: { lte: proximoMes, gt: hoy },
-        estado: { nombre: { not: "Destruida / Segregada" } }
+        estado: {
+          nombre: {
+            notIn: [
+              "Destruida / Segregada",
+              "Anulada (Error de Registro)",
+              "Retención Cumplida (Descartable)",
+              "Esperando Recolección (Bolsa Roja)"
+            ]
+          }
+        }
       }
     });
 
-    // 4. Archivo Histórico (Ya destruidas)
+    // 4. Archivo Histórico (Ya destruidas o anuladas)
     const historico = await prisma.muestraFarmaceutica.count({
       where: {
-        estado: { nombre: "Destruida / Segregada" }
+        estado: { nombre: { in: ["Destruida / Segregada", "Anulada (Error de Registro)"] } }
       }
     });
 

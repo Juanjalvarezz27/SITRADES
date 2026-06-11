@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getToken } from "next-auth/jwt";
+import { getHoyCaracas, parseFechaCaracas } from "@/lib/dateUtils";
 export const dynamic = 'force-dynamic';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const fase = searchParams.get("fase") || "activa";
-    const hoy = new Date();
+    const hoy = getHoyCaracas(); // Hora actual en Venezuela (UTC-4)
 
     let whereClause: Record<string, unknown> = {};
 
@@ -156,8 +157,8 @@ export async function POST(request: Request) {
         cantidad: Number(body.cantidad),
         tipo_muestra: tipoMuestra as any  ,
         proposito_analisis: body.proposito_analisis,
-        fecha_caducidad: new Date(body.fecha_caducidad),
-        fecha_fin_retencion: new Date(body.fecha_fin_retencion),
+        fecha_caducidad: parseFechaCaracas(body.fecha_caducidad),
+        fecha_fin_retencion: parseFechaCaracas(body.fecha_fin_retencion),
         area_id: areaId,
         ubicacion_detalle: body.ubicacion_detalle,
         estado_id: estadoInicial.id,
@@ -177,13 +178,13 @@ export async function POST(request: Request) {
       }
     });
 
-    const hoy = new Date();
+    const hoy = getHoyCaracas(); // Hora actual en Venezuela (UTC-4)
     let estadoActualId = estadoInicial.id;
 
     // PASO 2: LOGICA DE AUTOMATIZACIÓN (SÓLO PARA CONTRAMUESTRAS)
     // Las operativas (ANALISIS) se saltan todo esto porque no tienen retención y su estado depende del usuario.
     if (tipoMuestra === "CONTRAMUESTRA") {
-      if (new Date(body.fecha_caducidad) <= hoy) {
+      if (parseFechaCaracas(body.fecha_caducidad) <= hoy) {
         await prisma.muestraFarmaceutica.update({
           where: { id: nuevaMuestra.id },
           data: { estado_id: estadoVencida.id }
@@ -201,7 +202,7 @@ export async function POST(request: Request) {
         estadoActualId = estadoVencida.id; 
       }
 
-      if (new Date(body.fecha_fin_retencion) <= hoy) {
+      if (parseFechaCaracas(body.fecha_fin_retencion) <= hoy) {
         await prisma.muestraFarmaceutica.update({
           where: { id: nuevaMuestra.id },
           data: { estado_id: estadoRetencion.id }

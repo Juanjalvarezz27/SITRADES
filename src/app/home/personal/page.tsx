@@ -49,13 +49,13 @@ export default function DirectorioPersonalPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/usuarios`);
-      if (!res.ok) throw new Error("Error al cargar los usuarios");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al cargar los usuarios");
       
-      const data = await res.json();
       setTodosLosUsuarios(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Error al cargar la lista de usuarios.");
+      toast.error(error.message || "Error al cargar la lista de usuarios.");
     } finally {
       setLoading(false);
     }
@@ -128,7 +128,7 @@ export default function DirectorioPersonalPage() {
         body: JSON.stringify({ activo: nuevoEstado })
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data.error || "Error al cambiar el estado del usuario");

@@ -71,9 +71,9 @@ export default function CentroReportesPage() {
       if (fechaFin) params.append("fechaFin", fechaFin);
 
       const res = await fetch(`/api/reportes?${params.toString()}`); 
-      if (!res.ok) throw new Error("Error de red");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error al cargar la data para reportes");
       
-      const data = await res.json();
       setReportes(data);
       
       if (opcionesAreas.length === 0) {
@@ -84,8 +84,8 @@ export default function CentroReportesPage() {
         setOpcionesUsuarios(usuarios.map((u: any) => ({ value: u, label: u })));
       }
 
-    } catch (error) {
-      toast.error("Error al cargar la data para reportes.");
+    } catch (error: any) {
+      toast.error(error.message || "Error al cargar la data para reportes.");
     } finally {
       setLoading(false);
     }
