@@ -78,7 +78,7 @@ const MuestraPDFTemplate = forwardRef<HTMLDivElement, MuestraPDFTemplateProps>(
           {/* BLOQUE 2: LOGÍSTICA Y TIEMPOS */}
           <div className="border border-indigo-100 p-5 rounded-2xl bg-slate-50/50 break-inside-avoid mt-6" style={{ pageBreakInside: 'avoid' }}>
             <h3 className="font-bold text-indigo-900 mb-4 border-b border-indigo-100 pb-2">
-              Logística y Tiempos Legales (Res. N° 072)
+              Logística y Tiempos Legales (Gaceta 38.009 - BPM)
             </h3>
             <div className="grid grid-cols-2 gap-y-4 text-[12px] mb-5">
               <p><strong className="text-slate-500 uppercase text-[9px] block">Ubicación Física</strong> {muestra.area?.nombre} ({muestra.area?.direccion?.nombre})</p>

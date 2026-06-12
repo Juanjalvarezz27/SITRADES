@@ -120,7 +120,7 @@ export default function CentroRecoleccionPage() {
             </h1>
           </div>
           <p className="text-slate-500 text-[13px] sm:text-sm font-medium max-w-xl leading-relaxed mx-auto md:mx-0">
-            Panel de control para Seguridad Industrial. Gestión de traslado de desechos biopeligrosos (Res. 072).
+            Panel de control para Seguridad Industrial. Gestión de traslado de desechos biopeligrosos (Gaceta 38.009 - BPM).
           </p>
         </div>
 

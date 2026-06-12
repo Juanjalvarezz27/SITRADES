@@ -576,7 +576,7 @@ export default function DescarteWizardPage() {
                 <div className="bg-slate-900/5 px-6 py-4 flex items-center gap-3 border-t border-slate-900/10">
                   <Scale size={20} className="text-slate-500 shrink-0" />
                   <p className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                    Fundamento Legal: <span className="font-medium">Resolución N° 072 / Ecofarmacovigilancia</span>
+                    Fundamento Legal: <span className="font-medium">Numeral 16.16 de la Gaceta 38.009 (BPM)</span>
                   </p>
                 </div>
               </div>

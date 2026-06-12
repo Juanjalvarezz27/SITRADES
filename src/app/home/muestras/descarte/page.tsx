@@ -106,7 +106,7 @@ export default function ColaDescartePage() {
             </h1>
           </div>
           <p className="text-slate-500 text-[13px] sm:text-sm font-medium max-w-xl leading-relaxed mx-auto md:mx-0">
-            Muestras con tiempo de retención legal cumplido (Res. 072) que requieren destrucción.
+            Muestras con tiempo de retención legal cumplido (Gaceta 38.009 - BPM) que requieren destrucción.
           </p>
         </div>
         

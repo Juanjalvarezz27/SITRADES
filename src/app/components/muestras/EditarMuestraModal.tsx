@@ -353,7 +353,7 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
                 {/*  CAMPO DE RETENCIÓN AUTOMÁTICO  */}
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2 items-center justify-between">
-                    <span>Fin Retención (Res. 072)</span>
+                    <span>Fin Retención (Gaceta 38.009 - BPM)</span>
                     <span className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded text-[9px] flex items-center gap-1"><Info size={10} /> Automático</span>
                   </label>
                   <input type="date" readOnly value={fechaFinRetencion} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-[13px] font-semibold text-slate-500 cursor-not-allowed outline-none" />

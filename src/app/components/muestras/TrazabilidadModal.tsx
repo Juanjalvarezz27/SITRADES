@@ -217,7 +217,7 @@ export default function TrazabilidadModal({ isOpen, onClose, muestra }: Trazabil
 
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
                 <div className="flex items-center gap-2 text-slate-800 font-bold mb-4 border-b border-slate-200 pb-2">
-                  <Clock size={18} className="text-blue-500" /> Tiempos Legales (Res. N° 072)
+                  <Clock size={18} className="text-blue-500" /> Tiempos Legales (Gaceta 38.009 - BPM)
                 </div>
                 
                 {/* Lógica dinámica de visualización de tiempos */}
