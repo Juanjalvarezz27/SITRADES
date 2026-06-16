@@ -52,7 +52,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
             : 'border-slate-200 bg-slate-50 hover:bg-white'
         } outline-none transition-all text-[14px] font-medium text-left flex justify-between items-center`}
       >
-        <span className={`truncate pr-4 ${value ? "text-slate-700" : "text-slate-400"}`}>
+        <span className={`pr-4 whitespace-normal break-words ${value ? "text-slate-700" : "text-slate-400"}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown size={16} className={`shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand-primary' : 'text-slate-400'}`} />
@@ -78,7 +78,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
                 value?.toString() === opt.value ? 'bg-brand-primary/10 text-brand-primary font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span className="truncate pr-2">{opt.label}</span>
+              <span className="pr-2 whitespace-normal break-words">{opt.label}</span>
               {value?.toString() === opt.value && <Check size={16} strokeWidth={3} className="shrink-0" />}
             </div>
           ))}
@@ -141,6 +141,37 @@ export default function RegistroMuestraPage() {
   const [unidades, setUnidades] = useState<{value: string, label: string}[]>([]);
   const [empaques, setEmpaques] = useState<{value: string, label: string}[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
+  const [displayFechaCaducidad, setDisplayFechaCaducidad] = useState("");
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let v = e.target.value.replace(/\D/g, ''); 
+    if (v.length > 8) v = v.slice(0, 8);
+    
+    let formatted = v;
+    if (v.length > 4) {
+      formatted = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
+    } else if (v.length > 2) {
+      formatted = `${v.slice(0,2)}/${v.slice(2)}`;
+    }
+    
+    setDisplayFechaCaducidad(formatted);
+
+    if (v.length === 8) {
+      const d = v.slice(0, 2);
+      const m = v.slice(2, 4);
+      const y = v.slice(4);
+      setFormData(prev => ({ ...prev, fecha_caducidad: `${y}-${m}-${d}` }));
+    } else {
+      setFormData(prev => ({ ...prev, fecha_caducidad: "" }));
+    }
+  };
+
+  const formatDDMMYYYY = (dateString: string) => {
+    if (!dateString) return "";
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return dateString;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
 
   const [formData, setFormData] = useState({
     tipo_muestra: "CONTRAMUESTRA", // Valor por defecto
@@ -380,14 +411,22 @@ export default function RegistroMuestraPage() {
             <div className="space-y-5">
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Fecha Caducidad <span className="text-red-500">*</span></label>
-                <input required type="date" name="fecha_caducidad" value={formData.fecha_caducidad} onChange={handleChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary" />
+                <input 
+                  required 
+                  type="text" 
+                  placeholder="DD/MM/AAAA" 
+                  value={displayFechaCaducidad} 
+                  onChange={handleDateChange} 
+                  maxLength={10}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary" 
+                />
               </div>
               
               {/* Lógica Visual de Tiempos Legales */}
               {formData.tipo_muestra === "CONTRAMUESTRA" ? (
                 <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
                   <label className="block text-[13px] font-bold text-blue-800 mb-1.5">Fin Retención Legal (Automático)</label>
-                  <input type="date" readOnly value={fechaFinRetencion} className="w-full px-4 py-3 bg-white/60 border border-blue-200 rounded-xl text-[14px] font-bold text-blue-900 cursor-not-allowed outline-none" />
+                  <input type="text" readOnly value={formatDDMMYYYY(fechaFinRetencion)} className="w-full px-4 py-3 bg-white/60 border border-blue-200 rounded-xl text-[14px] font-bold text-blue-900 cursor-not-allowed outline-none" />
                 </div>
               ) : (
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
@@ -415,7 +454,7 @@ export default function RegistroMuestraPage() {
               </div>
               <div>
                 <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Observaciones Adicionales</label>
-                <textarea required name="proposito_analisis" value={formData.proposito_analisis} onChange={handleChange} rows={2} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary resize-none" />
+                <textarea name="proposito_analisis" value={formData.proposito_analisis} onChange={handleChange} rows={2} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:outline-none focus:border-brand-primary resize-none" />
               </div>
             </div>
           </div>

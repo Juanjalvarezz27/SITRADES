@@ -49,10 +49,10 @@ export default function LoginPage() {
         // Activamos la pantalla de carga con el logo
         setLoginSuccess(true);
         
-        // Esperamos 2.5 segundos antes de redirigir
+        // Breve pausa para mostrar el Loader antes de redirigir
         setTimeout(() => {
           router.push("/home");
-        }, 2500);
+        }, 800);
       }
     } catch (err) {
       toast.update(toastId, { render: "Error de conexión con el servidor.", type: "error", isLoading: false, autoClose: 3000 });

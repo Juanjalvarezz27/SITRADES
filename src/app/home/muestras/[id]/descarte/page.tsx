@@ -70,7 +70,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
             : "border-slate-200 bg-white hover:border-rose-300"
         } outline-none transition-all text-[14px] font-bold text-left flex justify-between items-center shadow-sm pl-12`}
       >
-        <span className={`truncate pr-4 ${value ? "text-slate-700" : "text-slate-400 font-medium"}`}>
+        <span className={`pr-4 whitespace-normal break-words ${value ? "text-slate-700" : "text-slate-400 font-medium"}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
@@ -90,7 +90,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 left-0 min-w-full sm:min-w-[280px] mt-2 bg-white border border-slate-100 rounded-[1.2rem] shadow-[0_12px_40px_rgb(0,0,0,0.12)] py-2 max-h-60 overflow-y-auto overflow-x-hidden custom-scrollbar animate-in fade-in slide-in-from-top-2 origin-top flex flex-col">
+        <div className="absolute z-50 left-0 w-full mt-2 bg-white border border-slate-100 rounded-[1.2rem] shadow-[0_12px_40px_rgb(0,0,0,0.12)] py-2 max-h-60 overflow-y-auto overflow-x-hidden custom-scrollbar animate-in fade-in slide-in-from-top-2 origin-top flex flex-col">
           <div
             onClick={() => {
               onChange(name, "");
@@ -117,7 +117,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
-              <span className="truncate pr-2">{opt.label}</span>
+              <span className="pr-2 whitespace-normal break-words">{opt.label}</span>
               {value?.toString() === opt.value && <Check size={16} strokeWidth={3} className="shrink-0 text-rose-600" />}
             </div>
           ))}

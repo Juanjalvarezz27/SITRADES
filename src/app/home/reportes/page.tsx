@@ -285,7 +285,7 @@ export default function CentroReportesPage() {
         {/* RESULTADOS */}
         <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden mb-6">
           
-          <div className="hidden md:grid grid-cols-5 gap-4 p-5 bg-slate-50 border-b border-slate-100 text-[11px] uppercase tracking-widest text-slate-500 font-black">
+          <div className="hidden md:grid grid-cols-5 gap-6 px-6 py-4 bg-slate-50/80 border-b border-slate-100 text-[11px] uppercase tracking-widest text-slate-400 font-black">
             <div>Código / Lote</div>
             <div>Producto</div>
             <div>Ubicación</div>
@@ -309,28 +309,28 @@ export default function CentroReportesPage() {
                 return (
                   <div 
                     key={item.id} 
-                    className="bg-white border border-slate-100 md:border-0 md:border-b md:border-slate-100 rounded-2xl md:rounded-none shadow-sm md:shadow-none hover:bg-slate-50/50 transition-colors"
+                    className="bg-white border border-slate-100 md:border-0 md:border-b md:border-slate-100 rounded-2xl md:rounded-none shadow-sm md:shadow-none hover:bg-slate-50 transition-all duration-200 group"
                   >
                     
                     {/* === VISTA ESCRITORIO === */}
-                    <div className="hidden md:grid md:grid-cols-5 gap-4 p-5 items-center">
+                    <div className="hidden md:grid md:grid-cols-5 gap-6 px-6 py-5 items-center">
                       <div className="flex flex-col">
-                        <span className="font-bold text-slate-800 text-[14px]">{item.codigo_interno}</span>
-                        <span className="text-[12px] text-slate-500">Lote: {item.lote}</span>
+                        <span className="font-black text-brand-primary text-[14px]">{item.codigo_interno}</span>
+                        <span className="text-[12px] font-medium text-slate-400 mt-0.5">Lote: <span className="text-slate-600">{item.lote}</span></span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-black text-slate-700 text-[13px]">{item.principio_activo}</span>
-                        <span className="text-[11px] text-slate-400 mt-0.5">{item.cantidad} {item.unidad_medida?.nombre}</span>
+                        <span className="font-bold text-slate-800 text-[14px]">{item.principio_activo}</span>
+                        <span className="text-[12px] font-medium text-slate-500 mt-0.5">{item.cantidad} {item.unidad_medida?.nombre}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[13px] text-slate-600 font-medium">{item.area?.nombre || "N/A"}</span>
+                        <span className="text-[13px] text-slate-600 font-medium group-hover:text-slate-900 transition-colors">{item.area?.nombre || "N/A"}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[13px] text-slate-600">{formatearFecha(item.creado_en)}</span>
-                        <span className="text-[11px] font-bold text-brand-primary">{item.usuarioRegistrador?.nombre}</span>
+                        <span className="text-[12px] text-slate-400 font-medium mb-0.5">{formatearFecha(item.creado_en)}</span>
+                        <span className="text-[13px] font-bold text-slate-700">{item.usuarioRegistrador?.nombre}</span>
                       </div>
                       <div className="flex flex-col items-start justify-center">
-                        <span className={`inline-flex px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${colorEstado}`}>
+                        <span className={`inline-flex px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${colorEstado} bg-opacity-50`}>
                           {item.estado?.nombre || "N/A"}
                         </span>
                       </div>

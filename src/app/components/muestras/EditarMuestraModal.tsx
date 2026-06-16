@@ -47,7 +47,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
             : 'border-slate-200 bg-white hover:bg-slate-50'
         } outline-none transition-all text-[13px] font-semibold text-left flex justify-between items-center shadow-sm`}
       >
-        <span className={`truncate pr-4 ${value ? "text-slate-700" : "text-slate-400 font-medium"}`}>
+        <span className={`pr-4 whitespace-normal break-words ${value ? "text-slate-700" : "text-slate-400 font-medium"}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown size={16} className={`shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand-primary' : 'text-slate-400'}`} />
@@ -73,7 +73,7 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
                 value?.toString() === opt.value ? 'bg-brand-primary/10 text-brand-primary font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span className="truncate pr-2">{opt.label}</span>
+              <span className="pr-2 whitespace-normal break-words">{opt.label}</span>
               {value?.toString() === opt.value && <Check size={16} strokeWidth={3} className="shrink-0" />}
             </div>
           ))}
@@ -128,6 +128,37 @@ function CustomSelect({ name, value, options, onChange, placeholder = "Seleccion
 // --- MODAL PRINCIPAL ---
 export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess }: any  ) {
   const [loading, setLoading] = useState(false);
+  const [displayFechaCaducidad, setDisplayFechaCaducidad] = useState("");
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let v = e.target.value.replace(/\D/g, ''); 
+    if (v.length > 8) v = v.slice(0, 8);
+    
+    let formatted = v;
+    if (v.length > 4) {
+      formatted = `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
+    } else if (v.length > 2) {
+      formatted = `${v.slice(0,2)}/${v.slice(2)}`;
+    }
+    
+    setDisplayFechaCaducidad(formatted);
+
+    if (v.length === 8) {
+      const d = v.slice(0, 2);
+      const m = v.slice(2, 4);
+      const y = v.slice(4);
+      setFormData(prev => ({ ...prev, fecha_caducidad: `${y}-${m}-${d}` }));
+    } else {
+      setFormData(prev => ({ ...prev, fecha_caducidad: "" }));
+    }
+  };
+
+  const formatDDMMYYYY = (dateString: string) => {
+    if (!dateString) return "";
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return dateString;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
   
   const [areas, setAreas] = useState<any[]>([]); 
   const [unidades, setUnidades] = useState<any[]>([]);
@@ -155,6 +186,8 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
 
   useEffect(() => {
     if (muestra && isOpen) {
+      const fechaDB = muestra.fecha_caducidad ? new Date(muestra.fecha_caducidad).toISOString().split('T')[0] : "";
+      
       setFormData({
         codigo_interno: muestra.codigo_interno || "",
         lote: muestra.lote || "",
@@ -167,8 +200,15 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
         proposito_analisis: muestra.proposito_analisis || "",
         area_id: muestra.area_id?.toString() || "",
         ubicacion_detalle: muestra.ubicacion_detalle || "",
-        fecha_caducidad: muestra.fecha_caducidad ? new Date(muestra.fecha_caducidad).toISOString().split('T')[0] : "",
+        fecha_caducidad: fechaDB,
       });
+
+      if (fechaDB) {
+         const [y, m, d] = fechaDB.split('-');
+         setDisplayFechaCaducidad(`${d}/${m}/${y}`);
+      } else {
+         setDisplayFechaCaducidad("");
+      }
     }
   }, [muestra, isOpen]);
 
@@ -278,8 +318,8 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
                   <input name="registro_sanitario" value={formData.registro_sanitario} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-semibold text-slate-700 shadow-sm transition-all" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Propósito Análisis *</label>
-                  <input required name="proposito_analisis" value={formData.proposito_analisis} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-semibold text-slate-700 shadow-sm transition-all" />
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Propósito Análisis</label>
+                  <input name="proposito_analisis" value={formData.proposito_analisis} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-semibold text-slate-700 shadow-sm transition-all" />
                 </div>
               </div>
             </div>
@@ -347,7 +387,15 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
 
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase mb-2">Fecha de Caducidad Impresa *</label>
-                  <input required type="date" name="fecha_caducidad" value={formData.fecha_caducidad} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-bold text-brand-primary shadow-sm cursor-pointer transition-all" />
+                  <input 
+                    required 
+                    type="text" 
+                    placeholder="DD/MM/AAAA" 
+                    value={displayFechaCaducidad} 
+                    onChange={handleDateChange} 
+                    maxLength={10}
+                    className="w-full px-4 py-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 outline-none text-[13px] font-bold text-brand-primary shadow-sm transition-all" 
+                  />
                 </div>
 
                 {/*  CAMPO DE RETENCIÓN AUTOMÁTICO  */}
@@ -356,7 +404,7 @@ export default function EditarMuestraModal({ isOpen, onClose, muestra, onSuccess
                     <span>Fin Retención (Gaceta 38.009 - BPM)</span>
                     <span className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded text-[9px] flex items-center gap-1"><Info size={10} /> Automático</span>
                   </label>
-                  <input type="date" readOnly value={fechaFinRetencion} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-[13px] font-semibold text-slate-500 cursor-not-allowed outline-none" />
+                  <input type="text" readOnly value={formatDDMMYYYY(fechaFinRetencion)} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-[13px] font-semibold text-slate-500 cursor-not-allowed outline-none" />
                 </div>
 
               </div>

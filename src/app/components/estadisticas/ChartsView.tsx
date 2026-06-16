@@ -125,18 +125,17 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
         </div>
       </div>
 
-      {/* FILA 2: GRÁFICOS ESCALABLES (CON SCROLL INTERNO) */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      {/* FILA 2: Área y Personal lado a lado */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Volumen por Área */}
-        <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[500px]">
-          <div className="mb-6">
+        <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[400px]">
+          <div className="mb-4">
             <h3 className="font-black text-slate-800 text-[15px] uppercase tracking-wide leading-tight">Volumen por Área</h3>
             <p className="text-slate-400 text-[11px] font-bold mt-1 uppercase">Laboratorios del INHRR</p>
           </div>
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            {/* Altura dinámica: 50px por cada barra */}
-            <div style={{ height: `${Math.max(dataAreas.length * 50, 300)}px` }}>
+            <div style={{ height: `${Math.max(dataAreas.length * 50, 250)}px` }}>
               <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={dataAreas} layout="vertical" margin={{ left: -10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
@@ -153,13 +152,13 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
         </div>
 
         {/* Productividad Personal */}
-        <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[500px]">
-          <div className="mb-6">
+        <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[400px]">
+          <div className="mb-4">
             <h3 className="font-black text-slate-800 text-[15px] uppercase tracking-wide leading-tight">Registros por Personal</h3>
             <p className="text-slate-400 text-[11px] font-bold mt-1 uppercase">Analistas y Administradores</p>
           </div>
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            <div style={{ height: `${Math.max(dataPersonal.length * 50, 300)}px` }}>
+            <div style={{ height: `${Math.max(dataPersonal.length * 50, 250)}px` }}>
               <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={dataPersonal} layout="vertical" margin={{ left: -10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
@@ -174,28 +173,27 @@ export default function ChartsView({ muestras }: ChartsViewProps) {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Tipos de Empaque */}
-        <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[500px]">
-          <div className="mb-6">
-            <h3 className="font-black text-slate-800 text-[15px] uppercase tracking-wide leading-tight">Tipos de Empaque</h3>
-            <p className="text-slate-400 text-[11px] font-bold mt-1 uppercase">Clasificación de Envases</p>
-          </div>
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            <div style={{ height: `${Math.max(dataEmpaques.length * 50, 300)}px` }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                <BarChart data={dataEmpaques} layout="vertical" margin={{ left: -10, right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 11, fontWeight: 'bold' }} width={110} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="cantidad" radius={[0, 10, 10, 0]} barSize={24} fill="#10b981" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+      {/* FILA 3: Tipos de Empaque (ancho completo) */}
+      <div className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col h-[380px]">
+        <div className="mb-4">
+          <h3 className="font-black text-slate-800 text-[15px] uppercase tracking-wide leading-tight">Tipos de Empaque</h3>
+          <p className="text-slate-400 text-[11px] font-bold mt-1 uppercase">Clasificación de Envases</p>
+        </div>
+        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div style={{ height: `${Math.max(dataEmpaques.length * 50, 250)}px` }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+              <BarChart data={dataEmpaques} layout="vertical" margin={{ left: -10, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 11, fontWeight: 'bold' }} width={110} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                <Bar dataKey="cantidad" radius={[0, 10, 10, 0]} barSize={24} fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-
       </div>
     </div>
   );
