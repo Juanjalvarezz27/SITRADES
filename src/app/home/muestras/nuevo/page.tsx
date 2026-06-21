@@ -146,6 +146,20 @@ export default function RegistroMuestraPage() {
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let v = e.target.value.replace(/\D/g, ''); 
     if (v.length > 8) v = v.slice(0, 8);
+
+    if (v.length >= 2) {
+      let day = parseInt(v.slice(0, 2), 10);
+      if (day > 31) day = 31;
+      if (day === 0) day = 1;
+      v = day.toString().padStart(2, '0') + v.slice(2);
+    }
+
+    if (v.length >= 4) {
+      let month = parseInt(v.slice(2, 4), 10);
+      if (month > 12) month = 12;
+      if (month === 0) month = 1;
+      v = v.slice(0, 2) + month.toString().padStart(2, '0') + v.slice(4);
+    }
     
     let formatted = v;
     if (v.length > 4) {
