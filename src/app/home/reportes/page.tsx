@@ -196,9 +196,13 @@ export default function CentroReportesPage() {
   const reportesPaginados = reportes.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const getEstadoColor = (nombre: string) => {
-    if (nombre?.includes("Destruida")) return "bg-blue-50 text-brand-primary border-blue-200";
-    if (nombre?.includes("Anulada")) return "bg-red-50 text-red-600 border-red-200";
-    return "bg-emerald-50 text-emerald-600 border-emerald-200";
+    const estado = nombre?.toUpperCase() || "";
+    if (estado.includes("DESCARTA") || estado.includes("DESTRUIDA")) return "bg-blue-50 text-blue-600 border-blue-200";
+    if (estado.includes("ANULADA") || estado.includes("ERROR")) return "bg-red-50 text-red-600 border-red-200";
+    if (estado.includes("ACTIVA") || estado.includes("ALMACEN")) return "bg-emerald-50 text-emerald-600 border-emerald-200";
+    if (estado.includes("VENCIDA") || estado.includes("CADUCADA")) return "bg-amber-50 text-amber-600 border-amber-200";
+    
+    return "bg-slate-50 text-slate-600 border-slate-200";
   };
 
   return (
