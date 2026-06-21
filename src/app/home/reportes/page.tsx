@@ -197,9 +197,17 @@ export default function CentroReportesPage() {
 
   const getEstadoColor = (nombre: string) => {
     const estado = nombre?.toUpperCase() || "";
-    if (estado.includes("DESCARTA") || estado.includes("DESTRUIDA")) return "bg-blue-50 text-blue-600 border-blue-200";
-    if (estado.includes("ANULADA") || estado.includes("ERROR")) return "bg-red-50 text-red-600 border-red-200";
-    if (estado.includes("ACTIVA") || estado.includes("ALMACEN")) return "bg-emerald-50 text-emerald-600 border-emerald-200";
+    
+    // Rojas
+    if (estado.includes("RETENCIÓN CUMPLIDA") || estado.includes("RETENCION CUMPLIDA") || estado.includes("ANULADA") || estado.includes("ERROR")) return "bg-red-50 text-red-600 border-red-200";
+    
+    // Verdes
+    if (estado.includes("EN ANÁLISIS") || estado.includes("EN ANALISIS") || estado.includes("ACTIVA") || estado.includes("ALMACEN")) return "bg-emerald-50 text-emerald-600 border-emerald-200";
+    
+    // Azules
+    if (estado.includes("RECIBIDA") || estado.includes("PENDIENTE") || estado.includes("DESCARTA") || estado.includes("DESTRUIDA")) return "bg-blue-50 text-blue-600 border-blue-200";
+    
+    // Ámbar
     if (estado.includes("VENCIDA") || estado.includes("CADUCADA")) return "bg-amber-50 text-amber-600 border-amber-200";
     
     return "bg-slate-50 text-slate-600 border-slate-200";
